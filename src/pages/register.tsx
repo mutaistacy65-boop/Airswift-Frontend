@@ -102,19 +102,6 @@ const RegisterPage: React.FC = () => {
               required
             />
 
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">Account Type</label>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="job_seeker">Job Seeker</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-
             <Input
               label="Password"
               type="password"
