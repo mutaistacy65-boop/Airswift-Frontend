@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import Modal from './Modal'
 import Input from './Input'
-import Button from './Button'
 
 interface MpesaPaymentModalProps {
   isOpen: boolean
@@ -45,8 +44,9 @@ const MpesaPaymentModal: React.FC<MpesaPaymentModalProps> = ({
     try {
       await onConfirm(phoneNumber)
       setPhoneNumber('')
-    } catch (err: any) {
-      setError(err.message || 'Payment initiation failed')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Payment initiation failed'
+      setError(message)
     } finally {
       setLoading(false)
     }
