@@ -10,7 +10,7 @@ A modern, responsive web application for the Airswift job portal, connecting job
 - **Track Applications**: Real-time status updates (pending, reviewed, accepted, rejected)
 - **Interview Management**: Scheduled interviews with meeting links
 - **Profile Management**: Complete profile with CV upload and skills
-- **Payment Integration**: Secure mobile money payments for interview fees (3 KSH) and visa processing (30,000 KSH)
+- **Payment Integration**: Kenya Safaricom M-Pesa payments for interview fees (3 KSH) and visa processing (30,000 KSH)
 
 ### For Admins
 - **Job Management**: Create, edit, and manage job postings
