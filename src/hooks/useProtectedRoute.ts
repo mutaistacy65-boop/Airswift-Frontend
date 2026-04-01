@@ -15,4 +15,9 @@ export const useProtectedRoute = (requiredRole?: 'admin' | 'job_seeker') => {
       }
     }
   }, [isLoading, user, router, requiredRole])
+
+  return {
+    isAuthorized: !isLoading && user && (!requiredRole || user.role === requiredRole),
+    isLoading
+  }
 }

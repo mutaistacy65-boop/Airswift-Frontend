@@ -18,6 +18,8 @@ A modern, responsive web application for the Airswift job portal, connecting job
 - **Interview Scheduling**: Schedule interviews with candidates
 - **User Management**: Manage user accounts and permissions
 - **Dashboard Analytics**: Overview of jobs, applications, and users
+- **A–Z Role Counts**: Alphabetically sorted category stats with job/application breakdown
+- **Interview Pipeline Per Applicant**: Track each applicant’s stage, priority, and next action
 
 ## 🛠️ Tech Stack
 
@@ -50,14 +52,19 @@ cd Airswift-Frontend
 npm install
 ```
 
-3. Set up environment variables:
+3. Optionally clean build caches before running:
+```bash
+rm -rf .next node_modules/.cache
+```
+
+4. Set up environment variables:
 Create a `.env.local` file in the root directory:
 ```env
 NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-4. Start the development server:
+5. Start the development server:
 ```bash
 npm run dev
 ```

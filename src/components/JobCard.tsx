@@ -10,15 +10,13 @@ interface JobCardProps {
 
 const JobCard: React.FC<JobCardProps> = ({ job, showApplyButton = false }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-      <div className="flex justify-between items-start mb-4">
+    <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 p-6 border border-gray-200">
+      <div className="flex flex-col md:flex-row md:items-start justify-between mb-4 gap-4">
         <div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">{job.title}</h3>
-          <p className="text-gray-600">{job.company}</p>
+          <h3 className="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">{job.title}</h3>
+          <p className="text-blue-600 font-semibold">{job.company}</p>
         </div>
-        <span className="bg-primary text-white px-3 py-1 rounded-full text-sm">
-          {job.type}
-        </span>
+        <span className="bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold uppercase tracking-wide">{job.type}</span>
       </div>
 
       <div className="space-y-2 mb-4 text-gray-600">

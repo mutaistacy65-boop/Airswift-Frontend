@@ -11,6 +11,11 @@ interface User {
   profileImage?: string
   jobTitle?: string
   bio?: string
+  phone?: string
+  skills?: string[]
+  experience?: string
+  education?: string
+  location?: string
 }
 
 interface AuthContextType {

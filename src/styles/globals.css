@@ -25,3 +25,92 @@ code {
 html {
   scroll-behavior: smooth;
 }
+
+body {
+  position: relative;
+}
+
+/* Global Page Watermark - Covers Entire Page */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 150px,
+      rgba(59, 130, 246, 0.12) 150px,
+      rgba(59, 130, 246, 0.12) 300px
+    );
+  background-attachment: fixed;
+  font-size: 120px;
+  font-weight: 900;
+  pointer-events: none;
+  z-index: -1;
+}
+
+body::after {
+  content: 'AIRSWIFT';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  font-size: 600px;
+  font-weight: 900;
+  color: rgba(59, 130, 246, 0.1);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: -1;
+  white-space: pre;
+  line-height: 1.2;
+  padding: 50px;
+  transform: rotate(-30deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  word-wrap: break-word;
+  overflow: hidden;
+}
+
+/* Navbar Watermark */
+.navbar-watermark {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(245, 247, 250, 0.5) 100%);
+}
+
+.navbar-watermark::before {
+  content: 'AIRSWIFT';
+  position: absolute;
+  top: 50%;
+  right: 1%;
+  font-size: 600px;
+  font-weight: 900;
+  opacity: 0.1;
+  transform: translateY(-50%) rotate(-20deg);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 0;
+  color: #3b82f6;
+}
+
+.page-watermark {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure nav items are above watermark */
+.navbar-watermark > div {
+  position: relative;
+  z-index: 10;
+  background-color: inherit;
+}
+
+.navbar-watermark a {
+  position: relative;
+  z-index: 10;
+}

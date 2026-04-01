@@ -20,7 +20,18 @@ export interface JobApplication {
   resumeUrl: string
   coverLetter: string
   appliedDate: string
-  status: 'pending' | 'reviewed' | 'accepted' | 'rejected'
+  status: 'pending' | 'reviewed' | 'accepted' | 'interview_scheduled' | 'interview_completed' | 'visa_payment_pending' | 'visa_processing' | 'visa_ready' | 'rejected'
+  documents?: {
+    passport?: string
+    nationalId?: string
+    cv?: string
+    certificates?: string[]
+  }
+  interviewDetails?: {
+    zoomLink?: string
+    scheduledDate?: string
+    notes?: string
+  }
 }
 
 export const jobService = {
@@ -39,11 +50,20 @@ export const jobService = {
     return response.data
   },
 
-  applyForJob: async (jobId: string, resume: File, coverLetter?: string) => {
+  applyForJob: async (jobId: string, cv: File, coverLetter?: string, additionalData?: FormData) => {
     const formData = new FormData()
     formData.append('job_id', jobId)
-    formData.append('resume', resume)
+    formData.append('cv', cv)
     if (coverLetter) formData.append('cover_letter', coverLetter)
+
+    // Add additional documents if provided
+    if (additionalData) {
+      for (const [key, value] of additionalData.entries()) {
+        if (key !== 'job_id' && key !== 'cv' && key !== 'cover_letter') {
+          formData.append(key, value as File)
+        }
+      }
+    }
 
     const response = await apiClient.post('/applications/apply', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },

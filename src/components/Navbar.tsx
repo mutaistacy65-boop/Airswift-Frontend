@@ -9,16 +9,18 @@ const Navbar: React.FC = () => {
   const router = useRouter()
 
   return (
-    <nav className="bg-white shadow-md">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link href="/" className="text-2xl font-bold text-primary">
+    <nav className="bg-white shadow-md navbar-watermark">
+      <div className="container mx-auto px-4 py-6 flex justify-between items-center">
+        <Link href="/" className="font-black text-red-600 uppercase tracking-widest" style={{ fontSize: '11.25rem', lineHeight: '1' }}>
           Airswift
         </Link>
 
         <div className="hidden md:flex space-x-8 items-center">
-          <Link href="/jobs" className="text-gray-700 hover:text-primary">
-            Jobs
-          </Link>
+          {isAuthenticated && (
+            <Link href="/jobs" className="text-gray-700 hover:text-primary">
+              Jobs
+            </Link>
+          )}
           {isAuthenticated && (
             <Link
               href={user?.role === 'admin' ? '/admin/dashboard' : '/job-seeker/dashboard'}
@@ -29,7 +31,7 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
-        <div className="hidden md:flex space-x-4">
+        <div className="hidden md:flex space-x-6 items-center">
           {isAuthenticated ? (
             <>
               <div className="flex items-center space-x-4">
@@ -75,9 +77,11 @@ const Navbar: React.FC = () => {
       {/* Mobile Menu */}
       {menuOpen && (
         <div className="md:hidden bg-white border-t px-4 py-4 space-y-4">
-          <Link href="/jobs" className="block text-gray-700 hover:text-primary">
-            Jobs
-          </Link>
+          {isAuthenticated && (
+            <Link href="/jobs" className="block text-gray-700 hover:text-primary">
+              Jobs
+            </Link>
+          )}
           {isAuthenticated ? (
             <>
               <Link
@@ -106,6 +110,12 @@ const Navbar: React.FC = () => {
               </Link>
             </>
           )}
+          <Link href="/about" className="block text-gray-700 hover:text-primary border-t pt-4">
+            About
+          </Link>
+          <Link href="/contact" className="block text-gray-700 hover:text-primary">
+            Contact
+          </Link>
         </div>
       )}
     </nav>

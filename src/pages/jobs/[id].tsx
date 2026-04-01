@@ -2,16 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import MainLayout from '@/layouts/MainLayout'
 import Button from '@/components/Button'
-import Modal from '@/components/Modal'
-import MpesaPaymentModal from '@/components/MpesaPaymentModal'
-import Textarea from '@/components/Textarea'
 import Loader from '@/components/Loader'
 import { jobService, Job } from '@/services/jobService'
-import { paymentService } from '@/services/paymentService'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
 import { formatDate } from '@/utils/helpers'
-import { PAYMENT_AMOUNTS } from '@/utils/constants'
 
 const JobDetailPage: React.FC = () => {
   const router = useRouter()
@@ -20,12 +15,6 @@ const JobDetailPage: React.FC = () => {
   const { addNotification } = useNotification()
   const [job, setJob] = useState<Job | null>(null)
   const [loading, setLoading] = useState(true)
-  const [showApplyModal, setShowApplyModal] = useState(false)
-  const [showMpesaModal, setShowMpesaModal] = useState(false)
-  const [coverLetter, setCoverLetter] = useState('')
-  const [resume, setResume] = useState<File | null>(null)
-  const [applying, setApplying] = useState(false)
-  const [paymentInProgress, setPaymentInProgress] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -41,50 +30,6 @@ const JobDetailPage: React.FC = () => {
       addNotification('Failed to load job details', 'error')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleApply = async () => {
-    if (!resume) {
-      addNotification('Please upload your resume', 'error')
-      return
-    }
-
-    setApplying(true)
-    try {
-      await jobService.applyForJob(id as string, resume, coverLetter)
-      addNotification('Application submitted successfully!', 'success')
-      setShowApplyModal(false)
-      setCoverLetter('')
-      setResume(null)
-    } catch (error) {
-      addNotification('Failed to submit application', 'error')
-    } finally {
-      setApplying(false)
-    }
-  }
-
-  const handleMpesaPaymentConfirmation = async (phoneNumber: string) => {
-    setPaymentInProgress(true)
-    try {
-      await paymentService.initiateMpesaPayment(
-        phoneNumber,
-        PAYMENT_AMOUNTS.INTERVIEW_FEE,
-        'Interview fee payment',
-        'interview_fee'
-      )
-
-      addNotification(
-        'STK push sent to your phone. Enter your M-Pesa PIN in the Safaricom prompt to complete payment.',
-        'success'
-      )
-      setShowMpesaModal(false)
-      setShowApplyModal(true)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to initiate M-Pesa payment'
-      addNotification(message, 'error')
-    } finally {
-      setPaymentInProgress(false)
     }
   }
 
@@ -165,11 +110,11 @@ const JobDetailPage: React.FC = () => {
             {isAuthenticated ? (
               user?.role === 'job_seeker' ? (
                 <Button
-                  onClick={() => setShowMpesaModal(true)}
+                  onClick={() => router.push(`/jobs/apply/${id}`)}
                   size="lg"
                   className="w-full"
                 >
-                  Pay 3 KSH with M-Pesa and Apply
+                  Apply for this Job
                 </Button>
               ) : (
                 <p className="text-gray-600 text-center">Admin cannot apply for jobs</p>
@@ -186,43 +131,6 @@ const JobDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
-
-      <MpesaPaymentModal
-        isOpen={showMpesaModal}
-        onClose={() => setShowMpesaModal(false)}
-        onConfirm={handleMpesaPaymentConfirmation}
-        amount={PAYMENT_AMOUNTS.INTERVIEW_FEE}
-        description="Interview fee"
-      />
-
-      {/* Apply Modal */}
-      <Modal
-        isOpen={showApplyModal}
-        title="Apply for this Job"
-        onClose={() => setShowApplyModal(false)}
-        onConfirm={handleApply}
-        confirmText={applying ? 'Submitting...' : 'Submit Application'}
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-gray-700 font-semibold mb-2">Resume (PDF only)</label>
-            <input
-              type="file"
-              accept=".pdf"
-              onChange={(e) => setResume(e.target.files?.[0] || null)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              required
-            />
-          </div>
-          <Textarea
-            label="Cover Letter (Optional)"
-            value={coverLetter}
-            onChange={(e) => setCoverLetter(e.target.value)}
-            rows={6}
-            placeholder="Tell us why you're interested in this position..."
-          />
-        </div>
-      </Modal>
     </MainLayout>
   )
 }

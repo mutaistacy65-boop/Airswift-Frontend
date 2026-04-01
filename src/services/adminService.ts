@@ -68,4 +68,15 @@ export const adminService = {
     const response = await apiClient.get('/admin/stats')
     return response.data
   },
+
+  // Settings Management
+  getSettings: async () => {
+    const response = await apiClient.get('/admin/settings')
+    return response.data
+  },
+
+  updateSettings: async (settings: any) => {
+    const response = await apiClient.put('/admin/settings', settings)
+    return response.data
+  },
 }

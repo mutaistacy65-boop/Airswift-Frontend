@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import MainLayout from '@/layouts/MainLayout'
 import JobCard from '@/components/JobCard'
 import Loader from '@/components/Loader'
 import Input from '@/components/Input'
 import { jobService, Job } from '@/services/jobService'
 import { useNotification } from '@/context/NotificationContext'
+import { useAuth } from '@/context/AuthContext'
+import { JOB_TYPES } from '@/utils/constants'
 
 const JobsPage: React.FC = () => {
+  const router = useRouter()
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
   const [jobs, setJobs] = useState<Job[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [jobType, setJobType] = useState('')
@@ -16,13 +21,19 @@ const JobsPage: React.FC = () => {
   const { addNotification } = useNotification()
 
   useEffect(() => {
-    fetchJobs()
-  }, [searchQuery, jobType, page])
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login')
+      return
+    }
+    if (!authLoading && isAuthenticated) {
+      fetchJobs()
+    }
+  }, [searchQuery, jobType, page, authLoading, isAuthenticated, router])
 
   const fetchJobs = async () => {
     setLoading(true)
     try {
-      const filters = {}
+      const filters: any = {}
       if (jobType) filters.type = jobType
       if (searchQuery) filters.search = searchQuery
 
@@ -41,6 +52,9 @@ const JobsPage: React.FC = () => {
   }
 
   return (
+    authLoading ? (
+      <Loader />
+    ) : (
     <MainLayout>
       <div>
         <h1 className="text-3xl font-bold mb-8">Browse Jobs</h1>
@@ -67,9 +81,11 @@ const JobsPage: React.FC = () => {
               }}
             >
               <option value="">All Types</option>
-              <option value="full-time">Full Time</option>
-              <option value="part-time">Part Time</option>
-              <option value="contract">Contract</option>
+              {JOB_TYPES.map(type => (
+                <option key={type} value={type}>
+                  {type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -108,6 +124,7 @@ const JobsPage: React.FC = () => {
         )}
       </div>
     </MainLayout>
+    )
   )
 }
 

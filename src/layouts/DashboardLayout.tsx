@@ -13,11 +13,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, sidebarItem
   const { user } = useAuth()
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 page-watermark">
       {/* Sidebar */}
       <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gray-900 text-white transition-all duration-300 overflow-y-auto`}>
         <div className="p-4 flex items-center justify-between">
-          {sidebarOpen && <h2 className="text-xl font-bold">Airswift</h2>}
+          {sidebarOpen && <h2 className="text-xl font-black uppercase tracking-wide">Airswift</h2>}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-1 hover:bg-gray-800 rounded"

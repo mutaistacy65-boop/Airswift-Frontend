@@ -7,23 +7,15 @@ const Home: React.FC = () => {
     <MainLayout>
       <div className="space-y-16">
         {/* Hero Section */}
-        <div className="bg-gradient-to-r from-primary to-secondary text-white py-20 px-6 rounded-lg">
-          <h1 className="text-5xl font-bold mb-4">Find Your Dream Job in Canada</h1>
-          <p className="text-xl mb-8 max-w-2xl">
-            Discover thousands of job opportunities from top companies across Canada. Start your journey today!
-          </p>
-          <div className="flex gap-4">
-            <Link
-              href="/jobs"
-              className="bg-white text-primary px-8 py-3 rounded font-semibold hover:bg-opacity-90"
-            >
-              Browse Jobs
-            </Link>
-            <Link
-              href="/register"
-              className="border-2 border-white text-white px-8 py-3 rounded font-semibold hover:bg-white hover:text-primary"
-            >
-              Get Started
+        <div className="bg-cover bg-center relative rounded-3xl overflow-hidden" style={{ backgroundImage: 'linear-gradient(135deg, rgba(220, 38, 38, 0.85), rgba(239, 68, 68, 0.8)), url("https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1500&q=80")' }}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+          <div className="relative z-10 py-24 px-6 md:px-16 text-center text-white">
+            <h1 className="text-4xl md:text-6xl font-extrabold mb-5 leading-tight">Find Your Dream Job in Canada</h1>
+            <p className="text-lg md:text-2xl mb-8 max-w-3xl mx-auto">
+              Discover thousands of job opportunities from top companies across Canada. Start your journey today!
+            </p>
+            <Link href="/jobs" className="inline-block bg-white text-red-600 font-bold px-8 py-3 rounded-full shadow-lg hover:bg-gray-100 transition">
+              Explore Jobs
             </Link>
           </div>
         </div>
