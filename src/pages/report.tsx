@@ -53,20 +53,20 @@ const Report: React.FC = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-16">
-        <div className="bg-gradient-to-r from-primary to-secondary text-white py-20 px-6 rounded-lg text-center">
-          <h1 className="text-5xl font-bold mb-4">Report an Issue</h1>
-          <p className="text-xl max-w-2xl mx-auto">
+      <div className="space-y-8 sm:space-y-12 md:space-y-16">
+        <div className="bg-gradient-to-r from-primary to-secondary text-white py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-8 rounded-lg text-center">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4">Report an Issue</h1>
+          <p className="text-base sm:text-lg md:text-xl max-w-2xl mx-auto">
             Report login problems, suspicious activity, or unethical behavior. Our team takes every report seriously.
           </p>
         </div>
 
-        <section className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Issue Report Form</h2>
+        <section className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-lg shadow-md">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">Issue Report Form</h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                 Your Email (required)
               </label>
               <input
@@ -76,13 +76,13 @@ const Report: React.FC = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="issueType" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="issueType" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                 Issue Type
               </label>
               <select
@@ -90,7 +90,7 @@ const Report: React.FC = () => {
                 name="issueType"
                 value={formData.issueType}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base"
               >
                 <option value="login_issue">Login Issue</option>
                 <option value="unauthorized_activity">Unauthorized Activity</option>
@@ -102,7 +102,7 @@ const Report: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="subject" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                 Subject (required)
               </label>
               <input
@@ -112,13 +112,13 @@ const Report: React.FC = () => {
                 value={formData.subject}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base"
                 placeholder="Brief summary of the issue"
               />
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="description" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                 Detailed Description (required)
               </label>
               <textarea
@@ -128,7 +128,7 @@ const Report: React.FC = () => {
                 onChange={handleChange}
                 required
                 rows={6}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-vertical"
+                className="w-full px-3 sm:px-4 py-2 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-vertical text-sm sm:text-base"
                 placeholder="Describe what happened, any usernames affected, and the expected behavior."
               />
             </div>
@@ -137,13 +137,13 @@ const Report: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-primary text-white px-6 py-3 rounded font-semibold hover:bg-opacity-90 disabled:opacity-50"
+                className="w-full bg-primary text-white px-4 sm:px-6 py-2 sm:py-3 rounded font-semibold hover:bg-opacity-90 disabled:opacity-50 text-sm sm:text-base"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Report'}
               </button>
             </div>
 
-            <p className="text-sm text-gray-500">
+            <p className="text-xs sm:text-sm text-gray-500">
               By submitting this report, you confirm that the information is accurate to the best of your knowledge. Our team will investigate and follow up via email.
             </p>
           </form>
