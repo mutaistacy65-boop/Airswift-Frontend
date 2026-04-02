@@ -36,11 +36,11 @@ const ForgotPassword: React.FC = () => {
 
   return (
     <MainLayout>
-      <div className="min-h-screen flex items-center justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-6 sm:space-y-8">
-          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6 sm:p-8 border border-gray-200">
-            <div className="text-center mb-6 sm:mb-8">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Forgot Your Password?</h1>
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-gray-200">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-900">Forgot Your Password?</h1>
               <p className="text-gray-600 mt-2">
                 Enter the email address associated with your account, and we’ll send you instructions to reset your password.
               </p>
