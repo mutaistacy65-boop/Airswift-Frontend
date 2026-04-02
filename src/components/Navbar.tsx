@@ -11,7 +11,7 @@ const Navbar: React.FC = () => {
   return (
     <nav className="bg-white shadow-md navbar-watermark">
       <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-        <Link href="/" className="font-black text-red-600 uppercase tracking-widest" style={{ fontSize: '11.25rem', lineHeight: '1' }}>
+        <Link href="/" className="font-black text-red-600 uppercase tracking-widest text-3xl md:text-5xl lg:text-6xl leading-tight">
           Airswift
         </Link>
 
@@ -115,6 +115,9 @@ const Navbar: React.FC = () => {
           </Link>
           <Link href="/contact" className="block text-gray-700 hover:text-primary">
             Contact
+          </Link>
+          <Link href="/report" className="block text-gray-700 hover:text-primary">
+            Report Issue
           </Link>
         </div>
       )}

@@ -23,4 +23,10 @@ export const authService = {
     })
     return response.data
   },
+
+  forgotPassword: async (email: string) => {
+    // Use local mock API during development; replace with external endpoint as needed.
+    const response = await apiClient.post('/api/auth/forgot-password', { email })
+    return response.data
+  },
 }

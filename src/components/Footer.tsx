@@ -25,6 +25,7 @@ const Footer: React.FC = () => {
             <ul className="space-y-2 text-gray-400">
               <li><Link href="/privacy">Privacy Policy</Link></li>
               <li><Link href="/terms">Terms of Service</Link></li>
+              <li><Link href="/report" className="text-yellow-300 font-semibold">Report Issue</Link></li>
             </ul>
           </div>
         </div>
