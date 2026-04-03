@@ -1,29 +1,33 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import axios from "axios";
 import { signIn } from "next-auth/react";
 import Button from "../components/Button";
+import { registerUser } from "@/api/auth";
 
 export default function Register() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setMessage("");
 
     try {
-      await axios.post("/api/auth/send-registration-otp", form);
-      localStorage.setItem("pendingEmail", form.email);
-      localStorage.setItem("pendingName", form.name);
-      localStorage.setItem("pendingPassword", form.password);
+      const data = await registerUser(form);
+      setMessage("✅ Registered successfully!");
 
-      alert("OTP sent to your email");
-      router.push("/otp");
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
+
+      // optional: navigate to login/dashboard
+      router.push("/login");
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Registration failed");
+      setMessage("❌ " + (err?.message || "Registration failed"));
     } finally {
       setLoading(false);
     }
