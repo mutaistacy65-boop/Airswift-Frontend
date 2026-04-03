@@ -1,9 +1,9 @@
 import axios, { AxiosInstance, AxiosError, AxiosResponse } from 'axios'
 import Cookies from 'js-cookie'
 
-const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL
+const baseURL = process.env.NEXT_PUBLIC_API_URL
 
-const apiClient: AxiosInstance = axios.create({
+const API: AxiosInstance = axios.create({
   baseURL,
   withCredentials: true,
   headers: {
@@ -12,7 +12,7 @@ const apiClient: AxiosInstance = axios.create({
 })
 
 // Request interceptor to add token to headers
-apiClient.interceptors.request.use(
+API.interceptors.request.use(
   (config) => {
     const token = Cookies.get('token')
     if (token) {
@@ -26,7 +26,7 @@ apiClient.interceptors.request.use(
 )
 
 // Response interceptor to handle 401 errors
-apiClient.interceptors.response.use(
+API.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
@@ -39,4 +39,4 @@ apiClient.interceptors.response.use(
   }
 )
 
-export default apiClient
+export default API
