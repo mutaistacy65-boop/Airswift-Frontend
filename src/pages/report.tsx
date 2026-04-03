@@ -1,155 +1,169 @@
-import React, { useState, useEffect } from 'react'
-import MainLayout from '@/layouts/MainLayout'
-import { useNotification } from '@/context/NotificationContext'
-import { useAuth } from '@/context/AuthContext'
+import React from 'react'
+import { motion } from 'framer-motion'
+import { AlertTriangle, Shield, Bug, MessageSquare, Zap, Lock } from 'lucide-react'
 
 const Report: React.FC = () => {
-  const { user } = useAuth()
-  const { addNotification } = useNotification()
-
-  const [formData, setFormData] = useState({
-    email: '',
-    issueType: 'login_issue',
-    subject: '',
-    description: '',
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  useEffect(() => {
-    if (user?.email) {
-      setFormData(prev => ({ ...prev, email: user.email }))
-    }
-  }, [user])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-
-    if (!formData.subject.trim() || !formData.description.trim() || !formData.email.trim()) {
-      addNotification('Please fill in all required fields before submitting.', 'warning')
-      setIsSubmitting(false)
-      return
-    }
-
-    // Local handling; in production this should call an API endpoint.
-    const message = `Report submitted:\nType: ${formData.issueType}\nSubject: ${formData.subject}\nDescription: ${formData.description}`
-    console.log(message)
-
-    addNotification('Your report has been submitted. Our support team will review it shortly.', 'success')
-
-    setFormData({
-      email: user?.email || '',
-      issueType: 'login_issue',
-      subject: '',
-      description: '',
-    })
-    setIsSubmitting(false)
-  }
-
   return (
-    <MainLayout>
-      <div className="space-y-16">
-        <div className="bg-gradient-to-r from-primary to-secondary text-white py-20 px-6 rounded-lg text-center">
-          <h1 className="text-5xl font-bold mb-4">Report an Issue</h1>
-          <p className="text-xl max-w-2xl mx-auto">
-            Report login problems, suspicious activity, or unethical behavior. Our team takes every report seriously.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white">
+      <div className="max-w-4xl mx-auto px-6 py-16">
+        {/* Hero Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-16"
+        >
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
+            <AlertTriangle className="mx-auto mb-4 text-red-400" size={48} />
+            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
+              Report Issues
+            </h1>
+            <p className="text-slate-300">
+              Help us maintain a secure platform by reporting bugs, security concerns, or suspicious activity
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Report Categories */}
+        <div className="grid md:grid-cols-2 gap-8 mb-16">
+          {/* Security Issues */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20"
+          >
+            <Shield className="mb-4 text-red-400" size={32} />
+            <h3 className="text-xl font-semibold mb-4 text-red-300">Security Concerns</h3>
+            <div className="space-y-3 text-slate-300">
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
+                <p>Suspicious login attempts</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
+                <p>Potential security vulnerabilities</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
+                <p>Unauthorized access attempts</p>
+              </div>
+            </div>
+            <a
+              href="mailto:security@airswift.com?subject=Security%20Concern%20Report"
+              className="mt-6 inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors"
+            >
+              Report Security Issue
+            </a>
+          </motion.div>
+
+          {/* Technical Issues */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20"
+          >
+            <Bug className="mb-4 text-yellow-400" size={32} />
+            <h3 className="text-xl font-semibold mb-4 text-yellow-300">Technical Issues</h3>
+            <div className="space-y-3 text-slate-300">
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2 flex-shrink-0"></div>
+                <p>Login or authentication problems</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2 flex-shrink-0"></div>
+                <p>Application crashes or errors</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2 flex-shrink-0"></div>
+                <p>Performance issues</p>
+              </div>
+            </div>
+            <a
+              href="mailto:support@airswift.com?subject=Technical%20Issue%20Report"
+              className="mt-6 inline-block bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg transition-colors"
+            >
+              Report Bug
+            </a>
+          </motion.div>
         </div>
 
-        <section className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Issue Report Form</h2>
+        {/* Live Support */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 mb-8"
+        >
+          <MessageSquare className="mb-4 text-green-400" size={32} />
+          <h3 className="text-xl font-semibold mb-4 text-green-300">Live Support</h3>
+          <p className="text-slate-300 mb-6">
+            For immediate assistance with critical issues, contact our live support team.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <a
+              href="mailto:support@airswift.com?subject=Urgent%20Support%20Request"
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors text-center"
+            >
+              Email Support
+            </a>
+            <a
+              href="tel:+1-800-AIRSWIFT"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors text-center"
+            >
+              Call Support
+            </a>
+          </div>
+        </motion.div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Your Email (required)
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="you@example.com"
-              />
+        {/* Emergency Contact */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-red-900/20 border border-red-500/30 rounded-2xl p-8"
+        >
+          <Zap className="mb-4 text-red-400" size={32} />
+          <h3 className="text-xl font-semibold mb-4 text-red-300">Emergency Security Issues</h3>
+          <p className="text-slate-300 mb-6">
+            If you discover a critical security vulnerability or believe there's an active security breach,
+            please contact our emergency response team immediately.
+          </p>
+          <div className="bg-red-800/30 border border-red-500/50 rounded-lg p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <Lock className="text-red-400" size={20} />
+              <span className="font-semibold text-red-300">Emergency Contact</span>
             </div>
-
-            <div>
-              <label htmlFor="issueType" className="block text-sm font-medium text-gray-700 mb-1">
-                Issue Type
-              </label>
-              <select
-                id="issueType"
-                name="issueType"
-                value={formData.issueType}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                <option value="login_issue">Login Issue</option>
-                <option value="unauthorized_activity">Unauthorized Activity</option>
-                <option value="fake_posting">Fake/Suspicious Posting</option>
-                <option value="harassment">Harassment or Abuse</option>
-                <option value="security_concern">Security or Vulnerability</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
-                Subject (required)
-              </label>
-              <input
-                type="text"
-                id="subject"
-                name="subject"
-                value={formData.subject}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Brief summary of the issue"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                Detailed Description (required)
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                required
-                rows={6}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-vertical"
-                placeholder="Describe what happened, any usernames affected, and the expected behavior."
-              />
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-primary text-white px-6 py-3 rounded font-semibold hover:bg-opacity-90 disabled:opacity-50"
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Report'}
-              </button>
-            </div>
-
-            <p className="text-sm text-gray-500">
-              By submitting this report, you confirm that the information is accurate to the best of your knowledge. Our team will investigate and follow up via email.
+            <p className="text-slate-300 text-sm mb-3">
+              For critical security issues only - available 24/7
             </p>
-          </form>
-        </section>
+            <a
+              href="mailto:emergency@airswift.com?subject=CRITICAL%20SECURITY%20EMERGENCY"
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
+            >
+              emergency@airswift.com
+            </a>
+          </div>
+        </motion.div>
+
+        {/* Response Commitment */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="text-center mt-16"
+        >
+          <div className="bg-indigo-600/20 border border-indigo-500/30 rounded-2xl p-6">
+            <Shield className="mx-auto mb-4 text-indigo-400" size={48} />
+            <h3 className="text-xl font-semibold mb-2 text-indigo-300">Our Response Commitment</h3>
+            <p className="text-slate-300">
+              All reports are treated with the highest priority. Security issues receive immediate attention,
+              while technical reports are addressed within 24 hours. We appreciate your help in keeping AIRSWIFT secure.
+            </p>
+          </div>
+        </motion.div>
       </div>
-    </MainLayout>
+    </div>
   )
 }
 

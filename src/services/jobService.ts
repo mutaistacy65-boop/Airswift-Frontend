@@ -1,4 +1,5 @@
 import apiClient from './apiClient'
+import API_BASE_URL from '../api'
 
 export interface Job {
   id: string
@@ -84,5 +85,11 @@ export const jobService = {
   cancelApplication: async (id: string) => {
     const response = await apiClient.delete(`/applications/${id}`)
     return response.data
+  },
+
+  getJobs: async () => {
+    const response = await fetch(`${API_BASE_URL}/api/jobs`)
+    const data = await response.json()
+    return data
   },
 }

@@ -1,11 +1,11 @@
 import axios, { AxiosInstance, AxiosError, AxiosResponse } from 'axios'
 import Cookies from 'js-cookie'
-import { useRouter } from 'next/router'
 
 const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL
 
 const apiClient: AxiosInstance = axios.create({
   baseURL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },

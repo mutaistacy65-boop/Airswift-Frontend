@@ -1,24 +1,30 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
-import MainLayout from '@/layouts/MainLayout'
+import { motion } from 'framer-motion'
+import { Eye, EyeOff, Mail, Lock, AlertCircle, Plane, ArrowRight } from 'lucide-react'
 import Input from '@/components/Input'
 import Button from '@/components/Button'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
+import { useRouter } from 'next/router'
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const { addNotification } = useNotification()
+  const router = useRouter()
 
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {}
 
     if (!email) {
       newErrors.email = 'Email is required'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Please enter a valid email'
     }
 
     if (!password) {
@@ -37,6 +43,7 @@ const LoginPage: React.FC = () => {
     try {
       await login(email, password)
       addNotification('Login successful!', 'success')
+      router.push(email.includes('admin') ? '/admin/dashboard' : '/job-seeker/dashboard')
     } catch (error: any) {
       addNotification(error.message || 'Login failed', 'error')
     } finally {
@@ -45,82 +52,153 @@ const LoginPage: React.FC = () => {
   }
 
   return (
-    <MainLayout>
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          {/* Background with gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-red-500 via-red-600 to-red-800 opacity-10 rounded-3xl"></div>
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top,_#4f46e5,_transparent_60%)]" />
+      <div className="absolute top-20 right-20 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse" />
+      <div className="absolute bottom-20 left-20 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse animation-delay-2000" />
 
-          {/* Main card */}
-          <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20">
-            {/* Header */}
-            <div className="text-center mb-8">
-              <div className="mx-auto h-16 w-16 bg-red-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
-                <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-              <p className="text-gray-600">Sign in to your Airswift account</p>
-            </div>
+      {/* Main Content */}
+      <div className="w-full max-w-md relative z-10">
+        {/* Go Back / Home Link */}
+        <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-indigo-400 transition mb-6 text-sm">
+          <span>← Back</span>
+        </Link>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Header Card */}
+          <div className="text-center mb-8">
+            <motion.div 
+              className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mb-4 shadow-lg shadow-indigo-500/50"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Plane className="text-white" size={32} />
+            </motion.div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+              Welcome Back
+            </h1>
+            <p className="text-slate-400">
+              Sign in to access your secure dashboard
+            </p>
+          </div>
+
+          {/* Form Card */}
+          <div className="backdrop-blur-2xl bg-white/10 border border-white/20 shadow-2xl rounded-3xl p-8 mb-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Email Input */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-300 flex items-center gap-2">
+                  <Mail size={16} />
+                  Email Address
+                </label>
                 <Input
-                  label="Email Address"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="your@email.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  error={errors.email}
-                  required
-                  className="transition-all duration-200 focus:scale-105"
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    if (errors.email) setErrors({ ...errors, email: '' })
+                  }}
+                  className="w-full bg-white/10 border border-white/20 text-white placeholder:text-slate-500 rounded-xl px-4 py-3 focus:border-indigo-400/50 focus:outline-none transition"
                 />
-
-                <Input
-                  label="Password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  error={errors.password}
-                  required
-                  className="transition-all duration-200 focus:scale-105"
-                />
+                {errors.email && (
+                  <div className="flex items-center gap-2 text-red-400 text-xs">
+                    <AlertCircle size={14} />
+                    {errors.email}
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <Link href="/forgot-password" className="text-red-600 hover:text-red-500 font-medium transition-colors">
-                    Forgot your password?
-                  </Link>
+              {/* Password Input */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-300 flex items-center gap-2">
+                  <Lock size={16} />
+                  Password
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value)
+                      if (errors.password) setErrors({ ...errors, password: '' })
+                    }}
+                    className="w-full bg-white/10 border border-white/20 text-white placeholder:text-slate-500 rounded-xl px-4 py-3 pr-12 focus:border-indigo-400/50 focus:outline-none transition"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-400 transition"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
+                {errors.password && (
+                  <div className="flex items-center gap-2 text-red-400 text-xs">
+                    <AlertCircle size={14} />
+                    {errors.password}
+                  </div>
+                )}
               </div>
 
+              {/* Forgot Password Link */}
+              <div className="text-right">
+                <Link href="/forgot-password" className="text-xs text-indigo-300 hover:text-indigo-200 transition font-medium">
+                  Forgot your password?
+                </Link>
+              </div>
+
+              {/* Submit Button */}
               <Button
                 type="submit"
-                size="lg"
-                className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                loading={loading}
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
               >
-                {loading ? 'Signing In...' : 'Sign In'}
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    Sign In
+                    <ArrowRight size={18} />
+                  </>
+                )}
               </Button>
             </form>
+          </div>
 
-            {/* Footer */}
-            <div className="mt-8 text-center">
-              <p className="text-gray-600">
+          {/* Footer Links */}
+          <div className="space-y-4">
+            <div className="text-center">
+              <p className="text-slate-400 text-sm">
                 Don't have an account?{' '}
-                <Link href="/register" className="text-red-600 font-semibold hover:text-red-700 transition-colors hover:underline">
+                <Link href="/register" className="text-indigo-300 hover:text-indigo-200 font-semibold transition">
                   Create one now
                 </Link>
               </p>
             </div>
+
+            <div className="text-center text-xs text-slate-500">
+              By signing in, you agree to AIRSWIFT's
+              <br />
+              <Link href="/terms" className="text-indigo-400 hover:text-indigo-300 transition">Terms of Service</Link>
+              {' '} & {' '}
+              <Link href="/privacy" className="text-indigo-400 hover:text-indigo-300 transition">Privacy Policy</Link>
+            </div>
           </div>
-        </div>
+        </motion.div>
       </div>
-    </MainLayout>
+    </div>
   )
 }
 

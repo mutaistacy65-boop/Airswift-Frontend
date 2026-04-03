@@ -26,6 +26,7 @@ interface AuthContextType {
   register: (userData: any) => Promise<void>
   logout: () => void
   updateUser: (userData: Partial<User>) => void
+  setUser: (user: User | null) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -47,12 +48,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const verifyToken = async (token: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/verify`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (response.ok) {
         const data = await response.json()
-        setUser(data.user)
+        setUser(data)
       } else {
         Cookies.remove('token')
       }
@@ -70,14 +71,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.message)
-
-      Cookies.set('token', data.token, { expires: 7 })
-      setUser(data.user)
-      router.push(data.user.role === 'admin' ? '/admin/dashboard' : '/job-seeker/dashboard')
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message)
+      }
+      // After login, fetch user data
+      const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/me`, {
+        credentials: 'include',
+      })
+      if (userResponse.ok) {
+        const userData = await userResponse.json()
+        setUser(userData)
+        router.push(userData.role === 'admin' ? '/admin/dashboard' : '/job-seeker/dashboard')
+      } else {
+        throw new Error('Failed to get user data')
+      }
+    } catch (error: any) {
+      console.error('Login failed:', error)
+      // Error will be handled by the calling component
     } finally {
       setIsLoading(false)
     }
@@ -94,15 +108,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await response.json()
       if (!response.ok) throw new Error(data.message)
 
-      Cookies.set('token', data.token, { expires: 7 })
+      localStorage.setItem('token', data.token)
       setUser(data.user)
-      router.push('/job-seeker/dashboard')
+      router.push(data.user.role === 'admin' ? '/admin/dashboard' : '/job-seeker/dashboard')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      })
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
     Cookies.remove('token')
     setUser(null)
     router.push('/')
@@ -113,7 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, register, logout, updateUser, setUser }}>
       {children}
     </AuthContext.Provider>
   )

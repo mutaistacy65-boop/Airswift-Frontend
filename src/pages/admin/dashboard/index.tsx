@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import DashboardLayout from '@/layouts/DashboardLayout'
+import { useRouter } from 'next/router'
+import { motion } from 'framer-motion'
+import { LayoutDashboard, FileText, Phone, Users, Settings, LogOut, Briefcase, DollarSign } from 'lucide-react'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
 import Loader from '@/components/Loader'
-import Button from '@/components/Button'
 import { jobCategoryService } from '@/services/jobCategoryService'
 import { JobCategoryStats, InterviewPipelineItem } from '@/types/jobCategories'
 
 const AdminDashboard: React.FC = () => {
   const { isAuthorized, isLoading } = useProtectedRoute('admin')
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const { addNotification } = useNotification()
+  const router = useRouter()
 
   const [stats, setStats] = useState({
     totalJobs: 0,
@@ -78,28 +80,9 @@ const AdminDashboard: React.FC = () => {
     }
   }
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800'
-      case 'medium': return 'bg-yellow-100 text-yellow-800'
-      case 'low': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getStageColor = (stage: string) => {
-    switch (stage) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'reviewed': return 'bg-blue-100 text-blue-800'
-      case 'accepted': return 'bg-green-100 text-green-800'
-      case 'interview_scheduled': return 'bg-purple-100 text-purple-800'
-      case 'interview_completed': return 'bg-indigo-100 text-indigo-800'
-      case 'visa_payment_pending': return 'bg-orange-100 text-orange-800'
-      case 'visa_processing': return 'bg-teal-100 text-teal-800'
-      case 'visa_ready': return 'bg-emerald-100 text-emerald-800'
-      case 'rejected': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
+  const handleLogout = async () => {
+    await logout()
+    addNotification('Logged out successfully', 'success')
   }
 
   if (isLoading || loading) {
@@ -110,166 +93,110 @@ const AdminDashboard: React.FC = () => {
     return null
   }
 
-  const sidebarItems = [
-    { label: 'Dashboard', href: '/admin/dashboard', icon: '📊' },
-    { label: 'Manage Jobs', href: '/admin/jobs', icon: '💼' },
-    { label: 'Categories', href: '/admin/categories', icon: '🏷️' },
-    { label: 'Applications', href: '/admin/applications', icon: '📋' },
-    { label: 'Interviews', href: '/admin/interviews', icon: '📞' },
-    { label: 'Email Templates', href: '/admin/email-templates', icon: '📧' },
-    { label: 'Settings', href: '/admin/settings', icon: '⚙️' },
-  ]
-
-  // Sort categories alphabetically for A-Z display
-  const sortedCategories = [...categoryStats].sort((a, b) => a.categoryName.localeCompare(b.categoryName))
-
   return (
-    <DashboardLayout sidebarItems={sidebarItems}>
-      <div>
-        <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+    <div className="min-h-screen bg-slate-950 text-white flex">
+      <aside className="w-64 bg-slate-900 p-6 hidden md:block">
+        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+          <LayoutDashboard /> Admin Dashboard
+        </h2>
+        <nav className="space-y-2">
+          <Link href="/admin/dashboard" className="flex items-center gap-2 p-2 rounded hover:bg-slate-800">
+            <LayoutDashboard size={18} /> Dashboard
+          </Link>
+          <Link href="/admin/jobs" className="flex items-center gap-2 p-2 rounded hover:bg-slate-800">
+            <Briefcase size={18} /> Manage Jobs
+          </Link>
+          <Link href="/admin/categories" className="flex items-center gap-2 p-2 rounded hover:bg-slate-800">
+            <FileText size={18} /> Categories
+          </Link>
+          <Link href="/admin/applications" className="flex items-center gap-2 p-2 rounded hover:bg-slate-800">
+            <FileText size={18} /> Applications
+          </Link>
+          <Link href="/admin/interviews" className="flex items-center gap-2 p-2 rounded hover:bg-slate-800">
+            <Phone size={18} /> Interviews
+          </Link>
+          <Link href="/admin/email-templates" className="flex items-center gap-2 p-2 rounded hover:bg-slate-800">
+            <Users size={18} /> Email Templates
+          </Link>
+          <Link href="/admin/settings" className="flex items-center gap-2 p-2 rounded hover:bg-slate-800">
+            <Settings size={18} /> Settings
+          </Link>
+          <button onClick={handleLogout} className="flex items-center gap-2 p-2 rounded hover:bg-slate-800 text-red-400 w-full text-left">
+            <LogOut size={18} /> Logout
+          </button>
+        </nav>
+      </aside>
 
-        {/* Key Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <p className="text-gray-600 mb-2">Total Jobs</p>
-            <p className="text-4xl font-bold text-primary">{stats.totalJobs}</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <p className="text-gray-600 mb-2">Total Applications</p>
-            <p className="text-4xl font-bold text-secondary">{stats.totalApplications}</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <p className="text-gray-600 mb-2">Pending Review</p>
-            <p className="text-4xl font-bold text-yellow-600">{stats.pendingApplications}</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <p className="text-gray-600 mb-2">Interviews</p>
-            <p className="text-4xl font-bold text-purple-600">{stats.interviewScheduled + stats.interviewCompleted}</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <p className="text-gray-600 mb-2">Visas Ready</p>
-            <p className="text-4xl font-bold text-green-600">{stats.visaReady}</p>
-          </div>
-        </div>
+      <main className="flex-1 p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-6xl"
+        >
+          <h1 className="text-3xl font-bold">Welcome to AIRSWIFT Admin Dashboard</h1>
+          <p className="text-slate-400 mt-2">Role-based secure area (protected route)</p>
 
-        {/* Revenue */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-xl font-semibold mb-4">Revenue Overview</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div>
-              <p className="text-gray-600 mb-2">Interview Fees (3 KSH each)</p>
-              <p className="text-3xl font-bold text-blue-600">
-                KES {(stats.interviewScheduled + stats.interviewCompleted) * 3}
-              </p>
-              <p className="text-sm text-gray-500">{stats.interviewScheduled + stats.interviewCompleted} interviews</p>
+          <div className="grid md:grid-cols-4 gap-4 mt-6">
+            <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20">
+              <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                <Briefcase size={20} /> Total Jobs
+              </h3>
+              <p className="text-2xl font-bold text-indigo-400">{stats.totalJobs}</p>
             </div>
-            <div>
-              <p className="text-gray-600 mb-2">Visa Fees (30,000 KSH each)</p>
-              <p className="text-3xl font-bold text-green-600">
-                KES {(stats.visaProcessing + stats.visaReady) * 30000}
-              </p>
-              <p className="text-sm text-gray-500">{stats.visaProcessing + stats.visaReady} visas</p>
+            <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20">
+              <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                <FileText size={20} /> Applications
+              </h3>
+              <p className="text-2xl font-bold text-indigo-400">{stats.totalApplications}</p>
             </div>
-            <div>
-              <p className="text-gray-600 mb-2">Total Revenue</p>
-              <p className="text-4xl font-bold text-primary">
-                KES {stats.totalRevenue.toLocaleString()}
-              </p>
-              <p className="text-sm text-gray-500">All time</p>
+            <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20">
+              <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                <Phone size={20} /> Interviews
+              </h3>
+              <p className="text-2xl font-bold text-indigo-400">{stats.interviewScheduled + stats.interviewCompleted}</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20">
+              <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                <DollarSign size={20} /> Revenue
+              </h3>
+              <p className="text-2xl font-bold text-indigo-400">${stats.totalRevenue}</p>
             </div>
           </div>
-        </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* A-Z Role Counts */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">A-Z Job Categories</h2>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {sortedCategories.map((category) => (
-                <div key={category.categoryId} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                  <div>
-                    <span className="font-medium text-gray-900">{category.categoryName}</span>
-                    <span className="text-gray-500 text-sm ml-2">
-                      ({category.totalJobs} jobs, {category.totalApplications} applications)
+          <div className="grid md:grid-cols-2 gap-6 mt-8">
+            <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20">
+              <h3 className="text-lg font-semibold mb-4">Category Statistics</h3>
+              <div className="space-y-2">
+                {categoryStats.slice(0, 5).map((cat) => (
+                  <div key={cat.categoryId} className="flex justify-between">
+                    <span>{cat.categoryName}</span>
+                    <span className="text-indigo-400">{cat.totalApplications} apps</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20">
+              <h3 className="text-lg font-semibold mb-4">Interview Pipeline</h3>
+              <div className="space-y-2">
+                {interviewPipeline.slice(0, 5).map((item) => (
+                  <div key={item.applicantId} className="flex justify-between">
+                    <span>{item.applicantName}</span>
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      item.currentStage === 'interview_scheduled' ? 'bg-purple-600' :
+                      item.currentStage === 'interview_completed' ? 'bg-indigo-600' :
+                      'bg-slate-600'
+                    }`}>
+                      {item.currentStage.replace('_', ' ')}
                     </span>
                   </div>
-                  <div className="flex gap-4 text-sm">
-                    <span className="text-blue-600">📋 {category.pendingApplications}</span>
-                    <span className="text-green-600">✅ {category.acceptedApplications}</span>
-                    <span className="text-purple-600">📞 {category.interviewScheduled}</span>
-                    <span className="text-indigo-600">🎓 {category.interviewCompleted}</span>
-                    <span className="text-emerald-600">🛂 {category.visaReady}</span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
-
-          {/* Interview Pipeline */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Interview Pipeline</h2>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {interviewPipeline.slice(0, 10).map((item) => (
-                <div key={item.applicantId} className="p-3 border border-gray-200 rounded">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <p className="font-medium text-gray-900">{item.applicantName}</p>
-                      <p className="text-sm text-gray-600">{item.jobTitle} • {item.categoryName}</p>
-                    </div>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(item.priority)}`}>
-                      {item.priority}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${getStageColor(item.currentStage)}`}>
-                      {item.currentStage.replace(/_/g, ' ')}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      {item.daysInStage} days • {item.nextAction || 'Waiting'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-
-              {interviewPipeline.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <div className="text-4xl mb-2">📋</div>
-                  <p>No applicants in interview pipeline</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link href="/admin/jobs">
-              <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                Manage Jobs
-              </Button>
-            </Link>
-            <Link href="/admin/applications">
-              <Button className="w-full bg-green-600 hover:bg-green-700">
-                Review Applications
-              </Button>
-            </Link>
-            <Link href="/admin/interviews">
-              <Button className="w-full bg-purple-600 hover:bg-purple-700">
-                Schedule Interviews
-              </Button>
-            </Link>
-            <Link href="/admin/categories">
-              <Button className="w-full bg-orange-600 hover:bg-orange-700">
-                Manage Categories
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    </DashboardLayout>
+        </motion.div>
+      </main>
+    </div>
   )
 }
 
