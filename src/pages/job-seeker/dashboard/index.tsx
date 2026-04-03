@@ -80,7 +80,7 @@ const JobSeekerDashboard: React.FC = () => {
           className="max-w-4xl"
         >
           <h1 className="text-3xl font-bold">Welcome to AIRSWIFT Dashboard</h1>
-          <p className="text-slate-400 mt-2">Role-based secure area (protected route)</p>
+          <p className="text-slate-400 mt-2">Your gateway to Canadian career opportunities. Track applications, schedule interviews, and manage your journey to success in Canada.</p>
 
           <div className="grid md:grid-cols-3 gap-4 mt-6">
             <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20">
