@@ -61,7 +61,7 @@ rm -rf .next node_modules/.cache
 Create a `.env.local` file in the root directory:
 ```env
 NEXT_PUBLIC_API_BASE_URL=https://airswift-backend-fjt3.onrender.com
-NEXT_PUBLIC_APP_URL=https://airswift-frontend-p6il5gtt0-emanuelkirui973-3799s-projects.vercel.app
+NEXT_PUBLIC_APP_URL=https://airswift-frontend.vercel.app/
 ```
 
 For local development, use:
