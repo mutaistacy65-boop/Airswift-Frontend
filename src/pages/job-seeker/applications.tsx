@@ -119,26 +119,36 @@ const ApplicationsPage: React.FC = () => {
     }
   }
 
+  type TimelineStatus = 'completed' | 'current' | 'pending' | 'failed'
+  type TimelineStepLocal = {
+    id: string
+    title: string
+    description: string
+    status: TimelineStatus
+    date?: string
+    action?: React.ReactNode
+  }
+
   const generateTimelineSteps = (application: JobApplication) => {
-    const steps = [
+    const steps: TimelineStepLocal[] = [
       {
         id: 'applied',
         title: 'Application Submitted',
         description: 'Your application has been received and is being reviewed by our team.',
-        status: 'completed' as const,
+        status: 'completed',
         date: formatDate(application.appliedDate),
       },
       {
         id: 'review',
         title: 'Under Review',
         description: 'Our hiring team is carefully reviewing your qualifications and experience.',
-        status: (['reviewed', 'accepted', 'interview_scheduled', 'interview_completed', 'visa_payment_pending', 'visa_processing', 'visa_ready'].includes(application.status) ? 'completed' : 'current') as const,
+        status: ['reviewed', 'accepted', 'interview_scheduled', 'interview_completed', 'visa_payment_pending', 'visa_processing', 'visa_ready'].includes(application.status) ? 'completed' : 'current',
       },
       {
         id: 'shortlisted',
         title: 'Shortlisted',
         description: 'Congratulations! You have been shortlisted for this position.',
-        status: (['accepted', 'interview_scheduled', 'interview_completed', 'visa_payment_pending', 'visa_processing', 'visa_ready'].includes(application.status) ? 'completed' : 'pending') as const,
+        status: ['accepted', 'interview_scheduled', 'interview_completed', 'visa_payment_pending', 'visa_processing', 'visa_ready'].includes(application.status) ? 'completed' : 'pending',
         action: application.status === 'accepted' ? (
           <Button
             onClick={() => {
@@ -155,13 +165,13 @@ const ApplicationsPage: React.FC = () => {
         id: 'interview',
         title: 'Interview',
         description: 'Schedule and complete your Zoom interview with the hiring team.',
-        status: (['interview_scheduled', 'interview_completed', 'visa_payment_pending', 'visa_processing', 'visa_ready'].includes(application.status) ? 'completed' : 'pending') as const,
+        status: ['interview_scheduled', 'interview_completed', 'visa_payment_pending', 'visa_processing', 'visa_ready'].includes(application.status) ? 'completed' : 'pending',
       },
       {
         id: 'payment',
         title: 'Visa Payment',
         description: 'Complete the visa processing fee payment.',
-        status: (['visa_payment_pending', 'visa_processing', 'visa_ready'].includes(application.status) ? 'completed' : 'pending') as const,
+        status: ['visa_payment_pending', 'visa_processing', 'visa_ready'].includes(application.status) ? 'completed' : 'pending',
         action: application.status === 'interview_completed' ? (
           <Button
             onClick={() => {

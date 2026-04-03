@@ -89,35 +89,6 @@ const Home: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Job Categories Preview */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="py-12 md:py-20"
-          >
-            <h3 className="text-2xl md:text-3xl font-bold mb-8 text-center">Explore Job Categories (A-Z)</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {[
-                'Accounting', 'Business', 'Construction', 'Design', 'Education', 'Engineering',
-                'Finance', 'Healthcare', 'Hospitality', 'IT', 'Legal', 'Manufacturing',
-                'Marketing', 'Nursing', 'Operations', 'Retail', 'Sales', 'Technology'
-              ].map((category, index) => (
-                <motion.div
-                  key={category}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.05 }}
-                  className="bg-white/5 backdrop-blur-sm border border-indigo-500/20 rounded-xl p-4 text-center hover:border-indigo-500/50 hover:bg-white/10 transition-all cursor-pointer group"
-                >
-                  <Briefcase className="text-indigo-400 mx-auto mb-2 group-hover:scale-110 transition-transform" size={24} />
-                  <span className="text-sm font-medium">{category}</span>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
           {/* Testimonials Section */}
           <motion.div
             initial={{ opacity: 0 }}

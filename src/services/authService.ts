@@ -71,9 +71,20 @@ export const authService = {
     return response.data
   },
 
-  sendRegistrationOTP: async (userData: { name: string; email: string; password: string; role: string }) => {
-    const response = await apiClient.post('/api/auth/send-registration-otp', userData)
+  sendRegistrationOTP: async (userData: { name: string; email: string; password: string; role?: string }) => {
+    const payload = {
+      ...userData,
+      role: userData.role || 'job-seeker',
+    }
+    const response = await apiClient.post('/api/auth/send-registration-otp', payload)
     return response.data
+  },
+
+  resendRegistrationOTP: async (email: string, name?: string, password?: string) => {
+    if (!email || !name || !password) {
+      throw new Error('Missing email, name, or password for OTP resend.')
+    }
+    return authService.sendRegistrationOTP({ email, name, password, role: 'job-seeker' })
   },
 
   verifyRegistrationOTP: async (email: string, otp: string) => {

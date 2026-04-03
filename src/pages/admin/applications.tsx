@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import axios from 'axios'
 import Link from 'next/link'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
@@ -9,18 +10,41 @@ import Button from '@/components/Button'
 import Modal from '@/components/Modal'
 import Input from '@/components/Input'
 import Textarea from '@/components/Textarea'
-import { jobService, JobApplication } from '@/services/jobService'
 import { APPLICATION_STATUS } from '@/utils/constants'
 import { formatDate } from '@/utils/helpers'
+
+interface AdminApplication {
+  _id: string
+  fullName: string
+  email: string
+  userId?: string
+  jobId: { title: string } | string
+  status: string
+  passport?: string
+  nationalId?: string
+  coverLetter?: string
+  appliedDate?: string
+  documents?: {
+    passport?: string
+    nationalId?: string
+    cv?: string
+    certificates?: string[]
+  }
+  interviewDetails?: {
+    zoomLink?: string
+  }
+  createdAt?: string
+  updatedAt?: string
+}
 
 const AdminApplicationsPage: React.FC = () => {
   const { isAuthorized, isLoading } = useProtectedRoute('admin')
   const { user } = useAuth()
   const { addNotification } = useNotification()
 
-  const [applications, setApplications] = useState<JobApplication[]>([])
+  const [applications, setApplications] = useState<AdminApplication[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null)
+  const [selectedApplication, setSelectedApplication] = useState<AdminApplication | null>(null)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [showStatusModal, setShowStatusModal] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>('all')
@@ -44,42 +68,16 @@ const AdminApplicationsPage: React.FC = () => {
   }, [isAuthorized])
 
   const fetchApplications = async () => {
+    setLoading(true)
+
     try {
-      // This would typically call an admin API to get all applications
-      // For now, we'll simulate with sample data
-      const sampleApplications: JobApplication[] = [
-        {
-          id: '1',
-          jobId: 'job-001',
-          userId: 'user-001',
-          resumeUrl: '/resumes/sample.pdf',
-          coverLetter: 'I am very interested in this position...',
-          appliedDate: '2026-04-01',
-          status: 'pending',
-          documents: {
-            passport: '/docs/passport.pdf',
-            nationalId: '/docs/id.pdf',
-            cv: '/docs/cv.pdf'
-          }
-        },
-        {
-          id: '2',
-          jobId: 'job-002',
-          userId: 'user-002',
-          resumeUrl: '/resumes/sample2.pdf',
-          coverLetter: 'I have extensive experience...',
-          appliedDate: '2026-03-28',
-          status: 'accepted',
-          documents: {
-            passport: '/docs/passport2.pdf',
-            nationalId: '/docs/id2.pdf',
-            cv: '/docs/cv2.pdf'
-          }
-        }
-      ]
-      setApplications(sampleApplications)
-    } catch (error) {
-      addNotification('Failed to load applications', 'error')
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : ''
+      const response = await axios.get('/api/admin/applications', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      setApplications(response.data)
+    } catch (error: any) {
+      addNotification(error?.response?.data?.message || 'Failed to load applications', 'error')
     } finally {
       setLoading(false)
     }
@@ -115,7 +113,7 @@ const AdminApplicationsPage: React.FC = () => {
     }
   }
 
-  const handleScheduleInterview = (application: JobApplication) => {
+  const handleScheduleInterview = (application: AdminApplication) => {
     setSelectedApplication(application)
     setInterviewDate('')
     setInterviewTime('')
@@ -124,7 +122,7 @@ const AdminApplicationsPage: React.FC = () => {
     setShowScheduleModal(true)
   }
 
-  const handleUpdateStatus = (application: JobApplication) => {
+  const handleUpdateStatus = (application: AdminApplication) => {
     setSelectedApplication(application)
     setNewStatus(application.status)
     setStatusNotes('')
@@ -139,29 +137,49 @@ const AdminApplicationsPage: React.FC = () => {
 
     setScheduling(true)
     try {
-      // Here you would call an API to schedule the interview
       const interviewDetails = {
         scheduledDate: `${interviewDate} ${interviewTime}`,
         zoomLink,
-        notes: interviewNotes
+        notes: interviewNotes,
       }
 
-      // Update the application status to interview_scheduled
-      await updateApplicationStatus(selectedApplication.id, 'interview_scheduled', `Interview scheduled for ${interviewDetails.scheduledDate}`)
+      // Update the application status to interview_scheduled with API call
+      await updateApplicationStatus(
+        selectedApplication._id,
+        'interview_scheduled',
+        `Interview scheduled for ${interviewDetails.scheduledDate}`
+      )
 
-      addNotification('Interview scheduled successfully!', 'success')
+      await axios.post(
+        '/api/admin/send-interview',
+        {
+          email: selectedApplication.email || '',
+          name: selectedApplication.fullName || 'Candidate',
+          meetLink: zoomLink,
+          date: interviewDetails.scheduledDate,
+        },
+        {
+          headers: { Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') : ''}` },
+        }
+      )
+
+      addNotification('Interview scheduled and email sent successfully!', 'success')
       setShowScheduleModal(false)
-      fetchApplications() // Refresh the list
-    } catch (error) {
-      addNotification('Failed to schedule interview', 'error')
-    } finally {
-      setScheduling(false)
+      fetchApplications()
+    } catch (error: any) {
+      addNotification(error?.response?.data?.message || 'Failed to schedule interview', 'error')
     }
   }
 
   const updateApplicationStatus = async (applicationId: string, status: string, notes: string) => {
-    // This would call an API to update the application status
-    console.log('Updating application', applicationId, 'to status', status, 'with notes', notes)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : ''
+    await axios.patch(
+      `/api/admin/applications/${applicationId}`,
+      { status, notes },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    )
   }
 
   const submitStatusUpdate = async () => {
@@ -172,12 +190,12 @@ const AdminApplicationsPage: React.FC = () => {
 
     setUpdatingStatus(true)
     try {
-      await updateApplicationStatus(selectedApplication.id, newStatus, statusNotes)
+      await updateApplicationStatus(selectedApplication._id, newStatus, statusNotes)
       addNotification('Application status updated successfully!', 'success')
       setShowStatusModal(false)
       fetchApplications() // Refresh the list
-    } catch (error) {
-      addNotification('Failed to update status', 'error')
+    } catch (error: any) {
+      addNotification(error?.response?.data?.message || 'Failed to update status', 'error')
     } finally {
       setUpdatingStatus(false)
     }
@@ -312,13 +330,15 @@ const AdminApplicationsPage: React.FC = () => {
         ) : (
           <div className="space-y-6">
             {filteredApplications.map((application) => (
-              <div key={application.id} className="bg-white rounded-lg shadow-md p-6">
+              <div key={application._id} className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900">
-                      Application #{application.id.slice(-8)}
+                      Application #{application._id.slice(-8)}
                     </h3>
-                    <p className="text-gray-600">Job ID: {application.jobId} | Applied: {formatDate(application.appliedDate)}</p>
+                    <p className="text-gray-600">
+                      Job: {typeof application.jobId === 'string' ? application.jobId : application.jobId?.title || 'Unknown'} | Applied: {formatDate(application.createdAt || '')}
+                    </p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(application.status)}`}>
                     {getStatusText(application.status)}
