@@ -44,7 +44,7 @@ const AdminEmailTemplatesPage: React.FC = () => {
     try {
       // For now, use default templates since we don't have a backend
       // In production, this would fetch from the API
-      setTemplates(DEFAULT_EMAIL_TEMPLATES)
+      setTemplates(DEFAULT_EMAIL_TEMPLATES.filter(template => template.stage !== 'password_reset'))
     } catch (error) {
       addNotification('Failed to load email templates', 'error')
     } finally {
@@ -57,7 +57,7 @@ const AdminEmailTemplatesPage: React.FC = () => {
       name: template.name,
       subject: template.subject,
       body: template.body,
-      stage: template.stage,
+      stage: template.stage as ApplicationStage, // Safe cast since password_reset templates are filtered out
       isActive: template.isActive
     })
     setSelectedTemplate(template)
@@ -296,8 +296,8 @@ const AdminEmailTemplatesPage: React.FC = () => {
                   <p className="text-gray-600 text-sm">Subject: {template.subject}</p>
                 </div>
                 <div className="flex gap-2">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStageColor(template.stage)}`}>
-                    {getStageLabel(template.stage)}
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStageColor(template.stage as ApplicationStage)}`}>
+                    {getStageLabel(template.stage as ApplicationStage)}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${template.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                     {template.isActive ? 'Active' : 'Inactive'}

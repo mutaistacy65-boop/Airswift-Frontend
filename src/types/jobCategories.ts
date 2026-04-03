@@ -27,7 +27,7 @@ export interface EmailTemplate {
   name: string
   subject: string
   body: string
-  stage: ApplicationStage
+  stage: ApplicationStage | 'password_reset'
   isActive: boolean
   variables: string[] // e.g., ['applicantName', 'jobTitle', 'companyName', 'interviewDate']
 }

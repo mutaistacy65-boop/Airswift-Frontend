@@ -216,5 +216,36 @@ Phone: +1-800-AIRSWIFT`,
     stage: 'application_rejected',
     isActive: true,
     variables: ['applicantName', 'jobTitle', 'companyName']
+  },
+  {
+    id: 'password_reset',
+    name: 'Password Reset',
+    subject: 'Reset Your Airswift Password',
+    body: `Dear {{userName}},
+
+We received a request to reset your password for your Airswift account.
+
+If you made this request, click the link below to reset your password:
+
+{{resetLink}}
+
+This link will expire in 24 hours for security reasons.
+
+If you didn't request a password reset, please ignore this email. Your password will remain unchanged.
+
+For security reasons, please don't share this email or the reset link with anyone.
+
+If you have any questions or need assistance, please contact our support team.
+
+Best regards,
+The Airswift Support Team
+Email: support@airswift.com
+Phone: +1-800-AIRSWIFT
+
+---
+This is an automated message. Please do not reply to this email.`,
+    stage: 'password_reset',
+    isActive: true,
+    variables: ['userName', 'resetLink']
   }
 ]
