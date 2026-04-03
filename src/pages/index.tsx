@@ -67,27 +67,27 @@ const Home: React.FC = () => {
                 alt="Professional interview panel with diverse candidates in a modern office setting"
                 width={1800}
                 height={600}
-                className="w-full h-96 object-cover opacity-70"
+                className="w-full h-64 sm:h-80 md:h-96 object-cover opacity-70"
                 priority
               />
               <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/80 via-indigo-950/40 to-transparent" />
-              <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-2 gap-4 p-6 md:p-10">
+              <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 sm:p-6 md:p-10">
                 <div className="flex flex-col justify-center text-left text-white">
-                  <p className="text-sm uppercase tracking-wider text-emerald-300 mb-2">Canada pathway from Kenya</p>
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-4">
+                  <p className="text-xs sm:text-sm uppercase tracking-wider text-emerald-300 mb-2">Canada pathway from Kenya</p>
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-4">
                     Interview panel<br />and airport reception<br />experience in one view
                   </h1>
-                  <p className="text-sm sm:text-base text-slate-200 max-w-xl mb-8">
+                  <p className="text-xs sm:text-sm md:text-base text-slate-200 max-w-xl mb-8">
                     Explore verified Canadian employer interviews, receive tailored tips, and visualize your journey from the Kenya airport arrival hall to first day in Canada.
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <Link href="/register">
-                      <Button className="bg-indigo-600 hover:bg-indigo-700 text-base py-3 px-8 flex items-center gap-2">
+                      <Button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-sm sm:text-base py-3 px-8 flex items-center justify-center gap-2">
                         Get Started <ArrowRight size={18} />
                       </Button>
                     </Link>
                     <Link href="/login">
-                      <Button className="bg-white/10 hover:bg-white/20 border border-white/30 text-base py-3 px-8">
+                      <Button className="w-full sm:w-auto bg-white/10 hover:bg-white/20 border border-white/30 text-sm sm:text-base py-3 px-8">
                         Login
                       </Button>
                     </Link>
