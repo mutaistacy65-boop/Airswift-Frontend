@@ -7,15 +7,18 @@ import { useNotification } from '@/context/NotificationContext'
 import Loader from '@/components/Loader'
 import Button from '@/components/Button'
 import MpesaPaymentModal from '@/components/MpesaPaymentModal'
+import Timeline from '@/components/Timeline'
 import { jobService, JobApplication } from '@/services/jobService'
 import { paymentService } from '@/services/paymentService'
 import { PAYMENT_AMOUNTS } from '@/utils/constants'
 import { formatDate } from '@/utils/helpers'
+import { useRouter } from 'next/router'
 
 const ApplicationsPage: React.FC = () => {
   const { isAuthorized, isLoading } = useProtectedRoute('job_seeker')
   const { user } = useAuth()
   const { addNotification } = useNotification()
+  const router = useRouter()
 
   const [applications, setApplications] = useState<JobApplication[]>([])
   const [loading, setLoading] = useState(true)
@@ -65,7 +68,7 @@ const ApplicationsPage: React.FC = () => {
 
     setPaymentProcessing(true)
     try {
-      await paymentService.initiateMpesaPayment(
+      const result = await paymentService.initiateMpesaPayment(
         phoneNumber,
         PAYMENT_AMOUNTS.INTERVIEW_FEE,
         `Interview fee for ${selectedApplication.jobId}`,
@@ -75,6 +78,9 @@ const ApplicationsPage: React.FC = () => {
       addNotification('Interview fee payment initiated. Complete the payment on your phone.', 'success')
       setShowPaymentModal(false)
       setSelectedApplication(null)
+
+      // Redirect to payment success page
+      router.push(`/job-seeker/payment-success?transaction_id=${result.transactionId}&amount=${PAYMENT_AMOUNTS.INTERVIEW_FEE}&service=Interview Fee`)
 
       // Refresh applications to update status
       fetchApplications()
@@ -90,7 +96,7 @@ const ApplicationsPage: React.FC = () => {
 
     setPaymentProcessing(true)
     try {
-      await paymentService.initiateMpesaPayment(
+      const result = await paymentService.initiateMpesaPayment(
         phoneNumber,
         PAYMENT_AMOUNTS.VISA_PROCESSING,
         `Visa processing fee for ${selectedApplication.jobId}`,
@@ -101,6 +107,9 @@ const ApplicationsPage: React.FC = () => {
       setShowPaymentModal(false)
       setSelectedApplication(null)
 
+      // Redirect to payment success page
+      router.push(`/job-seeker/payment-success?transaction_id=${result.transactionId}&amount=${PAYMENT_AMOUNTS.VISA_PROCESSING}&service=Visa Processing`)
+
       // Refresh applications to update status
       fetchApplications()
     } catch (error: any) {
@@ -108,6 +117,84 @@ const ApplicationsPage: React.FC = () => {
     } finally {
       setPaymentProcessing(false)
     }
+  }
+
+  const generateTimelineSteps = (application: JobApplication) => {
+    const steps = [
+      {
+        id: 'applied',
+        title: 'Application Submitted',
+        description: 'Your application has been received and is being reviewed by our team.',
+        status: 'completed' as const,
+        date: formatDate(application.appliedDate),
+      },
+      {
+        id: 'review',
+        title: 'Under Review',
+        description: 'Our hiring team is carefully reviewing your qualifications and experience.',
+        status: (['reviewed', 'accepted', 'interview_scheduled', 'interview_completed', 'visa_payment_pending', 'visa_processing', 'visa_ready'].includes(application.status) ? 'completed' : 'current') as const,
+      },
+      {
+        id: 'shortlisted',
+        title: 'Shortlisted',
+        description: 'Congratulations! You have been shortlisted for this position.',
+        status: (['accepted', 'interview_scheduled', 'interview_completed', 'visa_payment_pending', 'visa_processing', 'visa_ready'].includes(application.status) ? 'completed' : 'pending') as const,
+        action: application.status === 'accepted' ? (
+          <Button
+            onClick={() => {
+              setSelectedApplication(application)
+              setShowPaymentModal(true)
+            }}
+            className="bg-green-600 hover:bg-green-700 text-sm"
+          >
+            Pay Interview Fee (3 KSH)
+          </Button>
+        ) : undefined,
+      },
+      {
+        id: 'interview',
+        title: 'Interview',
+        description: 'Schedule and complete your Zoom interview with the hiring team.',
+        status: (['interview_scheduled', 'interview_completed', 'visa_payment_pending', 'visa_processing', 'visa_ready'].includes(application.status) ? 'completed' : 'pending') as const,
+      },
+      {
+        id: 'payment',
+        title: 'Visa Payment',
+        description: 'Complete the visa processing fee payment.',
+        status: (['visa_payment_pending', 'visa_processing', 'visa_ready'].includes(application.status) ? 'completed' : 'pending') as const,
+        action: application.status === 'interview_completed' ? (
+          <Button
+            onClick={() => {
+              setSelectedApplication(application)
+              setShowPaymentModal(true)
+            }}
+            className="bg-indigo-600 hover:bg-indigo-700 text-sm"
+          >
+            Pay Visa Fee (30,000 KSH)
+          </Button>
+        ) : undefined,
+      },
+      {
+        id: 'processing',
+        title: 'Visa Processing',
+        description: 'Your visa application is being processed by Canadian immigration authorities.',
+        status: application.status === 'visa_ready' ? 'completed' : application.status === 'visa_processing' ? 'current' : 'pending',
+      },
+      {
+        id: 'ready',
+        title: 'Visa Ready',
+        description: 'Your visa has been approved and is ready for collection.',
+        status: application.status === 'visa_ready' ? 'completed' : 'pending',
+      },
+    ]
+
+    // Handle rejected status
+    if (application.status === 'rejected') {
+      steps[1].status = 'failed'
+      steps[1].description = 'Unfortunately, your application was not successful at this time.'
+    }
+
+    return steps
   }
 
   if (isLoading || loading) {
@@ -136,7 +223,7 @@ const ApplicationsPage: React.FC = () => {
       />
 
       <div>
-        <h1 className="text-3xl font-bold mb-8">My Applications</h1>
+        <h1 className="text-3xl font-bold mb-8">Application Timeline</h1>
 
         {applications.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-8 text-center">
@@ -148,154 +235,38 @@ const ApplicationsPage: React.FC = () => {
             </Link>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {applications.map((application) => (
               <div key={application.id} className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900">
-                      Job Application #{application.id.slice(-8)}
-                    </h3>
-                    <p className="text-gray-600">Applied on {formatDate(application.appliedDate)}</p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(application.status)}`}>
-                    {getStatusText(application.status)}
-                  </span>
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                    Job Application #{application.id.slice(-8)}
+                  </h2>
+                  <p className="text-gray-600">Applied on {formatDate(application.appliedDate)}</p>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Job ID</p>
-                    <p className="font-medium">{application.jobId}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Application Date</p>
-                    <p className="font-medium">{formatDate(application.appliedDate)}</p>
-                  </div>
-                </div>
+                <Timeline steps={generateTimelineSteps(application)} />
 
-                {application.coverLetter && (
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600 mb-2">Cover Letter</p>
-                    <p className="text-gray-700 bg-gray-50 p-3 rounded text-sm">
-                      {application.coverLetter.length > 200
-                        ? `${application.coverLetter.slice(0, 200)}...`
-                        : application.coverLetter
-                      }
+                {/* Status-specific messages */}
+                {application.status === 'rejected' && (
+                  <div className="mt-6 bg-red-50 border border-red-200 rounded p-4">
+                    <p className="text-red-800">
+                      <strong>Application Status: Not Successful</strong>
+                    </p>
+                    <p className="text-red-700 text-sm mt-1">
+                      We appreciate your interest. Unfortunately, we won't be proceeding with your application at this time.
+                      We encourage you to apply for other suitable positions.
                     </p>
                   </div>
                 )}
 
-                {/* Status-specific actions */}
-                <div className="border-t pt-4">
-                  {application.status === 'pending' && (
-                    <div className="bg-blue-50 border border-blue-200 rounded p-4">
-                      <p className="text-blue-800">
-                        <strong>Your application is under review.</strong> We'll notify you once there's an update on your status.
-                      </p>
-                    </div>
-                  )}
-
-                  {application.status === 'reviewed' && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
-                      <p className="text-yellow-800">
-                        <strong>Your application is being reviewed.</strong> The hiring team is currently evaluating your qualifications.
-                      </p>
-                    </div>
-                  )}
-
-                  {application.status === 'accepted' && (
-                    <div className="bg-green-50 border border-green-200 rounded p-4">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-green-800 mb-2">
-                            <strong>Congratulations! You've been shortlisted.</strong>
-                          </p>
-                          <p className="text-green-700 text-sm">
-                            Proceed with the interview fee payment to schedule your Zoom interview.
-                          </p>
-                        </div>
-                        <Button
-                          onClick={() => {
-                            setSelectedApplication(application)
-                            setShowPaymentModal(true)
-                          }}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          Pay Interview Fee (3 KSH)
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {application.status === 'interview_scheduled' && (
-                    <div className="bg-purple-50 border border-purple-200 rounded p-4">
-                      <p className="text-purple-800">
-                        <strong>Interview Scheduled!</strong> Check your email for Zoom meeting details and date/time.
-                      </p>
-                    </div>
-                  )}
-
-                  {application.status === 'interview_completed' && (
-                    <div className="bg-indigo-50 border border-indigo-200 rounded p-4">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-indigo-800 mb-2">
-                            <strong>Interview Completed!</strong>
-                          </p>
-                          <p className="text-indigo-700 text-sm">
-                            Congratulations! You've successfully completed your interview. Proceed with visa processing payment.
-                          </p>
-                        </div>
-                        <Button
-                          onClick={() => {
-                            setSelectedApplication(application)
-                            setShowPaymentModal(true)
-                          }}
-                          className="bg-indigo-600 hover:bg-indigo-700"
-                        >
-                          Pay Visa Fee (30,000 KSH)
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {application.status === 'visa_payment_pending' && (
-                    <div className="bg-orange-50 border border-orange-200 rounded p-4">
-                      <p className="text-orange-800">
-                        <strong>Visa payment initiated.</strong> Complete the payment on your phone to proceed with visa processing.
-                      </p>
-                    </div>
-                  )}
-
-                  {application.status === 'visa_processing' && (
-                    <div className="bg-teal-50 border border-teal-200 rounded p-4">
-                      <p className="text-teal-800">
-                        <strong>Visa processing in progress.</strong> We'll notify you once your visa is ready.
-                      </p>
-                    </div>
-                  )}
-
-                  {application.status === 'visa_ready' && (
-                    <div className="bg-emerald-50 border border-emerald-200 rounded p-4">
-                      <p className="text-emerald-800">
-                        <strong>Visa Ready!</strong> Your visa has been processed successfully. Check your email for collection details.
-                      </p>
-                    </div>
-                  )}
-
-                  {application.status === 'rejected' && (
-                    <div className="bg-red-50 border border-red-200 rounded p-4">
-                      <p className="text-red-800">
-                        <strong>Application Not Successful</strong>
-                      </p>
-                      <p className="text-red-700 text-sm mt-1">
-                        We appreciate your interest. Unfortunately, we won't be proceeding with your application at this time.
-                        We encourage you to apply for other suitable positions.
-                      </p>
-                    </div>
-                  )}
-                </div>
+                {application.status === 'visa_ready' && (
+                  <div className="mt-6 bg-emerald-50 border border-emerald-200 rounded p-4">
+                    <p className="text-emerald-800">
+                      <strong>🎉 Visa Ready!</strong> Your visa has been processed successfully. Check your email for collection details.
+                    </p>
+                  </div>
+                )}
               </div>
             ))}
           </div>

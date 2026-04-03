@@ -66,10 +66,10 @@ const Home: React.FC = () => {
             </div>
             
             <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 md:mb-6 leading-tight">
-              Your Path to Canadian
+              Work in Canada
               <br />
               <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                Career Success
+                Opportunities 🇨🇦
               </span>
             </h2>
             <p className="text-base md:text-xl text-slate-300 max-w-2xl mx-auto mb-8 md:mb-12">
@@ -78,36 +78,99 @@ const Home: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
               <Link href="/register">
                 <Button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-base py-3 px-8 flex items-center justify-center gap-2">
-                  Find Jobs Now <ArrowRight size={18} />
+                  Apply Now <ArrowRight size={18} />
                 </Button>
               </Link>
-              <Link href="/about">
+              <Link href="/login">
                 <Button className="w-full sm:w-auto bg-white/10 hover:bg-white/20 border border-indigo-400/50 text-base py-3 px-8">
-                  How It Works
+                  Login
                 </Button>
               </Link>
             </div>
           </motion.div>
 
-          {/* Features Grid */}
+          {/* Job Categories Preview */}
           <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="grid md:grid-cols-3 gap-6 md:gap-8 py-12 md:py-20"
+            className="py-12 md:py-20"
           >
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                variants={itemVariants}
-                className="bg-white/5 backdrop-blur-sm border border-indigo-500/20 rounded-2xl p-6 md:p-8 hover:border-indigo-500/50 hover:bg-white/10 transition-all group"
-              >
-                <feature.icon className="text-indigo-400 mb-4 group-hover:scale-110 transition-transform" size={32} />
-                <h3 className="text-lg md:text-xl font-bold mb-2">{feature.title}</h3>
-                <p className="text-slate-400">{feature.description}</p>
-              </motion.div>
-            ))}
+            <h3 className="text-2xl md:text-3xl font-bold mb-8 text-center">Explore Job Categories (A-Z)</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {[
+                'Accounting', 'Business', 'Construction', 'Design', 'Education', 'Engineering',
+                'Finance', 'Healthcare', 'Hospitality', 'IT', 'Legal', 'Manufacturing',
+                'Marketing', 'Nursing', 'Operations', 'Retail', 'Sales', 'Technology'
+              ].map((category, index) => (
+                <motion.div
+                  key={category}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-white/5 backdrop-blur-sm border border-indigo-500/20 rounded-xl p-4 text-center hover:border-indigo-500/50 hover:bg-white/10 transition-all cursor-pointer group"
+                >
+                  <Briefcase className="text-indigo-400 mx-auto mb-2 group-hover:scale-110 transition-transform" size={24} />
+                  <span className="text-sm font-medium">{category}</span>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Testimonials Section */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="py-12 md:py-20"
+          >
+            <h3 className="text-2xl md:text-3xl font-bold mb-12 text-center">Success Stories</h3>
+            <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+              {[
+                {
+                  name: 'Sarah Johnson',
+                  role: 'Software Engineer',
+                  company: 'TechCorp Canada',
+                  testimonial: 'Airswift made my dream of working in Canada a reality. The process was smooth and the support was exceptional.',
+                  avatar: 'SJ'
+                },
+                {
+                  name: 'Michael Chen',
+                  role: 'Project Manager',
+                  company: 'BuildMasters Inc',
+                  testimonial: 'From Kenya to Canada - thanks to Airswift\'s platform, I found my perfect job in construction management.',
+                  avatar: 'MC'
+                },
+                {
+                  name: 'Grace Oduya',
+                  role: 'Registered Nurse',
+                  company: 'HealthCare Plus',
+                  testimonial: 'The visa process guidance and job matching was outstanding. Highly recommend to anyone seeking Canadian opportunities.',
+                  avatar: 'GO'
+                }
+              ].map((testimonial, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white/5 backdrop-blur-sm border border-indigo-500/20 rounded-2xl p-6 hover:border-indigo-500/50 hover:bg-white/10 transition-all"
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                      {testimonial.avatar}
+                    </div>
+                    <div>
+                      <h4 className="font-bold">{testimonial.name}</h4>
+                      <p className="text-sm text-slate-400">{testimonial.role} at {testimonial.company}</p>
+                    </div>
+                  </div>
+                  <p className="text-slate-300 italic">"{testimonial.testimonial}"</p>
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
 
           {/* Why Choose Us */}

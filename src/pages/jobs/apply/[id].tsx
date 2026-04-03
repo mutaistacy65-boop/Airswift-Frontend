@@ -4,6 +4,7 @@ import MainLayout from '@/layouts/MainLayout'
 import Button from '@/components/Button'
 import DocumentUpload from '@/components/DocumentUpload'
 import Textarea from '@/components/Textarea'
+import SearchableSelect from '@/components/SearchableSelect'
 import Loader from '@/components/Loader'
 import { jobService, Job } from '@/services/jobService'
 import { useAuth } from '@/context/AuthContext'
@@ -19,6 +20,9 @@ const JobApplicationPage: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
 
+  // Job category selection
+  const [selectedCategory, setSelectedCategory] = useState('')
+
   // Document states
   const [passport, setPassport] = useState<File | null>(null)
   const [nationalId, setNationalId] = useState<File | null>(null)
@@ -28,6 +32,13 @@ const JobApplicationPage: React.FC = () => {
 
   // Validation errors
   const [errors, setErrors] = useState<{[key: string]: string}>({})
+
+  // Job categories (A-Z)
+  const jobCategories = [
+    'Accounting', 'Business', 'Construction', 'Design', 'Education', 'Engineering',
+    'Finance', 'Healthcare', 'Hospitality', 'IT', 'Legal', 'Manufacturing',
+    'Marketing', 'Nursing', 'Operations', 'Retail', 'Sales', 'Technology'
+  ].map(category => ({ value: category.toLowerCase(), label: category }))
 
   useEffect(() => {
     if (id && isAuthenticated) {
@@ -52,6 +63,7 @@ const JobApplicationPage: React.FC = () => {
   const validateForm = () => {
     const newErrors: {[key: string]: string} = {}
 
+    if (!selectedCategory) newErrors.category = 'Job category is required'
     if (!passport) newErrors.passport = 'Passport is required'
     if (!nationalId) newErrors.nationalId = 'National ID is required'
     if (!cv) newErrors.cv = 'CV/Resume is required'
@@ -73,6 +85,7 @@ const JobApplicationPage: React.FC = () => {
     try {
       const formData = new FormData()
       formData.append('job_id', id as string)
+      formData.append('job_category', selectedCategory)
       formData.append('cover_letter', coverLetter)
 
       // Add documents
@@ -145,6 +158,20 @@ const JobApplicationPage: React.FC = () => {
           <h2 className="text-2xl font-bold mb-6">Submit Your Application</h2>
 
           <div className="space-y-8">
+            {/* Job Category Selection */}
+            <div>
+              <h3 className="text-xl font-semibold mb-4 text-gray-900">Job Category</h3>
+              <SearchableSelect
+                label="Select Job Category (A-Z)"
+                options={jobCategories}
+                value={selectedCategory}
+                onChange={setSelectedCategory}
+                placeholder="Choose a job category..."
+                required
+                error={errors.category}
+              />
+            </div>
+
             {/* Required Documents */}
             <div>
               <h3 className="text-xl font-semibold mb-4 text-gray-900">Required Documents</h3>

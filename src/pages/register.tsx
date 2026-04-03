@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin } from "lucide-react";
 import Input from "@/components/Input";
 import Button from "@/components/Button";
 import { useNotification } from "@/context/NotificationContext";
@@ -12,6 +12,8 @@ const RegisterPage: React.FC = () => {
     name: "",
     email: "",
     password: "",
+    country: "",
+    phone: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -36,6 +38,16 @@ const RegisterPage: React.FC = () => {
       newErrors.password = "Password is required";
     } else if (formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
+    }
+
+    if (!formData.country) {
+      newErrors.country = "Country is required";
+    }
+
+    if (!formData.phone) {
+      newErrors.phone = "Phone number is required";
+    } else if (!/^\+?[\d\s\-\(\)]+$/.test(formData.phone)) {
+      newErrors.phone = "Invalid phone number format";
     }
 
     setErrors(newErrors);
@@ -139,6 +151,30 @@ const RegisterPage: React.FC = () => {
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
+            </div>
+
+            <div className="relative">
+              <MapPin className="absolute left-3 top-3 text-slate-400" size={18} />
+              <Input
+                placeholder="Country"
+                name="country"
+                value={formData.country}
+                onChange={handleChange}
+                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-slate-400"
+                style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderColor: 'rgba(255,255,255,0.2)', color: 'white' }}
+              />
+            </div>
+
+            <div className="relative">
+              <Phone className="absolute left-3 top-3 text-slate-400" size={18} />
+              <Input
+                placeholder="Phone Number"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-slate-400"
+                style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderColor: 'rgba(255,255,255,0.2)', color: 'white' }}
+              />
             </div>
 
             <Button
