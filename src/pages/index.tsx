@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { Globe, Briefcase, TrendingUp, Users, ArrowRight, MapPin, Check, Plane } from 'lucide-react'
 import Button from '@/components/Button'
@@ -58,34 +59,50 @@ const Home: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-center"
+            className="rounded-3xl overflow-hidden shadow-2xl"
           >
-            <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-full">
-              <MapPin className="text-green-400" size={16} />
-              <span className="text-sm text-green-300">Kenya to Canada Job Opportunities</span>
-            </div>
-            
-            <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 md:mb-6 leading-tight">
-              Work in Canada
-              <br />
-              <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                Opportunities 🇨🇦
-              </span>
-            </h2>
-            <p className="text-base md:text-xl text-slate-300 max-w-2xl mx-auto mb-8 md:mb-12">
-              Connect with top Canadian employers from Kenya. Access verified job listings, streamlined application process, and career growth opportunities across multiple industries.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <Link href="/register">
-                <Button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-base py-3 px-8 flex items-center justify-center gap-2">
-                  Apply Now <ArrowRight size={18} />
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button className="w-full sm:w-auto bg-white/10 hover:bg-white/20 border border-indigo-400/50 text-base py-3 px-8">
-                  Login
-                </Button>
-              </Link>
+            <div className="relative bg-slate-900/30">
+              <Image
+                src="https://images.unsplash.com/photo-1558041217-92d29f0ffacd?auto=format&fit=crop&w=1800&q=80"
+                alt="Professional interview panel with diverse candidates in a modern office setting"
+                width={1800}
+                height={600}
+                className="w-full h-96 object-cover opacity-70"
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/80 via-indigo-950/40 to-transparent" />
+              <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-2 gap-4 p-6 md:p-10">
+                <div className="flex flex-col justify-center text-left text-white">
+                  <p className="text-sm uppercase tracking-wider text-emerald-300 mb-2">Canada pathway from Kenya</p>
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-4">
+                    Interview panel<br />and airport reception<br />experience in one view
+                  </h1>
+                  <p className="text-sm sm:text-base text-slate-200 max-w-xl mb-8">
+                    Explore verified Canadian employer interviews, receive tailored tips, and visualize your journey from the Kenya airport arrival hall to first day in Canada.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <Link href="/register">
+                      <Button className="bg-indigo-600 hover:bg-indigo-700 text-base py-3 px-8 flex items-center gap-2">
+                        Get Started <ArrowRight size={18} />
+                      </Button>
+                    </Link>
+                    <Link href="/login">
+                      <Button className="bg-white/10 hover:bg-white/20 border border-white/30 text-base py-3 px-8">
+                        Login
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+                <div className="hidden md:block rounded-2xl overflow-hidden border border-white/20 shadow-xl">
+                  <Image
+                    src="https://images.unsplash.com/photo-1542089363-66e92efb12b7?auto=format&fit=crop&w=1200&q=80"
+                    alt="Welcoming reception area at a Canadian airport with travelers and staff"
+                    width={1200}
+                    height={800}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
             </div>
           </motion.div>
 
