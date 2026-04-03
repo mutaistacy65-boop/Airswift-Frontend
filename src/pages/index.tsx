@@ -64,7 +64,7 @@ const Home: React.FC = () => {
             <div className="relative bg-slate-900/30">
               <Image
                 src="https://images.unsplash.com/photo-1558041217-92d29f0ffacd?auto=format&fit=crop&w=1800&q=80"
-                alt="Professional interview panel with diverse candidates in a modern office setting"
+                alt="Professional networking and career advancement opportunities in Canada"
                 width={1800}
                 height={600}
                 className="w-full h-64 sm:h-80 md:h-96 object-cover opacity-70"
@@ -73,12 +73,12 @@ const Home: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/80 via-indigo-950/40 to-transparent" />
               <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 sm:p-6 md:p-10">
                 <div className="flex flex-col justify-center text-left text-white">
-                  <p className="text-xs sm:text-sm uppercase tracking-wider text-emerald-300 mb-2">Canada pathway from Kenya</p>
+                  <p className="text-xs sm:text-sm uppercase tracking-wider text-emerald-300 mb-2">Your Bridge to Canadian Career Success</p>
                   <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-4">
-                    Interview panel<br />and airport reception<br />experience in one view
+                    From Kenya to Canada:<br />Transform Your<br />Professional Journey
                   </h1>
                   <p className="text-xs sm:text-sm md:text-base text-slate-200 max-w-xl mb-8">
-                    Explore verified Canadian employer interviews, receive tailored tips, and visualize your journey from the Kenya airport arrival hall to first day in Canada.
+                    Join thousands of Kenyan professionals who've secured their dream Canadian careers through Airswift. Access exclusive job opportunities, expert visa guidance, and personalized career support. Your international success story starts here.
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <Link href="/register">
@@ -96,7 +96,7 @@ const Home: React.FC = () => {
                 <div className="hidden md:block rounded-2xl overflow-hidden border border-white/20 shadow-xl">
                   <Image
                     src="https://images.unsplash.com/photo-1542089363-66e92efb12b7?auto=format&fit=crop&w=1200&q=80"
-                    alt="Welcoming reception area at a Canadian airport with travelers and staff"
+                    alt="Modern Canadian workplace environment with professional collaboration"
                     width={1200}
                     height={800}
                     className="w-full h-full object-cover"
