@@ -1,6 +1,6 @@
-# Airswift Frontend
+# AIRSWIFT
 
-A modern, responsive web application for the Airswift job portal, connecting job seekers with Canada-based immigration opportunities.
+A modern, responsive web application for the AIRSWIFT job portal, connecting job seekers with Canada-based immigration opportunities.
 
 ## 🌟 Features
 

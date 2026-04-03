@@ -1,7 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Globe, Briefcase, TrendingUp, Users, ArrowRight, MapPin, Check } from 'lucide-react'
+import { Globe, Briefcase, TrendingUp, Users, ArrowRight, MapPin, Check, Plane } from 'lucide-react'
 import Button from '@/components/Button'
 
 const Home: React.FC = () => {
@@ -33,8 +33,8 @@ const Home: React.FC = () => {
             className="text-2xl md:text-3xl font-bold flex items-center gap-2 cursor-pointer"
             whileHover={{ scale: 1.05 }}
           >
-            <Globe className="text-indigo-400" size={28} />
-            <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">JOB PORTAL</span>
+            <Plane className="text-indigo-400" size={28} />
+            <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">AIRSWIFT</span>
           </motion.h1>
           <div className="flex items-center gap-2 md:gap-4">
             <Link href="/login">
@@ -210,8 +210,8 @@ const Home: React.FC = () => {
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
             <div>
               <h4 className="font-bold mb-4 flex items-center gap-2">
-                <Globe size={20} className="text-indigo-400" />
-                Job Portal
+                <Plane size={20} className="text-indigo-400" />
+                AIRSWIFT
               </h4>
               <p className="text-slate-400 text-sm">Connecting Kenyan talent with Canadian opportunities.</p>
             </div>
@@ -239,7 +239,7 @@ const Home: React.FC = () => {
             </div>
           </div>
           <div className="border-t border-indigo-500/20 pt-6 text-center text-slate-400 text-sm">
-            <p>&copy; 2026 Job Portal. All rights reserved. | Kenya to Canada Job Opportunities</p>
+            <p>&copy; 2026 AIRSWIFT. All rights reserved. | Kenya to Canada Job Opportunities</p>
           </div>
         </div>
       </footer>
