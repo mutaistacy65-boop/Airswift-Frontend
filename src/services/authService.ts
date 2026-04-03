@@ -1,5 +1,4 @@
 import API from './apiClient'
-import API_BASE_URL from '../api'
 
 export const authService = {
   login: async (email: string, password: string) => {
