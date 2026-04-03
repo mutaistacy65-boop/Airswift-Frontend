@@ -1,4 +1,4 @@
-import apiClient from './apiClient'
+import API from './apiClient'
 import API_BASE_URL from '../api'
 
 export interface Job {
@@ -37,17 +37,17 @@ export interface JobApplication {
 
 export const jobService = {
   getAllJobs: async (page = 1, limit = 10) => {
-    const response = await apiClient.get('/jobs', { params: { page, limit } })
+    const response = await API.get('/jobs', { params: { page, limit } })
     return response.data
   },
 
   getJobById: async (id: string) => {
-    const response = await apiClient.get(`/jobs/${id}`)
+    const response = await API.get(`/jobs/${id}`)
     return response.data
   },
 
   searchJobs: async (query: string, filters?: any) => {
-    const response = await apiClient.get('/jobs/search', { params: { q: query, ...filters } })
+    const response = await API.get('/jobs/search', { params: { q: query, ...filters } })
     return response.data
   },
 
@@ -66,30 +66,29 @@ export const jobService = {
       }
     }
 
-    const response = await apiClient.post('/applications/apply', formData, {
+    const response = await API.post('/applications/apply', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     return response.data
   },
 
   getMyApplications: async () => {
-    const response = await apiClient.get('/applications/my')
+    const response = await API.get('/applications/my')
     return response.data
   },
 
   getApplicationById: async (id: string) => {
-    const response = await apiClient.get(`/applications/${id}`)
+    const response = await API.get(`/applications/${id}`)
     return response.data
   },
 
   cancelApplication: async (id: string) => {
-    const response = await apiClient.delete(`/applications/${id}`)
+    const response = await API.delete(`/applications/${id}`)
     return response.data
   },
 
   getJobs: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/jobs`)
-    const data = await response.json()
-    return data
+    const response = await API.get('/jobs')
+    return response.data
   },
 }

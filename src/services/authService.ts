@@ -1,49 +1,26 @@
-import apiClient from './apiClient'
+import API from './apiClient'
 import API_BASE_URL from '../api'
 
 export const authService = {
   login: async (email: string, password: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        email,
-        password,
-      }),
+    const response = await API.post('/login', {
+      email,
+      password,
     })
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.message || 'Login failed')
-    }
-    const data = await response.json()
-    return data
+    return response.data
   },
 
   register: async (name: string, email: string, password: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        name,
-        email,
-        password,
-      }),
+    const response = await API.post('/register', {
+      name,
+      email,
+      password,
     })
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.message || 'Registration failed')
-    }
-    const data = await response.json()
-    return data
+    return response.data
   },
 
   updateProfile: async (userData: any) => {
-    const response = await apiClient.put('/profile', userData)
+    const response = await API.put('/profile', userData)
     return response.data
   },
 
@@ -51,14 +28,14 @@ export const authService = {
     const formData = new FormData()
     formData.append('cv', file)
 
-    const response = await apiClient.post('/profile/upload-cv', formData, {
+    const response = await API.post('/profile/upload-cv', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     return response.data
   },
 
   changePassword: async (oldPassword: string, newPassword: string) => {
-    const response = await apiClient.post('/auth/change-password', {
+    const response = await API.post('/auth/change-password', {
       oldPassword,
       newPassword,
     })
@@ -67,7 +44,7 @@ export const authService = {
 
   forgotPassword: async (email: string) => {
     // Use local mock API during development; replace with external endpoint as needed.
-    const response = await apiClient.post('/api/auth/forgot-password', { email })
+    const response = await API.post('/api/auth/forgot-password', { email })
     return response.data
   },
 
@@ -76,7 +53,7 @@ export const authService = {
       ...userData,
       role: userData.role || 'job-seeker',
     }
-    const response = await apiClient.post('/api/auth/send-registration-otp', payload)
+    const response = await API.post('/api/auth/send-registration-otp', payload)
     return response.data
   },
 
@@ -88,7 +65,7 @@ export const authService = {
   },
 
   verifyRegistrationOTP: async (email: string, otp: string) => {
-    const response = await apiClient.post('/api/auth/verify-registration-otp', { email, otp })
+    const response = await API.post('/api/auth/verify-registration-otp', { email, otp })
     return response.data
   },
 }

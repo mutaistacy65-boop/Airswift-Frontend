@@ -1,4 +1,4 @@
-import apiClient from './apiClient'
+import API from './apiClient'
 
 export interface MpesaPaymentData {
   phoneNumber: string
@@ -9,7 +9,7 @@ export interface MpesaPaymentData {
 
 export const paymentService = {
   initiatePayment: async (paymentData: MpesaPaymentData) => {
-    const response = await apiClient.post('/payment/initiate', {
+    const response = await API.post('/payment/initiate', {
       ...paymentData,
       paymentMethod: 'mpesa',
       currency: 'KES',
@@ -18,7 +18,7 @@ export const paymentService = {
   },
 
   verifyPayment: async (transactionId: string) => {
-    const response = await apiClient.post('/payment/verify', {
+    const response = await API.post('/payment/verify', {
       transactionId,
       paymentMethod: 'mpesa',
     })

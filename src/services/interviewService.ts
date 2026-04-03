@@ -1,8 +1,8 @@
-import apiClient from './apiClient'
+import API from './apiClient'
 
 export const interviewService = {
   getMyInterviews: async () => {
-    const response = await apiClient.get('/interviews/my')
+    const response = await API.get('/interviews/my')
     return response.data
   },
 }
