@@ -1,15 +1,16 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { signIn } from 'next-auth/react'
 import Button from '../components/Button'
 import Input from '../components/Input'
 import { loginUser } from '../api/auth'
+import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { googleLogin } = useAuth()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -79,7 +80,7 @@ export default function Login() {
 
           <div className="space-y-4">
             <button
-              onClick={() => signIn('google')}
+              onClick={googleLogin}
               className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
