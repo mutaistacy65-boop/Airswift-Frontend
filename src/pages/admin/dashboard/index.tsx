@@ -312,6 +312,7 @@ export default function AdminDashboard() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
+        credentials: "include",
         body: JSON.stringify({
           name: app.fullName || app.user?.name,
           email: app.email || app.user?.email,
@@ -425,6 +426,7 @@ export default function AdminDashboard() {
         try {
           const transcribeRes = await fetch('/api/interview/transcribe', {
             method: 'POST',
+            credentials: 'include',
             body: formData,
           });
           const { text } = await transcribeRes.json();
@@ -449,6 +451,7 @@ export default function AdminDashboard() {
           const interviewRes = await fetch('/api/interview/ask', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ messages }),
           });
           const { reply } = await interviewRes.json();
@@ -763,7 +766,11 @@ export default function AdminDashboard() {
                   onClick={async () => {
                     try {
                       const res = await fetch(`${API_URL}/api/audit/logs`, {
-                        headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
+                        headers: { 
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${localStorage.getItem("accessToken")}` 
+                        },
+                        credentials: "include",
                       });
                       const data = await res.json();
                       console.log("Audit Logs:", data);
@@ -802,7 +809,11 @@ export default function AdminDashboard() {
                     onClick={async () => {
                       try {
                         const res = await fetch(`${API_URL}/api/cv/encrypt-demo`, {
-                          headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
+                          headers: { 
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${localStorage.getItem("accessToken")}` 
+                          },
+                          credentials: "include",
                         });
                         const data = await res.json();
                         alert("CV encryption test completed successfully! Data is securely stored.");
