@@ -108,7 +108,7 @@ const JobDetailPage: React.FC = () => {
             </div>
 
             {isAuthenticated ? (
-              user?.role === 'job_seeker' ? (
+              user?.role === 'user' ? (
                 <Button
                   onClick={() => router.push(`/jobs/apply/${id}`)}
                   size="lg"

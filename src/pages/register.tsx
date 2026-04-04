@@ -18,14 +18,17 @@ export default function Register() {
 
     try {
       const data = await registerUser(form);
-      setMessage("✅ Registered successfully!");
+      setMessage("✅ Registration successful! Please check your email for OTP verification.");
 
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
+      // Store registration data for OTP verification
+      localStorage.setItem('pendingEmail', form.email);
+      localStorage.setItem('pendingName', form.name);
+      localStorage.setItem('pendingPassword', form.password);
 
-      // optional: navigate to login/dashboard
-      router.push("/login");
+      // Redirect to OTP verification
+      setTimeout(() => {
+        router.push("/verify-otp");
+      }, 2000);
     } catch (err: any) {
       setMessage("❌ " + (err?.message || "Registration failed"));
     } finally {

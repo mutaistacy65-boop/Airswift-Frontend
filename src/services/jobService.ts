@@ -52,21 +52,23 @@ export const jobService = {
 
   applyForJob: async (jobId: string, cv: File, coverLetter?: string, additionalData?: FormData) => {
     const formData = new FormData()
-    formData.append('job_id', jobId)
+    formData.append('jobId', jobId)
     formData.append('cv', cv)
-    if (coverLetter) formData.append('cover_letter', coverLetter)
+    if (coverLetter) formData.append('coverLetter', coverLetter)
 
     // Add additional documents if provided
     if (additionalData) {
       for (const [key, value] of additionalData.entries()) {
-        if (key !== 'job_id' && key !== 'cv' && key !== 'cover_letter') {
+        if (key !== 'jobId' && key !== 'cv' && key !== 'coverLetter') {
           formData.append(key, value as File)
         }
       }
     }
 
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : ''
+
     const response = await API.post('/applications/apply', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     })
     return response.data
   },

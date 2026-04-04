@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import axios from 'axios'
 import { signIn } from 'next-auth/react'
 import Button from '../components/Button'
 import Input from '../components/Input'
+import { loginUser } from '../api/auth'
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })
@@ -16,12 +16,16 @@ export default function Login() {
     setLoading(true)
 
     try {
-      const res = await axios.post('/api/auth/login', form)
-      localStorage.setItem('token', res.data.token)
-      alert('Login successful')
-      router.push('/job-seeker/dashboard')
+      const data = await loginUser(form)
+
+      if (data.accessToken) {
+        localStorage.setItem('accessToken', data.accessToken)
+        window.location.href = '/dashboard'
+      } else {
+        throw new Error('Login failed: access token not returned')
+      }
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Login failed')
+      alert(err?.message || 'Login failed')
     } finally {
       setLoading(false)
     }

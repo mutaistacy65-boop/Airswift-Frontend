@@ -10,7 +10,7 @@ import { jobService } from '@/services/jobService'
 import { useNotification } from '@/context/NotificationContext'
 
 const JobSeekerDashboard: React.FC = () => {
-  const { isAuthorized, isLoading } = useProtectedRoute('job_seeker')
+  const { isAuthorized, isLoading } = useProtectedRoute('user')
   const { user, logout } = useAuth()
   const { addNotification } = useNotification()
   const router = useRouter()

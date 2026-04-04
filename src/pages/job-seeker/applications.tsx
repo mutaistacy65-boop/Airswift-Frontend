@@ -15,7 +15,7 @@ import { formatDate } from '@/utils/helpers'
 import { useRouter } from 'next/router'
 
 const ApplicationsPage: React.FC = () => {
-  const { isAuthorized, isLoading } = useProtectedRoute('job_seeker')
+  const { isAuthorized, isLoading } = useProtectedRoute('user')
   const { user } = useAuth()
   const { addNotification } = useNotification()
   const router = useRouter()

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
-import axios from "axios";
+import { verifyOTP, registerUser } from "@/api/auth";
 
 export default function VerifyOTP() {
   const [email, setEmail] = useState("");
@@ -23,15 +23,13 @@ export default function VerifyOTP() {
 
     setLoading(true);
     try {
-      await axios.post("/api/auth/verify-registration-otp", { email, otp });
+      await verifyOTP(email, otp);
       localStorage.removeItem("pendingEmail");
-      localStorage.removeItem("pendingName");
-      localStorage.removeItem("pendingPassword");
 
-      alert("Verified successfully");
+      alert("Email verified successfully! You can now login.");
       router.push("/login");
     } catch (err: any) {
-      alert(err?.response?.data?.message || "OTP verification failed");
+      alert(err?.message || "OTP verification failed");
     } finally {
       setLoading(false);
     }
@@ -44,12 +42,20 @@ export default function VerifyOTP() {
     }
 
     try {
+      // Get stored registration data
       const name = localStorage.getItem("pendingName") || "";
       const password = localStorage.getItem("pendingPassword") || "";
-      await axios.post("/api/auth/send-registration-otp", { name, email, password });
-      alert("OTP resent");
+
+      if (!name || !password) {
+        alert("Registration data not found. Please register again.");
+        router.push("/register");
+        return;
+      }
+
+      await registerUser({ name, email, password });
+      alert("OTP resent to your email");
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Failed to resend OTP");
+      alert(err?.message || "Failed to resend OTP");
     }
   };
 

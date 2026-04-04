@@ -1,14 +1,31 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/router'
-import { Menu, X, Plane, LogOut, LayoutDashboard } from 'lucide-react'
+import { Menu, X, Plane, LogOut, LayoutDashboard, Moon, Sun } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark')
   const router = useRouter()
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null
+      const resolvedTheme = storedTheme || 'dark'
+      setTheme(resolvedTheme)
+      document.documentElement.classList.toggle('dark', resolvedTheme === 'dark')
+    }
+  }, [])
+
+  const handleThemeToggle = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark'
+    setTheme(nextTheme)
+    localStorage.setItem('theme', nextTheme)
+    document.documentElement.classList.toggle('dark', nextTheme === 'dark')
+  }
 
   const handleLogout = () => {
     logout()
@@ -54,6 +71,14 @@ const Navbar: React.FC = () => {
 
         {/* Desktop Auth Buttons */}
         <div className="hidden md:flex items-center gap-4">
+          <button
+            onClick={handleThemeToggle}
+            className="p-2 rounded-lg bg-slate-800 text-slate-100 hover:bg-slate-700 transition"
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+
           {isAuthenticated ? (
             <>
               <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-lg border border-indigo-500/20">

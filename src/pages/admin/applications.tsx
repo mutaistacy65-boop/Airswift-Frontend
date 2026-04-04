@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import Link from 'next/link'
+import { Search, Eye, FileText, Upload, RefreshCcw } from 'lucide-react'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useAuth } from '@/context/AuthContext'
@@ -45,9 +46,13 @@ const AdminApplicationsPage: React.FC = () => {
   const [applications, setApplications] = useState<AdminApplication[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedApplication, setSelectedApplication] = useState<AdminApplication | null>(null)
+  const [showProfileModal, setShowProfileModal] = useState(false)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [showStatusModal, setShowStatusModal] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 7
 
   // Interview scheduling form
   const [interviewDate, setInterviewDate] = useState('')
@@ -64,6 +69,8 @@ const AdminApplicationsPage: React.FC = () => {
   useEffect(() => {
     if (isAuthorized) {
       fetchApplications()
+      const interval = setInterval(fetchApplications, 30000)
+      return () => clearInterval(interval)
     }
   }, [isAuthorized])
 
@@ -129,6 +136,11 @@ const AdminApplicationsPage: React.FC = () => {
     setShowStatusModal(true)
   }
 
+  const handleViewProfile = (application: AdminApplication) => {
+    setSelectedApplication(application)
+    setShowProfileModal(true)
+  }
+
   const submitInterviewSchedule = async () => {
     if (!selectedApplication || !interviewDate || !interviewTime || !zoomLink) {
       addNotification('Please fill in all required fields', 'error')
@@ -151,7 +163,7 @@ const AdminApplicationsPage: React.FC = () => {
       )
 
       await axios.post(
-        '/api/admin/send-interview',
+        `/api/admin/send-interview/${selectedApplication._id}`,
         {
           email: selectedApplication.email || '',
           name: selectedApplication.fullName || 'Candidate',
@@ -300,13 +312,127 @@ const AdminApplicationsPage: React.FC = () => {
         </div>
       </Modal>
 
+      <Modal
+        isOpen={showProfileModal}
+        onClose={() => {
+          setShowProfileModal(false)
+        }}
+        title="Applicant Profile"
+        confirmText="Close"
+        onConfirm={() => {
+          setShowProfileModal(false)
+        }}
+      >
+        {selectedApplication ? (
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Name</p>
+                <p className="font-semibold text-gray-900">{selectedApplication.fullName}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Email</p>
+                <p className="font-semibold text-gray-900">{selectedApplication.email}</p>
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Applied For</p>
+                <p className="font-semibold text-gray-900">{typeof selectedApplication.jobId === 'string' ? selectedApplication.jobId : selectedApplication.jobId?.title || 'Unknown'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Status</p>
+                <p className="font-semibold text-gray-900">{getStatusText(selectedApplication.status)}</p>
+              </div>
+            </div>
+            {selectedApplication.coverLetter && (
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Cover Letter</p>
+                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg text-sm text-slate-700 dark:text-slate-200">
+                  {selectedApplication.coverLetter}
+                </div>
+              </div>
+            )}
+            <div>
+              <p className="text-sm text-gray-500 mb-2">CV Preview</p>
+              {selectedApplication.documents?.cv ? (
+                <div className="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden mb-4">
+                  <iframe
+                    src={selectedApplication.documents.cv}
+                    title="CV Preview"
+                    className="w-full h-64"
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">No CV available for preview.</p>
+              )}
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500 mb-2">Passport</p>
+                {selectedApplication.documents?.passport ? (
+                  <img
+                    src={selectedApplication.documents.passport}
+                    alt="Passport"
+                    className="w-full h-40 object-cover rounded-lg border border-gray-200"
+                  />
+                ) : (
+                  <p className="text-sm text-indigo-600">N/A</p>
+                )}
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-2">National ID</p>
+                {selectedApplication.documents?.nationalId ? (
+                  <img
+                    src={selectedApplication.documents.nationalId}
+                    alt="National ID"
+                    className="w-full h-40 object-cover rounded-lg border border-gray-200"
+                  />
+                ) : (
+                  <p className="text-sm text-indigo-600">N/A</p>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p>No profile selected.</p>
+        )}
+      </Modal>
+
       <div>
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Manage Applications</h1>
-          <div className="flex gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold">Manage Applications</h1>
+            <p className="text-sm text-gray-500">Search, filter, and action candidate applications.</p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setCurrentPage(1)
+                }}
+                placeholder="Search by name, email, or job"
+                className="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-72"
+              />
+            </div>
+            <button
+              onClick={fetchApplications}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition"
+            >
+              <RefreshCcw size={18} />
+              Refresh
+            </button>
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={(e) => {
+                setFilterStatus(e.target.value)
+                setCurrentPage(1)
+              }}
               className="px-4 py-2 border border-gray-300 rounded-lg"
             >
               <option value="all">All Status</option>

@@ -9,7 +9,7 @@ import { jobService, JobApplication } from '@/services/jobService'
 import { formatDate } from '@/utils/helpers'
 
 const InterviewsPage: React.FC = () => {
-  const { isAuthorized, isLoading } = useProtectedRoute('job_seeker')
+  const { isAuthorized, isLoading } = useProtectedRoute('user')
   const { user } = useAuth()
   const { addNotification } = useNotification()
 

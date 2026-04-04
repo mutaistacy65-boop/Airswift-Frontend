@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import Button from '../components/Button'
+import { forgotPassword } from '../api/auth'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -22,18 +23,7 @@ export default function ForgotPassword() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Unable to submit request. Please try again later.')
-      }
+      const response = await forgotPassword(email)
 
       setSubmitted(true)
     } catch (err: any) {

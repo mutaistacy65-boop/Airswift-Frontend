@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Button from '../components/Button'
+import { resetPassword } from '../api/auth'
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('')
@@ -47,18 +48,7 @@ export default function ResetPassword() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token, password }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Failed to reset password.')
-      }
+      const response = await resetPassword(token, password)
 
       setSuccess(true)
     } catch (err: any) {

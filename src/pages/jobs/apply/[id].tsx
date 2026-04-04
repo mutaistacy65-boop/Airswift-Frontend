@@ -84,13 +84,13 @@ const JobApplicationPage: React.FC = () => {
 
     try {
       const formData = new FormData()
-      formData.append('job_id', id as string)
-      formData.append('job_category', selectedCategory)
-      formData.append('cover_letter', coverLetter)
+      formData.append('jobId', id as string)
+      formData.append('jobCategory', selectedCategory)
+      formData.append('coverLetter', coverLetter)
 
       // Add documents
       if (passport) formData.append('passport', passport)
-      if (nationalId) formData.append('national_id', nationalId)
+      if (nationalId) formData.append('nationalId', nationalId)
       if (cv) formData.append('cv', cv)
 
       // Add certificates
