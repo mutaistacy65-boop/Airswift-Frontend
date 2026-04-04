@@ -286,32 +286,56 @@ export default function AdminDashboard() {
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
 
-        // Add user message to chat
-        setChat(prev => [...prev, {
-          text: "Recording completed. Processing your response...",
-          type: 'user',
-          timestamp: new Date()
-        }]);
+        // Transcribe audio
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.wav');
 
-        // Simulate AI processing delay
-        setTimeout(() => {
-          // Simulate AI response based on common interview questions
-          const aiResponses = [
-            "Thank you for sharing that. Can you tell me about a challenging project you've worked on and how you overcame the difficulties?",
-            "That's interesting. How do you handle tight deadlines and competing priorities?",
-            "Great answer. What are your career goals for the next 3-5 years?",
-            "I appreciate your honesty. How do you stay updated with the latest technologies in your field?",
-            "Excellent. Can you give an example of how you've contributed to team success?"
-          ];
+        try {
+          const transcribeRes = await fetch('/api/interview/transcribe', {
+            method: 'POST',
+            body: formData,
+          });
+          const { text } = await transcribeRes.json();
 
-          const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
-
+          // Add user message to chat
           setChat(prev => [...prev, {
-            text: randomResponse,
+            text: text,
+            type: 'user',
+            timestamp: new Date()
+          }]);
+
+          // Prepare messages for OpenAI
+          const messages = chat.map(msg => ({
+            role: msg.type === 'user' ? 'user' : 'assistant',
+            content: msg.text
+          }));
+
+          // Add the new user message
+          messages.push({ role: 'user', content: text });
+
+          // Call interview API
+          const interviewRes = await fetch('/api/interview/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages }),
+          });
+          const { reply } = await interviewRes.json();
+
+          // Add AI response to chat
+          setChat(prev => [...prev, {
+            text: reply,
             type: 'ai',
             timestamp: new Date()
           }]);
-        }, 2000);
+
+        } catch (error) {
+          console.error('Error processing interview:', error);
+          setChat(prev => [...prev, {
+            text: "Sorry, there was an error processing your response. Please try again.",
+            type: 'ai',
+            timestamp: new Date()
+          }]);
+        }
 
         stream.getTracks().forEach(track => track.stop());
         setIsRecording(false);

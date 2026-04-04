@@ -38,11 +38,14 @@ interface AdminApplication {
   updatedAt?: string
 }
 
-const AdminApplicationsPage: React.FC = () => {
+const AdminApplicationsPage = () => {
   const { isAuthorized, isLoading } = useProtectedRoute('admin')
   const { user } = useAuth()
   const { addNotification } = useNotification()
 
+  const [jobDescription, setJobDescription] = useState('')
+  const [recruiterResults, setRecruiterResults] = useState(null)
+  const [recruiterLoading, setRecruiterLoading] = useState(false)
   const [applications, setApplications] = useState<AdminApplication[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedApplication, setSelectedApplication] = useState<AdminApplication | null>(null)
@@ -65,6 +68,9 @@ const AdminApplicationsPage: React.FC = () => {
   const [newStatus, setNewStatus] = useState('')
   const [statusNotes, setStatusNotes] = useState('')
   const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [cvText, setCvText] = useState('')
+  const [cvScore, setCvScore] = useState(null)
+  const [scoringLoading, setScoringLoading] = useState(false)
 
   useEffect(() => {
     if (isAuthorized) {
@@ -136,9 +142,23 @@ const AdminApplicationsPage: React.FC = () => {
     setShowStatusModal(true)
   }
 
-  const handleViewProfile = (application: AdminApplication) => {
-    setSelectedApplication(application)
-    setShowProfileModal(true)
+  const updateApplicationStatus = async (applicationId: string, newStatus: string, notes?: string) => {
+    setUpdatingStatus(true)
+    try {
+      const token = localStorage.getItem('token')
+      await axios.put(`/api/admin/applications/${applicationId}`, {
+        status: newStatus,
+        notes
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      addNotification('Application status updated successfully', 'success')
+      fetchApplications()
+    } catch (error: any) {
+      addNotification(error?.response?.data?.message || 'Failed to update application status', 'error')
+    } finally {
+      setUpdatingStatus(false)
+    }
   }
 
   const submitInterviewSchedule = async () => {
@@ -183,15 +203,46 @@ const AdminApplicationsPage: React.FC = () => {
     }
   }
 
-  const updateApplicationStatus = async (applicationId: string, status: string, notes: string) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : ''
-    await axios.patch(
-      `/api/admin/applications/${applicationId}`,
-      { status, notes },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    )
+  const runAIRecruiter = async () => {
+    if (!jobDescription.trim()) {
+      addNotification('Please enter job description', 'error')
+      return
+    }
+    setRecruiterLoading(true)
+    try {
+      const response = await axios.post('/api/ai/recruiter-agent', {
+        applications,
+        jobDescription
+      })
+      setRecruiterResults(response.data)
+      addNotification('AI Recruiter completed', 'success')
+    } catch (error) {
+      console.error('Error running AI recruiter:', error)
+      addNotification('Failed to run AI recruiter', 'error')
+    } finally {
+      setRecruiterLoading(false)
+    }
+  }
+
+  const scoreCV = async () => {
+    if (!cvText.trim()) {
+      addNotification('Please enter CV text to score', 'error')
+      return
+    }
+    setScoringLoading(true)
+    try {
+      const response = await axios.post('/api/cv/score', {
+        cvText,
+        jobRole: typeof selectedApplication?.jobId === 'string' ? selectedApplication.jobId : selectedApplication?.jobId?.title || 'General'
+      })
+      setCvScore(response.data)
+      addNotification('CV scored successfully', 'success')
+    } catch (error) {
+      console.error('Error scoring CV:', error)
+      addNotification('Failed to score CV', 'error')
+    } finally {
+      setScoringLoading(false)
+    }
   }
 
   const submitStatusUpdate = async () => {
@@ -367,6 +418,30 @@ const AdminApplicationsPage: React.FC = () => {
                 <p className="text-sm text-gray-500">No CV available for preview.</p>
               )}
             </div>
+            <div>
+              <p className="text-sm text-gray-500 mb-2">AI CV Scoring</p>
+              <Textarea
+                placeholder="Paste CV text here for AI scoring..."
+                value={cvText}
+                onChange={(e) => setCvText(e.target.value)}
+                rows={6}
+              />
+              <Button
+                onClick={scoreCV}
+                disabled={scoringLoading}
+                className="mt-2"
+              >
+                {scoringLoading ? 'Scoring...' : 'Score CV with AI'}
+              </Button>
+              {cvScore && (
+                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-100">AI Score: {cvScore.score}/100</h4>
+                  <p className="text-sm text-blue-700 dark:text-blue-200">Recommendation: {cvScore.recommendation}</p>
+                  <p className="text-sm text-blue-700 dark:text-blue-200">Skills: {cvScore.skills.join(', ')}</p>
+                  <p className="text-sm text-blue-700 dark:text-blue-200">Summary: {cvScore.summary}</p>
+                </div>
+              )}
+            </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-500 mb-2">Passport</p>
@@ -442,6 +517,44 @@ const AdminApplicationsPage: React.FC = () => {
                 </option>
               ))}
             </select>
+          </div>
+        </div>
+
+        {/* AI Recruiter Section */}
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4">🤖 Autonomous AI Recruiter</h2>
+          <div className="space-y-4">
+            <Textarea
+              label="Job Description"
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              placeholder="Paste the job description here..."
+              rows={4}
+            />
+            <Button
+              onClick={runAIRecruiter}
+              disabled={recruiterLoading}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {recruiterLoading ? 'Running AI...' : 'Run AI Recruiter'}
+            </Button>
+            {recruiterResults && (
+              <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-900 rounded-lg">
+                <h4 className="font-semibold text-purple-900 dark:text-purple-100">Top Candidates:</h4>
+                <ul className="list-disc list-inside text-sm text-purple-700 dark:text-purple-200">
+                  {recruiterResults.topCandidates.map((candidate, index) => (
+                    <li key={index}>{candidate}</li>
+                  ))}
+                </ul>
+                <h4 className="font-semibold text-purple-900 dark:text-purple-100 mt-2">Rejected:</h4>
+                <ul className="list-disc list-inside text-sm text-purple-700 dark:text-purple-200">
+                  {recruiterResults.rejected.map((candidate, index) => (
+                    <li key={index}>{candidate}</li>
+                  ))}
+                </ul>
+                <p className="text-sm text-purple-700 dark:text-purple-200 mt-2">Reasoning: {recruiterResults.reasoning}</p>
+              </div>
+            )}
           </div>
         </div>
 
