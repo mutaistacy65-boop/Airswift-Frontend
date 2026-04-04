@@ -38,7 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   // OTP verified, now register the user
   try {
     // Call your actual registration API
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL
     if (!apiBaseUrl) {
       return res.status(500).json({ message: 'API base URL not configured' })
     }

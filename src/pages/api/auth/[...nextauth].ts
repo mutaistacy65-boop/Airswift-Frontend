@@ -8,6 +8,7 @@ export default NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
+  secret: process.env.JWT_SECRET,
   callbacks: {
     async signIn({ user, account, profile }) {
       // Here you can handle the sign-in logic

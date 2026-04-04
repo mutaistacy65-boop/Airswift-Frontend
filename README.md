@@ -60,13 +60,13 @@ rm -rf .next node_modules/.cache
 4. Set up environment variables:
 Create a `.env.local` file in the root directory:
 ```env
-NEXT_PUBLIC_API_BASE_URL=https://airswift-backend-fjt3.onrender.com
+NEXT_PUBLIC_API_URL=https://airswift-backend-fjt3.onrender.com
 NEXT_PUBLIC_APP_URL=https://airswift-frontend.vercel.app/
 ```
 
 For local development, use:
 ```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+NEXT_PUBLIC_API_URL=http://localhost:5000
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
