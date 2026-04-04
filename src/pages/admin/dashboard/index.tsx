@@ -84,12 +84,16 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const socketClient = io('/api/socket', {
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || undefined;
+    const socketClient = io(socketUrl || '/api/socket', {
       path: '/api/socket',
     });
 
     socketClient.on('connect', () => {
       console.log('Live interview socket connected');
+    });
+    socketClient.on('disconnect', () => {
+      console.log('Live interview socket disconnected');
     });
 
     socketClient.on('ai-question', (text) => {
@@ -154,14 +158,15 @@ export default function AdminDashboard() {
 
   const startListening = () => {
     if (typeof window === 'undefined') return;
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const win = window as any;
+    const SpeechRecognition = win.SpeechRecognition || win.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert('Speech recognition is not supported in this browser.');
       return;
     }
 
     const recognition = new SpeechRecognition();
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = false;
     recognition.lang = 'en-US';
 

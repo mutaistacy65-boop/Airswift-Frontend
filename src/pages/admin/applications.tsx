@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Search, Eye, FileText, Upload, RefreshCcw } from 'lucide-react'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
@@ -216,6 +217,7 @@ const AdminApplicationsPage = () => {
       })
       setRecruiterResults(response.data)
       addNotification('AI Recruiter completed', 'success')
+      await fetchApplications()
     } catch (error) {
       console.error('Error running AI recruiter:', error)
       addNotification('Failed to run AI recruiter', 'error')
@@ -446,9 +448,11 @@ const AdminApplicationsPage = () => {
               <div>
                 <p className="text-sm text-gray-500 mb-2">Passport</p>
                 {selectedApplication.documents?.passport ? (
-                  <img
+                  <Image
                     src={selectedApplication.documents.passport}
                     alt="Passport"
+                    width={300}
+                    height={160}
                     className="w-full h-40 object-cover rounded-lg border border-gray-200"
                   />
                 ) : (
@@ -458,9 +462,11 @@ const AdminApplicationsPage = () => {
               <div>
                 <p className="text-sm text-gray-500 mb-2">National ID</p>
                 {selectedApplication.documents?.nationalId ? (
-                  <img
+                  <Image
                     src={selectedApplication.documents.nationalId}
                     alt="National ID"
+                    width={300}
+                    height={160}
                     className="w-full h-40 object-cover rounded-lg border border-gray-200"
                   />
                 ) : (
