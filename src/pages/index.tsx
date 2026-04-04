@@ -480,10 +480,7 @@ const Home: React.FC = () => {
             </div>
           </div>
           <div className="border-t border-indigo-500/20 pt-8">
-            <div className="grid md:grid-cols-2 gap-4 text-center md:text-left">
-              <p className="text-slate-400 text-sm">&copy; 2026 AIRSWIFT. All rights reserved. | Connecting Kenya to Canadian Opportunities</p>
-              <p className="text-slate-500 text-xs">Made with <span className="text-red-500">❤</span> to help Kenyans achieve their dreams in Canada</p>
-            </div>
+            <p className="text-slate-400 text-sm text-center">&copy; 2026 AIRSWIFT. All rights reserved. | Connecting Kenya to Canadian Opportunities</p>
           </div>
         </div>
       </footer>
