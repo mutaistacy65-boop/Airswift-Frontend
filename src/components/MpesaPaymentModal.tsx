@@ -8,6 +8,7 @@ interface MpesaPaymentModalProps {
   onConfirm: (phoneNumber: string) => Promise<void>
   amount: number
   description: string
+  currency?: string
 }
 
 const MpesaPaymentModal: React.FC<MpesaPaymentModalProps> = ({
@@ -16,6 +17,7 @@ const MpesaPaymentModal: React.FC<MpesaPaymentModalProps> = ({
   onConfirm,
   amount,
   description,
+  currency = 'KES',
 }) => {
   const [phoneNumber, setPhoneNumber] = useState('')
   const [error, setError] = useState('')
@@ -65,7 +67,7 @@ const MpesaPaymentModal: React.FC<MpesaPaymentModalProps> = ({
       <div className="space-y-4">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-blue-800">
-            <strong>Amount:</strong> KES {amount.toLocaleString()}
+            <strong>Amount:</strong> {currency} {amount.toLocaleString()}
           </p>
           <p className="text-sm text-blue-800 mt-1">
             <strong>Service:</strong> {description}

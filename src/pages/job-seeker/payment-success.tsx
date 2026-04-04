@@ -76,7 +76,9 @@ const PaymentSuccessPage: React.FC = () => {
 
             <div className="flex justify-between items-center">
               <span className="text-slate-400">Amount Paid</span>
-              <span className="font-bold text-green-400">KES {amount || '30,000'}</span>
+              <span className="font-bold text-green-400">
+                {serviceType === 'Interview Fee' ? 'USD' : 'KES'} {amount || (serviceType === 'Interview Fee' ? '3' : '30,000')}
+              </span>
             </div>
 
             <div className="flex justify-between items-center">
@@ -88,8 +90,17 @@ const PaymentSuccessPage: React.FC = () => {
           {/* Status Message */}
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-8">
             <p className="text-blue-300 text-sm">
-              <strong>Visa processing started!</strong><br />
-              You will receive updates via email and SMS. Processing typically takes 2-4 weeks.
+              {serviceType === 'Interview Fee' ? (
+                <>
+                  <strong>Interview scheduled!</strong><br />
+                  Your AI voice interview has been scheduled. You will receive details via email and SMS.
+                </>
+              ) : (
+                <>
+                  <strong>Visa processing started!</strong><br />
+                  You will receive updates via email and SMS. Processing typically takes 2-4 weeks.
+                </>
+              )}
             </p>
           </div>
 

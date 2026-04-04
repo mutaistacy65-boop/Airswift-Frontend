@@ -38,14 +38,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const router = useRouter()
 
   useEffect(() => {
-    // Check for token in URL params after Google OAuth redirect
-    const token = new URLSearchParams(window.location.search).get("token");
-    if (token) {
-      localStorage.setItem("accessToken", token);
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-
     // Check if user is already logged in by making a request to /me endpoint
     verifyAuthStatus()
   }, [])

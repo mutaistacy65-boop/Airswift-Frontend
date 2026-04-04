@@ -8,7 +8,15 @@ import '@/styles/globals.css'
 
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
-    // Prevent hydration mismatch
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+
+    if (token) {
+      localStorage.setItem("accessToken", token);
+
+      // remove token from URL
+      window.history.replaceState({}, document.title, "/dashboard");
+    }
   }, [])
 
   return (

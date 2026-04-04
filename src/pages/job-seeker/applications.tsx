@@ -230,6 +230,7 @@ const ApplicationsPage: React.FC = () => {
         onConfirm={selectedApplication?.status === 'accepted' ? handleInterviewPayment : handleVisaPayment}
         amount={selectedApplication?.status === 'accepted' ? PAYMENT_AMOUNTS.INTERVIEW_FEE : PAYMENT_AMOUNTS.VISA_PROCESSING}
         description={selectedApplication?.status === 'accepted' ? 'Interview fee' : 'Visa processing fee'}
+        currency={selectedApplication?.status === 'accepted' ? 'USD' : 'KES'}
       />
 
       <div>

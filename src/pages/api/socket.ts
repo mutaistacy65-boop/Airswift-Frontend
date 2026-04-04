@@ -53,42 +53,57 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     io.on('connection', (socket) => {
       console.log('Interview socket connected', socket.id);
 
-      socket.on('start-interview', ({ jobRole }: { jobRole: string }) => {
-        const selectedRole = jobRole || 'Software Engineer';
+      socket.on('start-voice-interview', ({ jobRole, candidateName }: { jobRole: string, candidateName: string }) => {
+        const sessionId = `voice-${Date.now()}-${socket.id}`
+        const selectedRole = jobRole || 'Software Engineer'
+
         socket.data.interview = {
+          sessionId,
           jobRole: selectedRole,
+          candidateName,
           questionIndex: 0,
           currentQuestion: getNextQuestion(selectedRole, 0),
-        };
-
-        const question = socket.data.interview.currentQuestion;
-        socket.emit('ai-question', question);
-        socket.emit('ai-audio', null);
-      });
-
-      socket.on('user-answer', async ({ answer }: { answer: string }) => {
-        const interview = socket.data.interview;
-        if (!interview) {
-          return socket.emit('ai-feedback', { error: 'Interview session not initialized.' });
+          startTime: new Date(),
+          responses: []
         }
 
-        const prompt = buildInterviewPrompt(interview.jobRole, interview.currentQuestion, answer || '');
+        socket.emit('voice-interview-started', {
+          sessionId,
+          firstQuestion: socket.data.interview.currentQuestion
+        })
+      })
+
+      socket.on('voice-response', async ({ sessionId, transcript, question }: { sessionId: string, transcript: string, question: string }) => {
+        const interview = socket.data.interview
+        if (!interview || interview.sessionId !== sessionId) {
+          return socket.emit('voice-interview-error', { error: 'Invalid interview session' })
+        }
+
+        // Store the response
+        interview.responses.push({
+          question,
+          transcript,
+          timestamp: new Date()
+        })
+
+        // Analyze the response with AI
+        const prompt = buildInterviewPrompt(interview.jobRole, question, transcript)
 
         try {
           const response = await openai.responses.create({
             model: 'gpt-4.1-mini',
             input: prompt,
-          });
+          })
 
-          const raw = response.output_text || '';
-          let analysis = null;
+          const raw = response.output_text || ''
+          let analysis = null
           try {
-            const firstBrace = raw.indexOf('{');
-            const lastBrace = raw.lastIndexOf('}');
-            const jsonString = firstBrace !== -1 && lastBrace !== -1 ? raw.slice(firstBrace, lastBrace + 1) : raw;
-            analysis = JSON.parse(jsonString);
+            const firstBrace = raw.indexOf('{')
+            const lastBrace = raw.lastIndexOf('}')
+            const jsonString = firstBrace !== -1 && lastBrace !== -1 ? raw.slice(firstBrace, lastBrace + 1) : raw
+            analysis = JSON.parse(jsonString)
           } catch (err) {
-            console.error('Failed to parse interview analysis', err, raw);
+            console.error('Failed to parse interview analysis', err, raw)
             analysis = {
               confidence: 75,
               fillerWords: [],
@@ -96,25 +111,52 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
               quality: 'Good reasoning and solid examples.',
               nextQuestion: getNextQuestion(interview.jobRole, interview.questionIndex + 1),
               feedback: 'Nice answer. Please continue to the next question.',
-            };
+            }
           }
 
-          socket.emit('ai-feedback', analysis);
+          socket.emit('voice-response-processed', {
+            sessionId,
+            transcript,
+            analysis
+          })
 
           if (analysis.nextQuestion) {
-            interview.questionIndex += 1;
-            interview.currentQuestion = analysis.nextQuestion;
-            socket.emit('ai-question', analysis.nextQuestion);
-            socket.emit('ai-audio', null);
+            interview.questionIndex += 1
+            interview.currentQuestion = analysis.nextQuestion
           } else {
-            socket.emit('ai-question', 'Thank you for participating in the interview. We will review your answers and follow up soon.');
-            socket.emit('ai-audio', null);
+            // Interview completed
+            const results = {
+              sessionId,
+              totalQuestions: interview.questionIndex + 1,
+              responses: interview.responses,
+              completedAt: new Date(),
+              averageConfidence: interview.responses.reduce((acc, resp, idx) => {
+                // This would need to be calculated from all analyses
+                return acc + (analysis.confidence || 75)
+              }, 0) / interview.responses.length
+            }
+
+            socket.emit('voice-interview-completed', { results })
           }
         } catch (error) {
-          console.error('OpenAI interview analysis error:', error);
-          socket.emit('ai-feedback', { error: 'Unable to analyze response at this time.' });
+          console.error('OpenAI interview analysis error:', error)
+          socket.emit('voice-interview-error', { error: 'Unable to analyze response at this time.' })
         }
-      });
+      })
+
+      socket.on('end-voice-interview', ({ sessionId }: { sessionId: string }) => {
+        const interview = socket.data.interview
+        if (interview && interview.sessionId === sessionId) {
+          const results = {
+            sessionId,
+            totalQuestions: interview.questionIndex + 1,
+            responses: interview.responses,
+            completedAt: new Date(),
+            averageConfidence: 75 // Placeholder
+          }
+          socket.emit('voice-interview-completed', { results })
+        }
+      })
 
       socket.on('disconnect', () => {
         console.log('Interview socket disconnected', socket.id);

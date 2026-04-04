@@ -12,6 +12,7 @@ import Button from '@/components/Button'
 import Modal from '@/components/Modal'
 import Input from '@/components/Input'
 import Textarea from '@/components/Textarea'
+import CVAnalysis from '@/components/CVAnalysis'
 import { APPLICATION_STATUS } from '@/utils/constants'
 import { formatDate } from '@/utils/helpers'
 
@@ -53,6 +54,7 @@ const AdminApplicationsPage = () => {
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [showStatusModal, setShowStatusModal] = useState(false)
+  const [showCVAnalysisModal, setShowCVAnalysisModal] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -474,9 +476,38 @@ const AdminApplicationsPage = () => {
                 )}
               </div>
             </div>
+
+            {/* CV Analysis Button */}
+            <div className="flex justify-center pt-4">
+              <Button
+                onClick={() => {
+                  setShowProfileModal(false)
+                  setShowCVAnalysisModal(true)
+                }}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                🔍 Analyze CV with AI
+              </Button>
+            </div>
           </div>
         ) : (
           <p>No profile selected.</p>
+        )}
+      </Modal>
+
+      {/* CV Analysis Modal */}
+      <Modal
+        isOpen={showCVAnalysisModal}
+        onClose={() => setShowCVAnalysisModal(false)}
+        title="AI CV Analysis"
+      >
+        {selectedApplication && (
+          <CVAnalysis
+            jobRole={typeof selectedApplication.jobId === 'string' ? selectedApplication.jobId : selectedApplication.jobId?.title || 'Software Engineer'}
+            onAnalysisComplete={(result) => {
+              addNotification(`CV analysis complete! Score: ${result.score}/100 - ${result.recommendation}`, 'success')
+            }}
+          />
         )}
       </Modal>
 
