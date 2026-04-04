@@ -108,8 +108,10 @@ const Home: React.FC = () => {
               <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 sm:p-6 md:p-10">
                 <div className="flex flex-col justify-center text-left text-white">
                   <p className="text-xs sm:text-sm uppercase tracking-wider text-emerald-300 mb-2">Global Talent Meets Opportunity</p>
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-4">
-                    Your Gateway to<br />Premium Canadian<br />Career Opportunities
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-4 whitespace-pre-line">
+                    {`Your Gateway to
+Premium Canadian
+Career Opportunities`}
                   </h1>
                   <p className="text-xs sm:text-sm md:text-base text-slate-200 max-w-xl mb-8">
                     Discover thousands of verified job opportunities with Canada's top employers. Get personalized career guidance, visa sponsorship support, and interview preparation from industry experts. Build your professional future with confidence.
