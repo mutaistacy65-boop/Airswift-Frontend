@@ -110,6 +110,65 @@ const JobSeekerDashboard: React.FC = () => {
               </Link>
             </div>
           </div>
+
+          <div className="mt-12 grid md:grid-cols-2 gap-6">
+            <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-6 rounded-xl border border-blue-500/20">
+              <h3 className="text-lg font-semibold text-blue-400 mb-3">🎯 Profile Strength</h3>
+              <div className="bg-slate-800/50 rounded-lg p-4 mb-4">
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm text-slate-300">Completion Status</span>
+                  <span className="text-sm font-semibold text-green-400">85%</span>
+                </div>
+                <div className="w-full bg-slate-700 rounded-full h-2">
+                  <div className="bg-green-500 h-2 rounded-full" style={{width: '85%'}}></div>
+                </div>
+              </div>
+              <p className="text-sm text-slate-400">Add more details to your profile to improve visibility with employers</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 p-6 rounded-xl border border-purple-500/20">
+              <h3 className="text-lg font-semibold text-purple-400 mb-3">💼 Recommended for You</h3>
+              <ul className="space-y-2 text-sm text-slate-300">
+                <li>✓ 3 new jobs matching your skills</li>
+                <li>✓ Senior Developer at TechCorp</li>
+                <li>✓ Vancouver, BC • $85K-$110K</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-12">
+            <h2 className="text-xl font-semibold mb-6">Why Choose AIRSWIFT?</h2>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="bg-slate-800/40 p-5 rounded-lg border border-slate-700/50">
+                <div className="text-2xl mb-3">🌍</div>
+                <h4 className="font-semibold mb-2">Access to Top Canadian Jobs</h4>
+                <p className="text-sm text-slate-400">Curated opportunities from leading employers across Canada</p>
+              </div>
+              <div className="bg-slate-800/40 p-5 rounded-lg border border-slate-700/50">
+                <div className="text-2xl mb-3">🤖</div>
+                <h4 className="font-semibold mb-2">AI-Powered Matching</h4>
+                <p className="text-sm text-slate-400">Smart recommendations based on your skills and experience</p>
+              </div>
+              <div className="bg-slate-800/40 p-5 rounded-lg border border-slate-700/50">
+                <div className="text-2xl mb-3">⚡</div>
+                <h4 className="font-semibold mb-2">Fast-Track Interviews</h4>
+                <p className="text-sm text-slate-400">Direct interview scheduling with hiring managers</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-12 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 p-8 rounded-xl border border-indigo-500/30">
+            <h2 className="text-2xl font-semibold mb-3">Ready to Advance Your Career?</h2>
+            <p className="text-slate-300 mb-6">Complete your profile, explore job opportunities, and connect with top Canadian employers. Your dream job is just a few clicks away.</p>
+            <div className="flex gap-4">
+              <Link href="/jobs" className="bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded-lg font-semibold transition">
+                Explore Opportunities
+              </Link>
+              <Link href="/job-seeker/profile" className="bg-slate-700 hover:bg-slate-600 px-6 py-2 rounded-lg font-semibold transition">
+                Complete Profile
+              </Link>
+            </div>
+          </div>
         </motion.div>
       </main>
     </div>
