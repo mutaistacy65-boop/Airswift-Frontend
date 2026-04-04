@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { FileText, Image as ImageIcon, Video, Mic, MicOff, Monitor, Phone, Calendar, Star, AlertCircle, CheckCircle, Shield } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { io } from "socket.io-client";
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 
@@ -16,6 +17,14 @@ export default function AdminDashboard() {
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [error, setError] = useState(null);
   const [interviewNotes, setInterviewNotes] = useState("");
+  const [socket, setSocket] = useState(null);
+  const [liveInterviewMessages, setLiveInterviewMessages] = useState([]);
+  const [currentQuestion, setCurrentQuestion] = useState("");
+  const [liveJobRole, setLiveJobRole] = useState('Software Engineer');
+  const [isInterviewActive, setIsInterviewActive] = useState(false);
+  const [speechStatus, setSpeechStatus] = useState('idle');
+  const [speechRecognition, setSpeechRecognition] = useState(null);
+  const [aiInterviewFeedback, setAiInterviewFeedback] = useState(null);
 
   // Video interview refs
   const localVideoRef = useRef(null);
@@ -71,6 +80,124 @@ export default function AdminDashboard() {
       fetchData();
     }
   }, [isAuthorized]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const socketClient = io('/api/socket', {
+      path: '/api/socket',
+    });
+
+    socketClient.on('connect', () => {
+      console.log('Live interview socket connected');
+    });
+
+    socketClient.on('ai-question', (text) => {
+      setCurrentQuestion(text);
+      setLiveInterviewMessages((prev) => [...prev, { role: 'ai', text, timestamp: new Date() }]);
+      speak(text);
+    });
+
+    socketClient.on('ai-feedback', (feedback) => {
+      setAiInterviewFeedback(feedback);
+    });
+
+    socketClient.on('ai-audio', (buffer) => {
+      if (!buffer) {
+        speak(currentQuestion);
+        return;
+      }
+      try {
+        const blob = new Blob([buffer], { type: 'audio/mpeg' });
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.play();
+      } catch (error) {
+        console.error('Error playing AI audio', error);
+        speak(currentQuestion);
+      }
+    });
+
+    setSocket(socketClient);
+
+    return () => {
+      if (socketClient) {
+        socketClient.disconnect();
+      }
+      if (speechRecognition) {
+        speechRecognition.stop();
+      }
+    };
+  }, []);
+
+  const speak = (text) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 1;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const startLiveInterview = () => {
+    if (!socket) {
+      alert('Socket connection not established. Please refresh the page.');
+      return;
+    }
+
+    setLiveInterviewMessages([]);
+    setCurrentQuestion('');
+    setAiInterviewFeedback(null);
+    setIsInterviewActive(true);
+    const role = selectedApp ? (typeof selectedApp.jobId === 'string' ? selectedApp.jobId : selectedApp.jobId?.title || 'Software Engineer') : liveJobRole;
+    socket.emit('start-interview', { jobRole: role });
+  };
+
+  const startListening = () => {
+    if (typeof window === 'undefined') return;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setSpeechStatus('listening');
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setLiveInterviewMessages((prev) => [...prev, { role: 'user', text: transcript, timestamp: new Date() }]);
+      if (socket) {
+        socket.emit('user-answer', { answer: transcript });
+      }
+      setSpeechStatus('processing');
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      setSpeechStatus('error');
+    };
+
+    recognition.onend = () => {
+      setSpeechStatus('idle');
+    };
+
+    recognition.start();
+    setSpeechRecognition(recognition);
+  };
+
+  const stopLiveInterview = () => {
+    if (speechRecognition) {
+      speechRecognition.stop();
+    }
+    setSpeechStatus('idle');
+    setIsInterviewActive(false);
+  };
 
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>
@@ -435,6 +562,16 @@ export default function AdminDashboard() {
               }`}
             >
               🎤 AI Voice Bot
+            </button>
+            <button
+              onClick={() => setActiveTab("live")}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                activeTab === "live"
+                  ? "bg-indigo-600 text-white shadow-md"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              🗣️ Live Interview
             </button>
             <button
               onClick={() => setActiveTab("analytics")}
