@@ -1,70 +1,124 @@
-import API from './apiClient'
+// Base API URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com';
 
-export const authService = {
-  login: async (email: string, password: string) => {
-    const response = await API.post('/login', {
-      email,
-      password,
-    })
-    return response.data
-  },
-
+const AuthService = {
+  // Registration
   register: async (name: string, email: string, password: string) => {
-    const response = await API.post('/register', {
-      name,
-      email,
-      password,
-    })
-    return response.data
-  },
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      });
 
-  updateProfile: async (userData: any) => {
-    const response = await API.put('/profile', userData)
-    return response.data
-  },
+      const data = await response.json();
 
-  uploadProfileImage: async (file: File) => {
-    const formData = new FormData()
-    formData.append('cv', file)
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
 
-    const response = await API.post('/profile/upload-cv', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-    return response.data
-  },
-
-  changePassword: async (oldPassword: string, newPassword: string) => {
-    const response = await API.post('/auth/change-password', {
-      oldPassword,
-      newPassword,
-    })
-    return response.data
-  },
-
-  forgotPassword: async (email: string) => {
-    // Use local mock API during development; replace with external endpoint as needed.
-    const response = await API.post('/api/auth/forgot-password', { email })
-    return response.data
-  },
-
-  sendRegistrationOTP: async (userData: { name: string; email: string; password: string; role?: string }) => {
-    const payload = {
-      ...userData,
-      role: userData.role || 'job-seeker',
+      return data;
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
     }
-    const response = await API.post('/api/auth/send-registration-otp', payload)
-    return response.data
   },
 
-  resendRegistrationOTP: async (email: string, name?: string, password?: string) => {
-    if (!email || !name || !password) {
-      throw new Error('Missing email, name, or password for OTP resend.')
+  // Login
+  login: async (email: string, password: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      // Store token
+      localStorage.setItem('token', data.accessToken);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      return data;
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
-    return authService.sendRegistrationOTP({ email, name, password, role: 'job-seeker' })
   },
 
-  verifyRegistrationOTP: async (email: string, otp: string) => {
-    const response = await API.post('/api/auth/verify-registration-otp', { email, otp })
-    return response.data
+  // Get Profile (Protected)
+  getProfile: async () => {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      throw new Error('No token found');
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Token expired or invalid
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        throw new Error(data.message || 'Unauthorized');
+      }
+
+      return data.user;
+    } catch (error) {
+      console.error('Profile fetch error:', error);
+      throw error;
+    }
   },
-}
+
+  // Logout
+  logout: async () => {
+    const token = localStorage.getItem('token');
+
+    try {
+      await fetch(`${API_BASE_URL}/api/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+
+    // Clear local storage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  },
+
+  // Get stored user
+  getStoredUser: () => {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
+  },
+
+  // Check if authenticated
+  isAuthenticated: () => {
+    return !!localStorage.getItem('token');
+  },
+
+  // Get token
+  getToken: () => {
+    return localStorage.getItem('token');
+  }
+};
+
+export default AuthService;

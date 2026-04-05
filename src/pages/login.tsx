@@ -3,7 +3,6 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Button from '../components/Button'
 import Input from '../components/Input'
-import { loginUser } from '../api/auth'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
@@ -17,16 +16,10 @@ export default function Login() {
     setLoading(true)
 
     try {
-      const data = await loginUser(form)
-
-      if (data.accessToken) {
-        localStorage.setItem('accessToken', data.accessToken)
-        window.location.href = '/dashboard'
-      } else {
-        throw new Error('Login failed: access token not returned')
-      }
+      await login(form.email, form.password)
     } catch (err: any) {
-      alert(err?.message || 'Login failed')
+      alert(err.message || 'Login failed')
+      console.error('Login failed:', err)
     } finally {
       setLoading(false)
     }
@@ -181,6 +174,19 @@ export default function Login() {
                 Create one here
               </Link>
             </p>
+          </div>
+
+          {/* Test Credentials Info */}
+          <div className="mt-8 p-4 bg-gray-50 rounded-lg border">
+            <h4 className="text-sm font-medium text-gray-900 mb-2">Test Credentials:</h4>
+            <div className="text-sm text-gray-600 space-y-1">
+              <p>
+                <strong>Admin:</strong> admin@airswift.com / Admin123!
+              </p>
+              <p>
+                <strong>User:</strong> testuser@example.com / TestPassword123!
+              </p>
+            </div>
           </div>
         </div>
       </div>

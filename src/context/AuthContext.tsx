@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { loginUser, registerUser, refreshToken } from '@/api/auth'
+import AuthService from '@/services/authService'
 
 interface User {
   id: string
@@ -61,13 +62,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
-      const data = await loginUser({ email, password })
+      const data = await AuthService.login(email, password)
 
-      // After successful login, verify auth status to get user data
-      await verifyAuthStatus()
+      // Set user in context
+      setUser(data.user)
 
-      // Redirect to dashboard - protected routes will handle role-based redirection
-      router.push('/dashboard')
+      // Redirect based on role
+      router.push(data.user.role === 'admin' ? '/admin/dashboard' : '/job-seeker/dashboard')
     } catch (error: any) {
       console.error('Login failed:', error)
       throw error
@@ -94,15 +95,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      })
+      await AuthService.logout()
     } catch (error) {
       console.error('Logout failed:', error)
     }
     setUser(null)
-    router.push('/')
+    router.push('/login')
   }
 
   const updateUser = (userData: Partial<User>) => {

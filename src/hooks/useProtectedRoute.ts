@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '@/context/AuthContext'
+import AuthService from '@/services/authService'
 
 export const useProtectedRoute = (requiredRole?: 'admin' | 'user') => {
   const router = useRouter()
@@ -8,11 +9,11 @@ export const useProtectedRoute = (requiredRole?: 'admin' | 'user') => {
 
   useEffect(() => {
     if (!isLoading) {
-      if (!user) {
+      if (!AuthService.isAuthenticated()) {
         router.push('/login')
-      } else if (requiredRole && user.role !== requiredRole) {
+      } else if (requiredRole && user?.role !== requiredRole) {
         // Redirect based on user role
-        if (user.role === 'admin') {
+        if (user?.role === 'admin') {
           router.push('/admin/dashboard')
         } else {
           router.push('/job-seeker/dashboard')
@@ -22,7 +23,7 @@ export const useProtectedRoute = (requiredRole?: 'admin' | 'user') => {
   }, [isLoading, user, router, requiredRole])
 
   return {
-    isAuthorized: !isLoading && user && (!requiredRole || user.role === requiredRole),
+    isAuthorized: !isLoading && AuthService.isAuthenticated() && (!requiredRole || user?.role === requiredRole),
     isLoading
   }
 }
