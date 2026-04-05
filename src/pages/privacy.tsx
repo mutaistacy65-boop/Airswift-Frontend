@@ -4,7 +4,7 @@ import { Lock, Eye, Database, ShieldCheck } from 'lucide-react'
 
 const PrivacyPolicy: React.FC = () => {
   return (
-    <div className="min-h-screen bg-white text-gray-900\">
+    <div className="min-h-screen bg-white text-gray-900">
       <div className="max-w-4xl mx-auto px-6 py-16">
         {/* Hero Section */}
         <motion.div
@@ -59,23 +59,23 @@ const PrivacyPolicy: React.FC = () => {
           transition={{ delay: 0.2 }}
           className="mb-12"
         >
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-            <h2 className="text-2xl font-bold mb-6 text-indigo-400 flex items-center gap-3">
-              <Database className="text-blue-400" size={28} />
+          <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+            <h2 className="text-2xl font-bold mb-6 text-primary flex items-center gap-3">
+              <Database className="text-secondary" size={28} />
               Information We Collect
             </h2>
-            <div className="space-y-4 text-slate-300">
+            <div className="space-y-4 text-gray-700">
               <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
-                <p>Email address for account verification and communication</p>
+                <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0"></div>
+                <p>Email address for account verification and communication.</p>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
-                <p>Phone number for OTP verification only</p>
+                <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0"></div>
+                <p>Phone number for OTP verification only.</p>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
-                <p>Usage analytics to improve platform performance</p>
+                <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0"></div>
+                <p>Usage analytics to improve platform performance.</p>
               </div>
             </div>
           </div>
@@ -88,27 +88,27 @@ const PrivacyPolicy: React.FC = () => {
           transition={{ delay: 0.3 }}
           className="mb-12"
         >
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-            <h2 className="text-2xl font-bold mb-6 text-indigo-400 flex items-center gap-3">
-              <Eye className="text-purple-400" size={28} />
+          <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+            <h2 className="text-2xl font-bold mb-6 text-primary flex items-center gap-3">
+              <Eye className="text-secondary" size={28} />
               Security Features
             </h2>
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
-                <h3 className="font-semibold text-green-300 mb-2">OTP Verification</h3>
-                <p className="text-slate-400 text-sm">Secure one-time password authentication</p>
+              <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4">
+                <h3 className="font-semibold text-secondary mb-2">OTP Verification</h3>
+                <p className="text-gray-600 text-sm">Secure one-time password authentication.</p>
               </div>
-              <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
-                <h3 className="font-semibold text-green-300 mb-2">Session Management</h3>
-                <p className="text-slate-400 text-sm">Automatic session timeout for security</p>
+              <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4">
+                <h3 className="font-semibold text-secondary mb-2">Session Management</h3>
+                <p className="text-gray-600 text-sm">Automatic session timeout for security.</p>
               </div>
-              <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
-                <h3 className="font-semibold text-green-300 mb-2">Data Encryption</h3>
-                <p className="text-slate-400 text-sm">End-to-end encryption for all data</p>
+              <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4">
+                <h3 className="font-semibold text-secondary mb-2">Data Encryption</h3>
+                <p className="text-gray-600 text-sm">End-to-end encryption for all data.</p>
               </div>
-              <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
-                <h3 className="font-semibold text-green-300 mb-2">Access Monitoring</h3>
-                <p className="text-slate-400 text-sm">Continuous monitoring of account activity</p>
+              <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4">
+                <h3 className="font-semibold text-secondary mb-2">Access Monitoring</h3>
+                <p className="text-gray-600 text-sm">Continuous monitoring of account activity.</p>
               </div>
             </div>
           </div>
@@ -121,27 +121,27 @@ const PrivacyPolicy: React.FC = () => {
           transition={{ delay: 0.4 }}
           className="mb-12"
         >
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-            <h2 className="text-2xl font-bold mb-6 text-indigo-400 flex items-center gap-3">
-              <Lock className="text-orange-400" size={28} />
+          <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+            <h2 className="text-2xl font-bold mb-6 text-primary flex items-center gap-3">
+              <Lock className="text-accent" size={28} />
               Usage Policies
             </h2>
-            <div className="space-y-4 text-slate-300">
+            <div className="space-y-4 text-gray-700">
               <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-orange-400 rounded-full mt-2 flex-shrink-0"></div>
-                <p>Data is used solely for platform functionality and security</p>
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                <p>Data is used solely for platform functionality and security.</p>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-orange-400 rounded-full mt-2 flex-shrink-0"></div>
-                <p>No data is sold or shared with third parties</p>
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                <p>No data is sold or shared with third parties.</p>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-orange-400 rounded-full mt-2 flex-shrink-0"></div>
-                <p>Users can request data deletion at any time</p>
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                <p>Users can request data deletion at any time.</p>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-orange-400 rounded-full mt-2 flex-shrink-0"></div>
-                <p>Compliance with international data protection standards</p>
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                <p>Compliance with international data protection standards.</p>
               </div>
             </div>
           </div>
@@ -154,10 +154,10 @@ const PrivacyPolicy: React.FC = () => {
           transition={{ delay: 0.5 }}
           className="text-center"
         >
-          <div className="bg-indigo-600/20 border border-indigo-500/30 rounded-2xl p-6">
-            <ShieldCheck className="mx-auto mb-4 text-green-400" size={48} />
-            <h3 className="text-xl font-semibold mb-2 text-indigo-300">Our Commitment</h3>
-            <p className="text-slate-300">
+          <div className="bg-primary/10 border border-primary/20 rounded-2xl p-6">
+            <ShieldCheck className="mx-auto mb-4 text-primary" size={48} />
+            <h3 className="text-xl font-semibold mb-2 text-primary">Our Commitment</h3>
+            <p className="text-gray-700">
               AIRSWIFT is committed to maintaining the highest standards of data privacy and security. Your trust is our foundation.
             </p>
           </div>

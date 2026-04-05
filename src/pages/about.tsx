@@ -96,32 +96,32 @@ const About: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-            <h2 className="text-3xl font-bold mb-6 text-indigo-400 flex items-center gap-3">
-              <Globe className="text-green-400" size={32} />
+          <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+            <h2 className="text-3xl font-bold mb-6 text-primary flex items-center gap-3">
+              <Globe className="text-primary" size={32} />
               Platform Features
             </h2>
             <div className="grid md:grid-cols-3 gap-6">
               <div className="text-center">
-                <div className="bg-indigo-600 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                  <Shield size={32} className="text-white" />
+                <div className="bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                  <Shield size={32} className="text-primary" />
                 </div>
                 <h3 className="font-semibold mb-2">Secure Auth</h3>
-                <p className="text-slate-400">Enterprise-grade security for all users</p>
+                <p className="text-gray-600">Enterprise-grade security for all users.</p>
               </div>
               <div className="text-center">
-                <div className="bg-indigo-600 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                  <Zap size={32} className="text-white" />
+                <div className="bg-secondary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                  <Zap size={32} className="text-secondary" />
                 </div>
                 <h3 className="font-semibold mb-2">Fast & Scalable</h3>
-                <p className="text-slate-400">Built for performance and growth</p>
+                <p className="text-gray-600">Built for performance and growth.</p>
               </div>
               <div className="text-center">
-                <div className="bg-indigo-600 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                  <Smartphone size={32} className="text-white" />
+                <div className="bg-accent/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                  <Smartphone size={32} className="text-accent" />
                 </div>
                 <h3 className="font-semibold mb-2">Cross-Platform</h3>
-                <p className="text-slate-400">Seamless web and mobile experience</p>
+                <p className="text-gray-600">Seamless web and mobile experience.</p>
               </div>
             </div>
           </div>
@@ -134,10 +134,8 @@ const About: React.FC = () => {
           transition={{ delay: 0.4 }}
           className="text-center mt-16"
         >
-          <Link href="/register">
-            <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 transform hover:scale-105">
-              Get Started with AIRSWIFT
-            </button>
+          <Link href="/register" className="inline-flex bg-primary hover:bg-green-600 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 transform hover:scale-105">
+            Get Started with AIRSWIFT
           </Link>
         </motion.div>
       </div>
