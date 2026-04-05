@@ -57,10 +57,11 @@ const JobsPage: React.FC = () => {
     ) : (
     <MainLayout>
       <div>
-        <h1 className="text-3xl font-bold mb-8">Browse Jobs</h1>
+        <h1 className="text-4xl font-bold mb-2 text-gray-900">Browse Opportunities</h1>
+        <p className="text-gray-600 mb-8">Find your next career opportunity from our curated job listings</p>
 
         {/* Filters */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8 grid md:grid-cols-2 gap-4">
+        <div className="bg-white p-6 rounded-lg shadow-sm mb-8 grid md:grid-cols-2 gap-4 border border-gray-100">
           <Input
             label="Search Jobs"
             placeholder="Job title, company, location..."

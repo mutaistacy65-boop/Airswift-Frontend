@@ -43,43 +43,43 @@ export default function AdminDashboard() {
             <>
               {/* Main Stats Grid */}
               <div className="grid md:grid-cols-4 gap-4 mb-8">
-                <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-6 rounded-xl border border-blue-500/20">
+                <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-6 rounded-xl border border-primary/20">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-slate-400 text-sm mb-1">Total Users</p>
                       <p className="text-3xl font-bold">{data.stats?.users || 0}</p>
                     </div>
-                    <Users className="text-blue-400" size={32} />
+                    <Users className="text-primary" size={32} />
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 p-6 rounded-xl border border-purple-500/20">
+                <div className="bg-gradient-to-br from-secondary/10 to-secondary/5 p-6 rounded-xl border border-secondary/20">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-slate-400 text-sm mb-1">Active Jobs</p>
                       <p className="text-3xl font-bold">{data.stats?.jobs || 0}</p>
                     </div>
-                    <Briefcase className="text-purple-400" size={32} />
+                    <Briefcase className="text-secondary" size={32} />
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 p-6 rounded-xl border border-green-500/20">
+                <div className="bg-gradient-to-br from-accent/10 to-accent/5 p-6 rounded-xl border border-accent/20">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-slate-400 text-sm mb-1">Applications</p>
                       <p className="text-3xl font-bold">{data.stats?.applications || 0}</p>
                     </div>
-                    <FileText className="text-green-400" size={32} />
+                    <FileText className="text-accent" size={32} />
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 p-6 rounded-xl border border-orange-500/20">
+                <div className="bg-gradient-to-br from-teal-500/10 to-teal-600/5 p-6 rounded-xl border border-teal-500/20">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-slate-400 text-sm mb-1">Conversion Rate</p>
                       <p className="text-3xl font-bold">24.5%</p>
                     </div>
-                    <TrendingUp className="text-orange-400" size={32} />
+                    <TrendingUp className="text-teal-400" size={32} />
                   </div>
                 </div>
               </div>
@@ -89,25 +89,25 @@ export default function AdminDashboard() {
                 <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
                 <div className="grid md:grid-cols-4 gap-4">
                   <Link href="/admin/jobs" className="bg-slate-800 hover:bg-slate-700 p-4 rounded-lg transition border border-slate-700">
-                    <Briefcase size={24} className="mb-2 text-purple-400" />
+                    <Briefcase size={24} className="mb-2 text-secondary" />
                     <h3 className="font-semibold">Manage Jobs</h3>
                     <p className="text-sm text-slate-400">Post and edit opportunities</p>
                   </Link>
 
                   <Link href="/admin/applications" className="bg-slate-800 hover:bg-slate-700 p-4 rounded-lg transition border border-slate-700">
-                    <FileText size={24} className="mb-2 text-green-400" />
+                    <FileText size={24} className="mb-2 text-accent" />
                     <h3 className="font-semibold">Applications</h3>
                     <p className="text-sm text-slate-400">Review submissions</p>
                   </Link>
 
                   <Link href="/admin/categories" className="bg-slate-800 hover:bg-slate-700 p-4 rounded-lg transition border border-slate-700">
-                    <BarChart3 size={24} className="mb-2 text-blue-400" />
+                    <BarChart3 size={24} className="mb-2 text-primary" />
                     <h3 className="font-semibold">Categories</h3>
                     <p className="text-sm text-slate-400">Manage job categories</p>
                   </Link>
 
                   <Link href="/admin/settings" className="bg-slate-800 hover:bg-slate-700 p-4 rounded-lg transition border border-slate-700">
-                    <Settings size={24} className="mb-2 text-orange-400" />
+                    <Settings size={24} className="mb-2 text-accent" />
                     <h3 className="font-semibold">Settings</h3>
                     <p className="text-sm text-slate-400">System configuration</p>
                   </Link>

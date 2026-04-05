@@ -62,10 +62,10 @@ export default function AdminDashboard() {
 
       setApplications(appsRes);
       setStats([
-        { name: "Total Users", value: statsRes.users || 0, icon: "👥", color: "bg-blue-500" },
-        { name: "Applications", value: statsRes.applications || 0, icon: "📋", color: "bg-green-500" },
-        { name: "Active Jobs", value: statsRes.jobs || 0, icon: "💼", color: "bg-purple-500" },
-        { name: "Interviews", value: statsRes.interviews || 0, icon: "📹", color: "bg-orange-500" },
+        { name: "Total Users", value: statsRes.users || 0, icon: "👥", color: "bg-primary" },
+        { name: "Applications", value: statsRes.applications || 0, icon: "📋", color: "bg-secondary" },
+        { name: "Active Jobs", value: statsRes.jobs || 0, icon: "💼", color: "bg-accent" },
+        { name: "Interviews", value: statsRes.interviews || 0, icon: "📹", color: "bg-teal-500" },
       ]);
     } catch (err) {
       console.error('Error fetching data:', err);

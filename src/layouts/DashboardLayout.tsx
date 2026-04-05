@@ -13,20 +13,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, sidebarItem
   const { user } = useAuth()
 
   return (
-    <div className="flex h-screen bg-gray-100 page-watermark overflow-hidden">
+    <div className="flex h-screen bg-gray-50 page-watermark overflow-hidden">
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white transform transition-transform duration-300 overflow-y-auto md:relative md:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="p-4 flex items-center justify-between">
-          <h2 className={`text-xl font-black uppercase tracking-wide ${sidebarOpen ? 'block' : 'hidden md:block'}`}>
-            Airswift
+        <div className="p-4 flex items-center justify-between bg-gradient-to-r from-primary to-secondary">
+          <h2 className={`text-xl font-bold uppercase tracking-wide text-white ${sidebarOpen ? 'block' : 'hidden md:block'}`}>
+            AIRSWIFT
           </h2>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1 hover:bg-gray-800 rounded"
+            className="p-1 hover:bg-primary/80 rounded text-white"
             aria-label="Toggle sidebar"
           >
             ☰
@@ -37,7 +37,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, sidebarItem
             <Link
               key={item.href}
               href={item.href}
-              className="block px-4 py-2 rounded-lg hover:bg-gray-800 transition"
+              className="block px-4 py-2 rounded-lg hover:bg-gray-700 transition text-gray-300 hover:text-white"
               onClick={() => setSidebarOpen(false)}
             >
               {item.label}

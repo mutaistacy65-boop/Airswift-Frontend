@@ -1,7 +1,7 @@
 import React from 'react'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'outline'
+  variant?: 'primary' | 'secondary' | 'accent' | 'danger' | 'outline'
   size?: 'sm' | 'md' | 'lg'
   loading?: boolean
   children: React.ReactNode
@@ -21,10 +21,11 @@ const Button: React.FC<ButtonProps> = ({
   const baseStyles = 'font-semibold rounded-lg transition-all duration-200 inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
   
   const variants = {
-    primary: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg hover:shadow-indigo-600/50 active:scale-95',
-    secondary: 'bg-slate-600 hover:bg-slate-700 text-white shadow-md hover:shadow-lg active:scale-95',
-    danger: 'bg-red-500 hover:bg-red-600 text-white shadow-md hover:shadow-lg hover:shadow-red-500/50 active:scale-95',
-    outline: 'border border-indigo-400/50 text-indigo-300 hover:bg-indigo-400/10 hover:border-indigo-400 active:scale-95',
+    primary: 'bg-primary hover:bg-green-600 text-white shadow-md hover:shadow-lg hover:shadow-green-500/30 active:scale-95',
+    secondary: 'bg-secondary hover:bg-blue-600 text-white shadow-md hover:shadow-lg hover:shadow-blue-500/30 active:scale-95',
+    accent: 'bg-accent hover:bg-orange-500 text-white shadow-md hover:shadow-lg hover:shadow-orange-500/30 active:scale-95',
+    danger: 'bg-red-500 hover:bg-red-600 text-white shadow-md hover:shadow-lg hover:shadow-red-500/30 active:scale-95',
+    outline: 'border-2 border-primary text-primary hover:bg-primary hover:text-white transition-all active:scale-95',
   }
 
   const sizes = {

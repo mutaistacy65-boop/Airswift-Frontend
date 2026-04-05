@@ -4,7 +4,7 @@ import { FileText, AlertTriangle, Shield, CheckCircle } from 'lucide-react'
 
 const TermsAndConditions: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white">
+    <div className="min-h-screen bg-white text-gray-900">
       <div className="max-w-4xl mx-auto px-6 py-16">
         {/* Hero Section */}
         <motion.div
@@ -13,11 +13,11 @@ const TermsAndConditions: React.FC = () => {
           className="text-center mb-16"
         >
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-            <FileText className="mx-auto mb-4 text-indigo-400" size={48} />
-            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+            <FileText className="mx-auto mb-4 text-primary" size={48} />
+            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Terms & Agreement
             </h1>
-            <p className="text-slate-300">
+            <p className="text-gray-600">
               By using AIRSWIFT, you agree to the following terms and conditions
             </p>
           </div>
@@ -35,9 +35,9 @@ const TermsAndConditions: React.FC = () => {
               <CheckCircle className="text-green-400" size={28} />
               Usage Rules
             </h2>
-            <div className="space-y-4 text-slate-300">
+            <div className="space-y-4 text-gray-700">
               <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-indigo-400 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                 <p>You must use the platform responsibly and legally</p>
               </div>
               <div className="flex items-start gap-3">

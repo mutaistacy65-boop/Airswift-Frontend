@@ -34,14 +34,14 @@ const Navbar: React.FC = () => {
   }
 
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-lg bg-slate-950/80 border-b border-indigo-500/20 shadow-lg">
+    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex justify-between items-center">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group cursor-pointer">
-          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-2 rounded-lg group-hover:shadow-lg group-hover:shadow-indigo-500/50 transition-all">
+          <div className="bg-gradient-to-br from-primary to-teal p-2 rounded-lg group-hover:shadow-lg group-hover:shadow-primary/50 transition-all">
             <Plane className="text-white" size={24} />
           </div>
-          <span className="hidden sm:inline text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+          <span className="hidden sm:inline text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             AIRSWIFT
           </span>
         </Link>
@@ -50,12 +50,12 @@ const Navbar: React.FC = () => {
         <div className="hidden md:flex items-center gap-8">
           {isAuthenticated ? (
             <>
-              <Link href="/jobs" className="text-slate-300 hover:text-indigo-400 transition font-medium">
+              <Link href="/jobs" className="text-gray-600 hover:text-primary transition font-medium">
                 Jobs
               </Link>
               <Link
                 href={user?.role === 'admin' ? '/admin/dashboard' : '/job-seeker/dashboard'}
-                className="text-slate-300 hover:text-indigo-400 transition font-medium flex items-center gap-2"
+                className="text-gray-600 hover:text-primary transition font-medium flex items-center gap-2"
               >
                 <LayoutDashboard size={18} />
                 Dashboard
@@ -63,8 +63,8 @@ const Navbar: React.FC = () => {
             </>
           ) : (
             <>
-              <Link href="/about" className="text-slate-300 hover:text-indigo-400 transition">About</Link>
-              <Link href="/contact" className="text-slate-300 hover:text-indigo-400 transition">Contact</Link>
+              <Link href="/about" className="text-gray-600 hover:text-primary transition">About</Link>
+              <Link href="/contact" className="text-gray-600 hover:text-primary transition">Contact</Link>
             </>
           )}
         </div>
@@ -73,7 +73,7 @@ const Navbar: React.FC = () => {
         <div className="hidden md:flex items-center gap-4">
           <button
             onClick={handleThemeToggle}
-            className="p-2 rounded-lg bg-slate-800 text-slate-100 hover:bg-slate-700 transition"
+            className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
             aria-label="Toggle theme"
           >
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -81,15 +81,15 @@ const Navbar: React.FC = () => {
 
           {isAuthenticated ? (
             <>
-              <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-lg border border-indigo-500/20">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-sm font-bold">
+              <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-sm font-bold text-white">
                   {user?.name?.charAt(0).toUpperCase()}
                 </div>
-                <span className="text-sm font-medium text-slate-300">{user?.name}</span>
+                <span className="text-sm font-medium text-gray-700">{user?.name}</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="bg-red-500/80 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all hover:shadow-lg hover:shadow-red-500/30"
+                className="bg-danger hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all hover:shadow-lg hover:shadow-red-500/30"
               >
                 <LogOut size={18} />
                 Logout
@@ -99,13 +99,13 @@ const Navbar: React.FC = () => {
             <>
               <Link
                 href="/login"
-                className="text-slate-300 hover:text-indigo-400 px-4 py-2 rounded-lg border border-indigo-400/30 hover:border-indigo-400/50 transition"
+                className="text-primary hover:text-green-600 px-4 py-2 rounded-lg border border-primary transition"
               >
                 Login
               </Link>
               <Link
                 href="/register"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition-all hover:shadow-lg hover:shadow-indigo-600/50"
+                className="bg-primary hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-all hover:shadow-lg hover:shadow-green-500/30"
               >
                 Register
               </Link>
@@ -115,7 +115,7 @@ const Navbar: React.FC = () => {
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden text-slate-300 hover:text-indigo-400 transition"
+          className="md:hidden text-gray-600 hover:text-primary transition"
           onClick={() => setMenuOpen(!menuOpen)}
         >
           {menuOpen ? <X size={28} /> : <Menu size={28} />}
@@ -128,21 +128,21 @@ const Navbar: React.FC = () => {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="md:hidden bg-slate-900/95 backdrop-blur-sm border-t border-indigo-500/20"
+          className="md:hidden bg-gray-50 border-t border-gray-200"
         >
           <div className="px-4 py-4 space-y-3">
             {isAuthenticated ? (
               <>
-                <div className="mb-4 flex items-center gap-3 px-3 py-2 bg-white/5 rounded-lg border border-indigo-500/20">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-sm font-bold">
+                <div className="mb-4 flex items-center gap-3 px-3 py-2 bg-white rounded-lg border border-gray-200">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-sm font-bold text-white">
                     {user?.name?.charAt(0).toUpperCase()}
                   </div>
-                  <span className="text-sm font-medium text-slate-300">{user?.name}</span>
+                  <span className="text-sm font-medium text-gray-700">{user?.name}</span>
                 </div>
 
                 <Link
                   href="/jobs"
-                  className="block px-3 py-2 text-slate-300 hover:text-indigo-400 hover:bg-white/5 rounded-lg transition"
+                  className="block px-3 py-2 text-gray-600 hover:text-primary hover:bg-green-50 rounded-lg transition"
                   onClick={() => setMenuOpen(false)}
                 >
                   Jobs
@@ -150,7 +150,7 @@ const Navbar: React.FC = () => {
 
                 <Link
                   href={user?.role === 'admin' ? '/admin/dashboard' : '/job-seeker/dashboard'}
-                  className="block px-3 py-2 text-slate-300 hover:text-indigo-400 hover:bg-white/5 rounded-lg transition flex items-center gap-2"
+                  className="block px-3 py-2 text-gray-600 hover:text-primary hover:bg-green-50 rounded-lg transition flex items-center gap-2"
                   onClick={() => setMenuOpen(false)}
                 >
                   <LayoutDashboard size={18} />
@@ -159,7 +159,7 @@ const Navbar: React.FC = () => {
 
                 <button
                   onClick={handleLogout}
-                  className="w-full bg-red-500/80 hover:bg-red-600 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-2 transition-all mt-2"
+                  className="w-full bg-danger hover:bg-red-600 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-2 transition-all mt-2"
                 >
                   <LogOut size={18} />
                   Logout
@@ -169,7 +169,7 @@ const Navbar: React.FC = () => {
               <>
                 <Link
                   href="/about"
-                  className="block px-3 py-2 text-slate-300 hover:text-indigo-400 hover:bg-white/5 rounded-lg transition"
+                  className="block px-3 py-2 text-gray-600 hover:text-primary hover:bg-green-50 rounded-lg transition"
                   onClick={() => setMenuOpen(false)}
                 >
                   About
@@ -177,7 +177,7 @@ const Navbar: React.FC = () => {
 
                 <Link
                   href="/contact"
-                  className="block px-3 py-2 text-slate-300 hover:text-indigo-400 hover:bg-white/5 rounded-lg transition"
+                  className="block px-3 py-2 text-gray-600 hover:text-primary hover:bg-green-50 rounded-lg transition"
                   onClick={() => setMenuOpen(false)}
                 >
                   Contact
@@ -185,7 +185,7 @@ const Navbar: React.FC = () => {
 
                 <Link
                   href="/login"
-                  className="block px-3 py-2 text-slate-300 border border-indigo-400/30 rounded-lg hover:border-indigo-400/50 transition text-center"
+                  className="block px-3 py-2 text-primary border border-primary rounded-lg hover:bg-green-50 transition text-center"
                   onClick={() => setMenuOpen(false)}
                 >
                   Login
@@ -193,7 +193,7 @@ const Navbar: React.FC = () => {
 
                 <Link
                   href="/register"
-                  className="block px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition text-center font-medium"
+                  className="block px-3 py-2 bg-primary hover:bg-green-600 text-white rounded-lg transition text-center font-medium"
                   onClick={() => setMenuOpen(false)}
                 >
                   Register

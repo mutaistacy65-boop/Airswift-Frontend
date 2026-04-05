@@ -4,7 +4,7 @@ import { Mail, Phone, Clock, MapPin, Globe, MessageCircle } from 'lucide-react'
 
 const Contact: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white">
+    <div className="min-h-screen bg-white text-gray-900">
       <div className="max-w-6xl mx-auto px-6 py-16">
         {/* Hero Section */}
         <motion.div
@@ -12,12 +12,12 @@ const Contact: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-16"
         >
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-            <MessageCircle className="mx-auto mb-4 text-indigo-400" size={48} />
-            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+          <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+            <MessageCircle className="mx-auto mb-4 text-primary" size={48} />
+            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Contact AIRSWIFT
             </h1>
-            <p className="text-slate-300">
+            <p className="text-gray-600">
               Get in touch with our global support team for assistance with your authentication needs
             </p>
           </div>
@@ -33,12 +33,12 @@ const Contact: React.FC = () => {
             className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 text-center"
           >
             <Mail className="mx-auto mb-4 text-blue-400" size={32} />
-            <h3 className="text-xl font-semibold mb-2 text-blue-300">Email Support</h3>
-            <p className="text-slate-300 mb-4">support@airswift.com</p>
+            <h3 className="text-xl font-semibold mb-2 text-primary">Email Support</h3>
+            <p className="text-gray-700 mb-4">support@airswift.com</p>
             <div className="space-y-2">
               <a
                 href="mailto:support@airswift.com"
-                className="block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                className="block bg-primary hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
               >
                 Send Email
               </a>
@@ -54,8 +54,8 @@ const Contact: React.FC = () => {
           >
             <Phone className="mx-auto mb-4 text-green-400" size={32} />
             <h3 className="text-xl font-semibold mb-2 text-green-300">Phone Support</h3>
-            <p className="text-slate-300 mb-4">+1-800-AIRSWIFT</p>
-            <p className="text-slate-400 text-sm">Available 24/7 for urgent issues</p>
+            <p className="text-gray-700 mb-4">+1-800-AIRSWIFT</p>
+            <p className="text-gray-600 text-sm">Available 24/7 for urgent issues</p>
           </motion.div>
 
           {/* Global Reach */}

@@ -5,7 +5,7 @@ import { Shield, Zap, Smartphone, Lock, Users, Globe } from 'lucide-react'
 
 const About: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white">
+    <div className="min-h-screen bg-white text-gray-900">
       <div className="max-w-6xl mx-auto px-6 py-16">
         {/* Hero Section */}
         <motion.div
@@ -13,10 +13,10 @@ const About: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-16"
         >
-          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             About AIRSWIFT
           </h1>
-          <p className="text-xl text-slate-300 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Modern, secure digital platform for fast, scalable, and reliable authentication and user management systems
           </p>
         </motion.div>
@@ -28,9 +28,9 @@ const About: React.FC = () => {
           transition={{ delay: 0.1 }}
           className="mb-16"
         >
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-            <h2 className="text-3xl font-bold mb-6 text-indigo-400">What is AIRSWIFT?</h2>
-            <p className="text-slate-300 text-lg leading-relaxed mb-6">
+          <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+            <h2 className="text-3xl font-bold mb-6 text-primary">What is AIRSWIFT?</h2>
+            <p className="text-gray-700 text-lg leading-relaxed mb-6">
               AIRSWIFT is a modern, secure digital platform designed to provide fast, scalable, and reliable authentication and user management systems for web and mobile applications.
             </p>
             <div className="grid md:grid-cols-2 gap-6">
@@ -66,13 +66,13 @@ const About: React.FC = () => {
               <Lock className="text-red-400" size={32} />
               Security-Focused System
             </h2>
-            <p className="text-slate-300 text-lg leading-relaxed mb-6">
+            <p className="text-gray-700 text-lg leading-relaxed mb-6">
               AIRSWIFT is built with security as a priority, implementing industry-standard practices to protect your data and ensure safe authentication.
             </p>
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-slate-800/50 rounded-lg p-4">
-                <h3 className="font-semibold text-indigo-300 mb-2">JWT Authentication</h3>
-                <p className="text-slate-400">Secure token-based authentication for all sessions</p>
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <h3 className="font-semibold text-primary mb-2">JWT Authentication</h3>
+                <p className="text-gray-600">Secure token-based authentication for all sessions</p>
               </div>
               <div className="bg-slate-800/50 rounded-lg p-4">
                 <h3 className="font-semibold text-indigo-300 mb-2">Session Security</h3>
