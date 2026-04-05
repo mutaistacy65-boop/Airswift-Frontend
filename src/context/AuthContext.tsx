@@ -8,6 +8,14 @@ interface User {
   email?: string
   name?: string
   role?: 'user' | 'admin'
+  phone?: string
+  profileImage?: string
+  jobTitle?: string
+  bio?: string
+  skills?: string[]
+  experience?: string
+  education?: string
+  location?: string
   token?: string
 }
 
