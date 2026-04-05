@@ -50,13 +50,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
-      const data = await loginUser({ email, password })
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+      const res = await fetch(`${API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      console.log("LOGIN RESPONSE:", data);
 
       if (data.token) {
         // Store token in localStorage
         localStorage.setItem('token', data.token)
         setUser({ ...data.user, token: data.token })
-        
+
         // Redirect based on role
         const redirectPath = data.user?.role === 'admin' ? '/admin/dashboard' : '/job-seeker/dashboard'
         router.push(redirectPath)

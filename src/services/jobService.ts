@@ -36,17 +36,17 @@ export interface JobApplication {
 
 export const jobService = {
   getAllJobs: async (page = 1, limit = 10) => {
-    const response = await API.get('/jobs', { params: { page, limit } })
+    const response = await API.get('/api/jobs', { params: { page, limit } })
     return response.data
   },
 
   getJobById: async (id: string) => {
-    const response = await API.get(`/jobs/${id}`)
+    const response = await API.get(`/api/jobs/${id}`)
     return response.data
   },
 
   searchJobs: async (query: string, filters?: any) => {
-    const response = await API.get('/jobs/search', { params: { q: query, ...filters } })
+    const response = await API.get('/api/jobs/search', { params: { q: query, ...filters } })
     return response.data
   },
 
@@ -89,7 +89,7 @@ export const jobService = {
   },
 
   getJobs: async () => {
-    const response = await API.get('/jobs')
+    const response = await API.get('/api/jobs')
     return response.data
   },
 }
