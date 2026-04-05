@@ -265,8 +265,6 @@ DB_NAME=airswift_db
 
 # Authentication
 JWT_SECRET=your-jwt-secret
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # External Services
 OPENAI_API_KEY=your-openai-key

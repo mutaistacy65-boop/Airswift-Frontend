@@ -28,7 +28,6 @@ interface AuthContextType {
   logout: () => void
   updateUser: (userData: Partial<User>) => void
   setUser: (user: User | null) => void
-  googleLogin: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -107,17 +106,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(prev => prev ? { ...prev, ...userData } : null)
   }
 
-  const googleLogin = async () => {
-    try {
-      const { signIn } = await import('next-auth/react')
-      await signIn('google', { redirect: true, callbackUrl: '/job-seeker/dashboard' })
-    } catch (error) {
-      console.error('Google sign-in failed:', error)
-    }
-  };
-
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, register, logout, updateUser, setUser, googleLogin }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, register, logout, updateUser, setUser }}>
       {children}
     </AuthContext.Provider>
   )
