@@ -11,7 +11,7 @@ export default function App({ Component, pageProps }: AppProps) {
     const token = params.get("token");
 
     if (token) {
-      localStorage.setItem("accessToken", token);
+      localStorage.setItem("token", token);
 
       // remove token from URL
       window.history.replaceState({}, document.title, "/dashboard");

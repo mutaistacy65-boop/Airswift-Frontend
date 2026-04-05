@@ -1,37 +1,22 @@
 import React, { useState } from "react";
-import { useRouter } from "next/router";
 import Link from "next/link";
 import Button from "../components/Button";
-import { registerUser } from "@/api/auth";
+import { useAuth } from "../context/AuthContext";
 
 export default function Register() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const router = useRouter();
+  const [error, setError] = useState("");
+  const { register, isLoading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage("");
+    setError("");
 
     try {
-      const data = await registerUser(form);
-      setMessage("✅ Registration successful! Please check your email for OTP verification.");
-
-      // Store registration data for OTP verification
-      localStorage.setItem('pendingEmail', form.email);
-      localStorage.setItem('pendingName', form.name);
-      localStorage.setItem('pendingPassword', form.password);
-
-      // Redirect to OTP verification
-      setTimeout(() => {
-        router.push("/verify-otp");
-      }, 2000);
+      await register(form);
     } catch (err: any) {
-      setMessage("❌ " + (err?.message || "Registration failed"));
-    } finally {
-      setLoading(false);
+      setError(err.message || "Registration failed");
+      console.error("Registration failed:", err);
     }
   };
 
@@ -80,6 +65,12 @@ export default function Register() {
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h2>
             <p className="text-gray-600">Join thousands of job seekers</p>
           </div>
+
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-sm font-medium">{error}</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -166,12 +157,12 @@ export default function Register() {
 
             <Button
               type="submit"
-              disabled={loading}
+              disabled={isLoading}
               fullWidth
               size="lg"
               className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-semibold py-3"
             >
-              {loading ? 'Creating Account...' : 'Create Account'}
+              {isLoading ? 'Creating Account...' : 'Create Account'}
             </Button>
           </form>
 

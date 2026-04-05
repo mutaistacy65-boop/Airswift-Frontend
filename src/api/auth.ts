@@ -1,6 +1,4 @@
-import { apiFetch } from '@/utils/api'
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export interface RegisterFormData {
   name: string;
@@ -15,10 +13,17 @@ export interface LoginFormData {
 
 export const registerUser = async (formData: RegisterFormData) => {
   try {
-    const data = await apiFetch('/api/auth/register', {
-      method: 'POST',
+    const response = await fetch(`${API_URL}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
     });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Registration failed');
+    }
 
     return data;
   } catch (error) {
@@ -28,10 +33,17 @@ export const registerUser = async (formData: RegisterFormData) => {
 
 export const loginUser = async (formData: LoginFormData) => {
   try {
-    const data = await apiFetch('/api/auth/login', {
-      method: 'POST',
+    const response = await fetch(`${API_URL}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
     });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Login failed');
+    }
 
     return data;
   } catch (error) {
@@ -41,10 +53,17 @@ export const loginUser = async (formData: LoginFormData) => {
 
 export const verifyOTP = async (email: string, otp: string) => {
   try {
-    const data = await apiFetch('/api/auth/verify-otp', {
-      method: 'POST',
+    const response = await fetch(`${API_URL}/api/auth/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, otp }),
     });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'OTP verification failed');
+    }
 
     return data;
   } catch (error) {
@@ -54,10 +73,17 @@ export const verifyOTP = async (email: string, otp: string) => {
 
 export const forgotPassword = async (email: string) => {
   try {
-    const data = await apiFetch('/api/auth/forgot-password', {
-      method: 'POST',
+    const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Forgot password failed');
+    }
 
     return data;
   } catch (error) {
@@ -67,10 +93,17 @@ export const forgotPassword = async (email: string) => {
 
 export const resetPassword = async (token: string, password: string) => {
   try {
-    const data = await apiFetch(`/api/auth/reset-password/${token}`, {
-      method: 'POST',
+    const response = await fetch(`${API_URL}/api/auth/reset-password/${token}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password }),
     });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Reset password failed');
+    }
 
     return data;
   } catch (error) {
@@ -80,15 +113,15 @@ export const resetPassword = async (token: string, password: string) => {
 
 export const refreshToken = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
+    const response = await fetch(`${API_URL}/api/auth/refresh`, {
       method: 'POST',
       credentials: 'include',
     });
 
-    const data = await res.json();
+    const data = await response.json();
 
-    if (!res.ok) {
-      throw new Error(data.message || 'Failed to refresh token');
+    if (!response.ok) {
+      throw new Error(data.message || 'Token refresh failed');
     }
 
     return data;
