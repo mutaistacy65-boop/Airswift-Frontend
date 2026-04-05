@@ -72,11 +72,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const redirectPath = data.user?.role === 'admin' ? '/admin/dashboard' : '/job-seeker/dashboard'
         router.push(redirectPath)
       } else {
-        throw new Error(data.message || 'Login failed')
+        throw new Error(data.message || data.error || 'Login failed')
       }
     } catch (error: any) {
-      console.error('Login failed:', error)
-      throw error
+      console.error('Login error:', error)
+      const errorMessage = error?.message || 'Login failed'
+      throw new Error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -96,11 +97,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const redirectPath = data.user?.role === 'admin' ? '/admin/dashboard' : '/job-seeker/dashboard'
         router.push(redirectPath)
       } else {
-        throw new Error(data.message || 'Registration failed')
+        throw new Error(data.message || data.error || 'Registration failed')
       }
     } catch (error: any) {
-      console.error('Registration failed:', error)
-      throw error
+      console.error('Registration error:', error)
+      const errorMessage = error?.message || 'Registration failed'
+      throw new Error(errorMessage)
     } finally {
       setIsLoading(false)
     }

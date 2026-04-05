@@ -7,19 +7,21 @@ const AuthService = {
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password })
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password }),
       });
 
-      const data = await res.json();
+      const result = await res.json();
 
-      console.log("REGISTER RESPONSE:", data);
+      console.log('REGISTER RESPONSE:', result);
 
       if (!res.ok) {
-        throw new Error(data.message || "Registration failed");
+        throw new Error(result.message || 'Registration failed');
       }
 
-      return data;
+      return result;
     } catch (error) {
       console.error('Registration error:', error);
       throw error;

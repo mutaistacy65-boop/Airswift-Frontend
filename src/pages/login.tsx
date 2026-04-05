@@ -13,11 +13,18 @@ export default function Login() {
     e.preventDefault()
     setError('')
 
+    // Validate form
+    if (!form.email || !form.password) {
+      setError('Please fill in all fields')
+      return
+    }
+
     try {
       await login(form.email, form.password)
     } catch (err: any) {
-      setError(err.message || 'Login failed')
-      console.error('Login failed:', err)
+      const errorMessage = err?.message || err?.toString?.() || 'Login failed'
+      setError(errorMessage)
+      console.error('Login error:', err)
     }
   }
 

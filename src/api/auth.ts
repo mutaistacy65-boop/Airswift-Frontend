@@ -13,20 +13,23 @@ export interface LoginFormData {
 
 export const registerUser = async (formData: RegisterFormData) => {
   try {
-    const response = await fetch(`${API_URL}/api/auth/register`, {
+    const res = await fetch(`${API_URL}/api/auth/register`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(formData),
     });
 
-    const data = await response.json();
-    console.log('REGISTER RESPONSE:', data);
+    const result = await res.json();
 
-    if (!response.ok) {
-      throw new Error(data.message || data.error || 'Registration failed');
+    console.log("REGISTER RESPONSE:", result);
+
+    if (!res.ok) {
+      throw new Error(result.message || "Registration failed");
     }
 
-    return data;
+    return result;
   } catch (error) {
     throw error;
   }
