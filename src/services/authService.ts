@@ -1,5 +1,5 @@
 // Base API URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const AuthService = {
   // Registration
@@ -40,7 +40,7 @@ const AuthService = {
       }
 
       // Store token
-      localStorage.setItem('token', data.accessToken);
+      localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('user', JSON.stringify(data.user));
 
       return data;
@@ -52,7 +52,7 @@ const AuthService = {
 
   // Get Profile (Protected)
   getProfile: async () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('accessToken');
 
     if (!token) {
       throw new Error('No token found');
@@ -71,7 +71,7 @@ const AuthService = {
 
       if (!response.ok) {
         // Token expired or invalid
-        localStorage.removeItem('token');
+        localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
         throw new Error(data.message || 'Unauthorized');
       }
@@ -85,7 +85,7 @@ const AuthService = {
 
   // Logout
   logout: async () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('accessToken');
 
     try {
       await fetch(`${API_BASE_URL}/api/auth/logout`, {
@@ -100,7 +100,7 @@ const AuthService = {
     }
 
     // Clear local storage
-    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
   },
 
@@ -112,12 +112,12 @@ const AuthService = {
 
   // Check if authenticated
   isAuthenticated: () => {
-    return !!localStorage.getItem('token');
+    return !!localStorage.getItem('accessToken');
   },
 
   // Get token
   getToken: () => {
-    return localStorage.getItem('token');
+    return localStorage.getItem('accessToken');
   }
 };
 
