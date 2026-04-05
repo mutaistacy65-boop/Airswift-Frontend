@@ -109,8 +109,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(prev => prev ? { ...prev, ...userData } : null)
   }
 
-  const googleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`;
+  const googleLogin = async () => {
+    try {
+      const { signIn } = await import('next-auth/react')
+      await signIn('google', { redirect: true, callbackUrl: '/job-seeker/dashboard' })
+    } catch (error) {
+      console.error('Google sign-in failed:', error)
+    }
   };
 
   return (

@@ -1,18 +1,20 @@
-import NextAuth from 'next-auth'
+import NextAuth, { type NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 
-export default NextAuth({
+const nextAuthOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      allowDangerousEmailAccountLinking: true,
     }),
   ],
-  secret: process.env.JWT_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET,
+  pages: {
+    error: '/auth/error',
+  },
   callbacks: {
     async signIn({ user, account, profile }) {
-      // Here you can handle the sign-in logic
-      // For example, check if user exists in your database, create if not
       console.log('Google sign-in:', user, account, profile)
       return true
     },
@@ -28,4 +30,6 @@ export default NextAuth({
       return session
     },
   },
-})
+}
+
+export default NextAuth(nextAuthOptions)
