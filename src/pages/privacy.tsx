@@ -18,7 +18,7 @@ const PrivacyPolicy: React.FC = () => {
               Privacy Policy
             </h1>
             <p className="text-gray-600">
-              Your privacy and data security are our top priorities at AIRSWIFT
+              Your privacy and data security are our top priorities at Talex
             </p>
           </div>
         </motion.div>
@@ -158,7 +158,7 @@ const PrivacyPolicy: React.FC = () => {
             <ShieldCheck className="mx-auto mb-4 text-primary" size={48} />
             <h3 className="text-xl font-semibold mb-2 text-primary">Our Commitment</h3>
             <p className="text-gray-700">
-              AIRSWIFT is committed to maintaining the highest standards of data privacy and security. Your trust is our foundation.
+              Talex is committed to maintaining the highest standards of data privacy and security. Your trust is our foundation.
             </p>
           </div>
         </motion.div>

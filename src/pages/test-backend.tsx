@@ -111,7 +111,7 @@ const BackendTestPage: React.FC = () => {
           <h3 className="text-lg font-semibold mb-4">📝 Instructions</h3>
           <ul className="space-y-2 text-slate-300 text-sm">
             <li>✅ Verify .env.local has NEXT_PUBLIC_API_URL set correctly</li>
-            <li>✅ Make sure your backend is running at: https://airswift-backend-fjt3.onrender.com</li>
+            <li>✅ Make sure your backend is running at the configured API URL</li>
             <li>✅ Click "Test Backend Connection" to verify the frontend-backend link</li>
             <li>✅ If test passes, your API is properly configured</li>
             <li>❌ If test fails, check backend URL and ensure backend is running</li>

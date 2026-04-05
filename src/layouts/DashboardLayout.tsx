@@ -22,7 +22,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, sidebarItem
       >
         <div className="p-4 flex items-center justify-between bg-gradient-to-r from-primary to-secondary">
           <h2 className={`text-xl font-bold uppercase tracking-wide text-white ${sidebarOpen ? 'block' : 'hidden md:block'}`}>
-            AIRSWIFT
+            TALEX
           </h2>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}

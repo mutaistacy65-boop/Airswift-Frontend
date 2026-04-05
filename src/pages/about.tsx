@@ -14,14 +14,14 @@ const About: React.FC = () => {
           className="text-center mb-16"
         >
           <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            About AIRSWIFT
+            About Talex
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Modern, secure digital platform for fast, scalable, and reliable authentication and user management systems
+            Talex is a modern career marketplace built to connect talent with verified employers and meaningful opportunities.
           </p>
         </motion.div>
 
-        {/* What is AIRSWIFT */}
+        {/* What is TALEX */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -29,9 +29,9 @@ const About: React.FC = () => {
           className="mb-16"
         >
           <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
-            <h2 className="text-3xl font-bold mb-6 text-primary">What is AIRSWIFT?</h2>
+            <h2 className="text-3xl font-bold mb-6 text-primary">What is Talex?</h2>
             <p className="text-gray-700 text-lg leading-relaxed mb-6">
-              AIRSWIFT is a modern, secure digital platform designed to provide fast, scalable, and reliable authentication and user management systems for web and mobile applications.
+              Talex is a modern career platform that connects job seekers with top employers through secure, fast, and intelligent matching.
             </p>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="flex items-center space-x-3">
@@ -67,7 +67,7 @@ const About: React.FC = () => {
               Security-Focused System
             </h2>
             <p className="text-gray-700 text-lg leading-relaxed mb-6">
-              AIRSWIFT is built with security as a priority, implementing industry-standard practices to protect your data and ensure safe authentication.
+              Talex is built with security as a priority, implementing industry-standard practices to protect your personal data and account information.
             </p>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -135,7 +135,7 @@ const About: React.FC = () => {
           className="text-center mt-16"
         >
           <Link href="/register" className="inline-flex bg-primary hover:bg-green-600 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 transform hover:scale-105">
-            Get Started with AIRSWIFT
+            Get Started with Talex
           </Link>
         </motion.div>
       </div>

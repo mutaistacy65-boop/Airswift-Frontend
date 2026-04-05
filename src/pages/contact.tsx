@@ -15,7 +15,7 @@ const Contact: React.FC = () => {
           <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
             <MessageCircle className="mx-auto mb-4 text-primary" size={48} />
             <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Contact AIRSWIFT
+              Contact Talex
             </h1>
             <p className="text-gray-600">
               Get in touch with our global support team for assistance with your authentication needs
@@ -34,10 +34,10 @@ const Contact: React.FC = () => {
           >
             <Mail className="mx-auto mb-4 text-secondary" size={32} />
             <h3 className="text-xl font-semibold mb-2 text-primary">Email Support</h3>
-            <p className="text-gray-700 mb-4">support@airswift.com</p>
+            <p className="text-gray-700 mb-4">support@talex.com</p>
             <div className="space-y-2">
               <a
-                href="mailto:support@airswift.com"
+                href="mailto:support@talex.com"
                 className="block bg-primary hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
               >
                 Send Email
@@ -54,7 +54,7 @@ const Contact: React.FC = () => {
           >
             <Phone className="mx-auto mb-4 text-primary" size={32} />
             <h3 className="text-xl font-semibold mb-2 text-primary">Phone Support</h3>
-            <p className="text-gray-700 mb-4">+1-800-AIRSWIFT</p>
+            <p className="text-gray-700 mb-4">+1-800-TALEX</p>
             <p className="text-gray-600 text-sm">Available 24/7 for urgent issues</p>
           </motion.div>
 
@@ -109,7 +109,7 @@ const Contact: React.FC = () => {
             <MapPin className="mb-4 text-red-400" size={32} />
             <h3 className="text-2xl font-semibold mb-4 text-red-300">Global Headquarters</h3>
             <div className="text-slate-300">
-              <p className="mb-2">AIRSWIFT Technologies Inc.</p>
+              <p className="mb-2">Talex Technologies Inc.</p>
               <p>1500 King Street West</p>
               <p>Toronto, ON M5H 1A1</p>
               <p className="mt-2">Canada</p>
@@ -122,33 +122,37 @@ const Contact: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-            className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm"
-          >
-            <h3 className="text-2xl font-semibold mb-6 text-primary text-center">How Can We Help?</h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
-                <h4 className="font-semibold text-primary mb-2">Account Issues</h4>
-                <p className="text-gray-600 text-sm">Login problems, password reset, account verification</p>
-              </div>
-              <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4">
-                <h4 className="font-semibold text-secondary mb-2">Security Concerns</h4>
-                <p className="text-gray-600 text-sm">Suspicious activity, security alerts, data protection</p>
-              </div>
-              <div className="bg-accent/10 border border-accent/20 rounded-lg p-4">
-                <h4 className="font-semibold text-accent mb-2">Technical Support</h4>
-                <p className="text-gray-600 text-sm">Platform issues, feature requests, bug reports</p>
-              </div>
-              <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
-                <h4 className="font-semibold text-teal-700 mb-2">Billing & Payments</h4>
-                <p className="text-gray-600 text-sm">Subscription issues, payment methods, refunds</p>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-900 mb-2">Integration Help</h4>
-                <p className="text-gray-600 text-sm">API integration, third-party connections</p>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-900 mb-2">Emergency Support</h4>
-                <p className="text-gray-600 text-sm">Critical system issues, urgent security matters</p>
+          className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm"
+        >
+          <h3 className="text-2xl font-semibold mb-6 text-primary text-center">How Can We Help?</h3>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+              <h4 className="font-semibold text-primary mb-2">Account Issues</h4>
+              <p className="text-gray-600 text-sm">Login problems, password reset, account verification</p>
+            </div>
+            <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4">
+              <h4 className="font-semibold text-secondary mb-2">Security Concerns</h4>
+              <p className="text-gray-600 text-sm">Suspicious activity, security alerts, data protection</p>
+            </div>
+            <div className="bg-accent/10 border border-accent/20 rounded-lg p-4">
+              <h4 className="font-semibold text-accent mb-2">Technical Support</h4>
+              <p className="text-gray-600 text-sm">Platform issues, feature requests, bug reports</p>
+            </div>
+            <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
+              <h4 className="font-semibold text-teal-700 mb-2">Billing & Payments</h4>
+              <p className="text-gray-600 text-sm">Subscription issues, payment methods, refunds</p>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <h4 className="font-semibold text-gray-900 mb-2">Integration Help</h4>
+              <p className="text-gray-600 text-sm">API integration, third-party connections</p>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <h4 className="font-semibold text-gray-900 mb-2">Emergency Support</h4>
+              <p className="text-gray-600 text-sm">Critical system issues, urgent security matters</p>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Response Time Commitment */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

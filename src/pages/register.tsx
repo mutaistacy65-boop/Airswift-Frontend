@@ -47,7 +47,7 @@ export default function Register() {
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
             </svg>
           </div>
-          <h1 className="text-4xl font-bold mb-4">Join Airswift</h1>
+          <h1 className="text-4xl font-bold mb-4">Join Talex</h1>
           <p className="text-lg opacity-90 mb-8">
             Start your career journey and discover amazing opportunities waiting for you
           </p>
@@ -73,7 +73,7 @@ export default function Register() {
         <div className="w-full max-w-md space-y-8">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <h1 className="text-3xl font-bold text-primary">Airswift</h1>
+            <h1 className="text-3xl font-bold text-primary">Talex</h1>
             <p className="text-gray-600 mt-2">Create Your Account</p>
           </div>
 

@@ -18,7 +18,7 @@ const TermsAndConditions: React.FC = () => {
               Terms & Agreement
             </h1>
             <p className="text-gray-600">
-              By using AIRSWIFT, you agree to the following terms and conditions
+              By using Talex, you agree to the following terms and conditions
             </p>
           </div>
         </motion.div>
@@ -94,7 +94,7 @@ const TermsAndConditions: React.FC = () => {
               Acceptable Use Policy
             </h2>
             <p className="text-gray-700 mb-6">
-              AIRSWIFT must not be used for any of the following prohibited activities:
+              Talex must not be used for any of the following prohibited activities:
             </p>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="bg-accent/10 border border-accent/20 rounded-lg p-4">
@@ -128,7 +128,7 @@ const TermsAndConditions: React.FC = () => {
             <CheckCircle className="mx-auto mb-4 text-primary" size={48} />
             <h3 className="text-xl font-semibold mb-2 text-primary">Agreement</h3>
             <p className="text-gray-700">
-              By using AIRSWIFT, you acknowledge that you have read, understood, and agree to be bound by these terms and conditions.
+              By using Talex, you acknowledge that you have read, understood, and agree to be bound by these terms and conditions.
             </p>
           </div>
         </motion.div>

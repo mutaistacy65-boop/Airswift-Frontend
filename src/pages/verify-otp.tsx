@@ -105,7 +105,7 @@ export default function VerifyOTP() {
         <div className="w-full max-w-md space-y-6">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <h1 className="text-3xl font-bold text-primary">AIRSWIFT</h1>
+            <h1 className="text-3xl font-bold text-primary">Talex</h1>
             <p className="text-gray-600 mt-2">Verify Your Email</p>
           </div>
 

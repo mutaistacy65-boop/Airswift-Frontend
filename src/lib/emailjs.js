@@ -8,7 +8,7 @@ export const sendOTPEmail = async (to_email, otp) => {
       {
         to_email: to_email,
         otp: otp,
-        from_name: "AIRSWIFT",
+        from_name: "TALEX",
       },
       process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
     );

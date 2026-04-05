@@ -126,8 +126,8 @@ const PaymentSuccessPage: React.FC = () => {
           <div className="mt-8 pt-6 border-t border-white/10">
             <p className="text-xs text-slate-500">
               Need help? Contact our support team at{' '}
-              <a href="mailto:support@airswift.com" className="text-indigo-400 hover:text-indigo-300">
-                support@airswift.com
+              <a href="mailto:support@talex.com" className="text-indigo-400 hover:text-indigo-300">
+                support@talex.com
               </a>
             </p>
           </div>

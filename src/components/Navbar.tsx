@@ -42,7 +42,7 @@ const Navbar: React.FC = () => {
             <Plane className="text-white" size={24} />
           </div>
           <span className="hidden sm:inline text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            AIRSWIFT
+            TALEX
           </span>
         </Link>
 

@@ -35,7 +35,7 @@ export default function Unauthorized() {
 
         <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm text-blue-800">
-            Need help? <a href="mailto:support@airswift.com" className="font-medium text-primary hover:text-secondary">Contact our support team</a>
+            Need help? <a href="mailto:support@talex.com" className="font-medium text-primary hover:text-secondary">Contact our support team</a>
           </p>
         </div>
       </div>

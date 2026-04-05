@@ -36,15 +36,14 @@ const stats = [
 
 const Home: React.FC = () => {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       <main>
-        {/* Hero Section */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-primary via-teal to-primary text-white py-20 lg:py-32">
+        <section className="relative overflow-hidden bg-gradient-to-br from-primary via-teal to-secondary text-white py-24 lg:py-32">
           <div className="absolute inset-0 opacity-20">
             <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
             <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
           </div>
-          
+
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid gap-12 lg:grid-cols-2 items-center">
               <motion.div
@@ -53,20 +52,20 @@ const Home: React.FC = () => {
                 transition={{ duration: 0.6 }}
                 className="space-y-8"
               >
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 backdrop-blur">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                   </span>
-                  <span className="text-sm font-semibold">Now Hiring: Thousands of opportunities</span>
+                  <span className="text-sm font-semibold">Instant access to vetted roles</span>
                 </div>
 
                 <div>
                   <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-                    Your Next Career Opportunity Awaits
+                    Where Talent Meets Opportunity
                   </h1>
-                  <p className="text-xl text-white/90">
-                    Connect with top employers, get matched with perfect roles, and advance your career with AIRSWIFT.
+                  <p className="text-xl text-white/85 max-w-2xl">
+                    Discover verified job listings, connect with hiring teams, and grow your career with Talex.
                   </p>
                 </div>
 
@@ -83,7 +82,7 @@ const Home: React.FC = () => {
                   </Link>
                 </div>
 
-                <div className="grid grid-cols-3 gap-6 pt-8 border-t border-white/20">
+                <div className="grid grid-cols-3 gap-6 pt-8 border-t border-white/15">
                   {stats.map((stat) => (
                     <div key={stat.label}>
                       <div className="text-3xl font-bold">{stat.number}</div>
@@ -99,16 +98,34 @@ const Home: React.FC = () => {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="relative"
               >
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-                  <div className="space-y-6">
-                    <div className="badge badge-success">Application Approved</div>
-                    <div>
-                      <h3 className="font-semibold text-lg mb-2">Senior Product Manager</h3>
-                      <p className="text-white/80 text-sm mb-4">Remote • Competitive Salary</p>
-                      <Button variant="primary" size="sm" className="w-full text-white">
-                        Apply Now
-                      </Button>
+                <div className="rounded-[2.5rem] bg-white/10 p-8 border border-white/10 shadow-2xl backdrop-blur-lg">
+                  <div className="rounded-[2rem] bg-slate-950/90 p-8 border border-white/10">
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Featured role</p>
+                        <h2 className="text-2xl font-semibold text-white mt-2">Senior Product Manager</h2>
+                      </div>
+                      <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-sm font-semibold text-emerald-200">
+                        Hired
+                      </span>
                     </div>
+                    <div className="space-y-4 text-slate-300">
+                      <div>
+                        <p className="text-sm text-slate-400">Location</p>
+                        <p className="text-lg font-medium">Remote · Global</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-400">Compensation</p>
+                        <p className="text-lg font-medium">$120k - $150k</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 rounded-[2rem] bg-white/10 p-6 border border-white/10">
+                    <p className="text-sm uppercase tracking-[0.3em] text-slate-400 mb-3">Trusted by top talent</p>
+                    <p className="text-white/80 leading-relaxed">
+                      Talex empowers professionals with smart recommendations, secure applications, and direct access to employers.
+                    </p>
                   </div>
                 </div>
               </motion.div>
@@ -116,13 +133,12 @@ const Home: React.FC = () => {
           </div>
         </section>
 
-        {/* Features Section */}
         <section id="features" className="py-20 lg:py-32 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">Why Choose AIRSWIFT?</h2>
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">Why Choose Talex?</h2>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                We make hiring simple and hiring talent rewarding.
+                We make hiring simple, secure, and built around the talent you want.
               </p>
             </div>
 
@@ -136,10 +152,10 @@ const Home: React.FC = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: idx * 0.1 }}
-                    className={`rounded-2xl p-8 ${feature.color} border border-gray-200`}
+                    className={`rounded-3xl p-8 ${feature.color} border border-gray-200`}
                   >
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${feature.color}`}>
-                      <Icon className={`h-6 w-6 ${feature.iconColor}`} />
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${feature.color}`}>
+                      <Icon className={`h-7 w-7 ${feature.iconColor}`} />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
                     <p className="text-gray-600">{feature.description}</p>
@@ -150,14 +166,13 @@ const Home: React.FC = () => {
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-20 lg:py-32 bg-primary text-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
+        <section className="py-20 lg:py-32 bg-slate-900 text-white">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
             <h2 className="text-4xl md:text-5xl font-bold leading-tight">
-              Ready to Take Your Career to the Next Level?
+              Ready to launch your next career move?
             </h2>
-            <p className="text-xl text-white/90">
-              Join thousands of professionals who have found their dream jobs through AIRSWIFT.
+            <p className="text-xl text-white/80">
+              Join thousands of professionals who trust Talex to connect them with top employers and high-growth opportunities.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/register">

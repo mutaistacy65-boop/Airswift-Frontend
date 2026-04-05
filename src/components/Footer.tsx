@@ -14,7 +14,7 @@ const Footer: React.FC = () => {
                 <Plane className="text-white" size={24} />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                AIRSWIFT
+                TALEX
               </span>
             </div>
             <p className="text-slate-400 text-sm">
@@ -28,7 +28,7 @@ const Footer: React.FC = () => {
             <ul className="space-y-2 text-slate-400 text-sm">
               <li>
                 <Link href="/about" className="hover:text-primary transition">
-                  About AIRSWIFT
+                  About TALEX
                 </Link>
               </li>
               <li>
@@ -67,11 +67,11 @@ const Footer: React.FC = () => {
             <ul className="space-y-3 text-slate-400 text-sm">
               <li className="flex items-center gap-2 hover:text-primary transition">
                 <Mail size={16} />
-                <a href="mailto:support@airswift.com">support@airswift.com</a>
+                <a href="mailto:support@talex.com">support@talex.com</a>
               </li>
               <li className="flex items-center gap-2 hover:text-primary transition">
                 <Phone size={16} />
-                <a href="tel:+1-800-AIRSWIFT">+1-800-AIRSWIFT</a>
+                <a href="tel:+1-800-TALEX">+1-800-TALEX</a>
               </li>
               <li className="flex items-start gap-2 hover:text-primary transition">
                 <MapPin size={16} className="mt-0.5 flex-shrink-0" />
@@ -85,7 +85,7 @@ const Footer: React.FC = () => {
         <div className="border-t border-gray-700 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-slate-400 text-sm">
-              &copy; 2026 AIRSWIFT. All rights reserved. | Secure Authentication Platform
+              &copy; 2026 TALEX. All rights reserved. | Secure Authentication Platform
             </p>
             <div className="flex gap-4">
               <a href="#" className="text-gray-400 hover:text-primary transition p-2 rounded-lg hover:bg-white/5">

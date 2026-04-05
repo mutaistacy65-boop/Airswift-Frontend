@@ -71,7 +71,7 @@ export default function ForgotPassword() {
         <div className="w-full max-w-md space-y-8">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <h1 className="text-3xl font-bold text-primary">Airswift</h1>
+            <h1 className="text-3xl font-bold text-primary">Talex</h1>
             <p className="text-gray-600 mt-2">Reset Your Password</p>
           </div>
 

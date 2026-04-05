@@ -139,7 +139,7 @@ const JobSeekerDashboard: React.FC = () => {
           </div>
 
           <div className="mt-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Why Choose AIRSWIFT?</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Why Choose TALEX?</h2>
             <div className="grid md:grid-cols-3 gap-4">
               <div className="bg-white p-5 rounded-lg shadow-sm border border-green-100">
                 <div className="text-2xl mb-3">🌍</div>

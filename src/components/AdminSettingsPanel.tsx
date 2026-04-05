@@ -18,15 +18,15 @@ interface AppSettings {
 }
 
 const defaultSettings: AppSettings = {
-  platformName: 'Airswift',
+  platformName: 'Talex',
   maxJobsPerDay: 50,
   maxApplicationsPerDay: 100,
   emailNotificationsEnabled: true,
   maintenanceMode: false,
   paymentProviderKey: '',
   defaultCurrency: 'USD',
-  companyContactEmail: 'support@airswift.com',
-  companyPhoneNumber: '+1-800-AIRSWIFT',
+  companyContactEmail: 'support@talex.com',
+  companyPhoneNumber: '+1-800-TALEX',
   termsAndConditionsUrl: '/terms',
   privacyPolicyUrl: '/privacy',
 }

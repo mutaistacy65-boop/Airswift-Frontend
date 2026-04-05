@@ -93,12 +93,7 @@ body {
 }
 
 .badge-purple {
-  @apply bg-purple-100 text-purple-800;
-}
-  white-space: nowrap;
-  pointer-events: none;
-  z-index: 0;
-  color: #3b82f6;
+  @apply bg-purple/10 text-purple border border-purple/20;
 }
 
 .page-watermark {

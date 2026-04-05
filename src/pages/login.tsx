@@ -9,7 +9,7 @@ export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const { googleLogin } = useAuth()
+  const { googleLogin, login } = useAuth()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,7 +38,7 @@ export default function Login() {
           </div>
           <h1 className="text-4xl font-bold mb-4">Welcome Back</h1>
           <p className="text-lg opacity-90 mb-8">
-            Continue your journey to find the perfect job opportunity with Airswift
+            Continue your journey to find the perfect job opportunity with Talex
           </p>
           <div className="flex items-center justify-center space-x-4 text-sm">
             <div className="flex items-center">
@@ -62,7 +62,7 @@ export default function Login() {
         <div className="w-full max-w-md space-y-8">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <h1 className="text-3xl font-bold text-primary">Airswift</h1>
+            <h1 className="text-3xl font-bold text-primary">Talex</h1>
             <p className="text-gray-600 mt-2">Your Career Journey Starts Here</p>
           </div>
 
@@ -181,7 +181,7 @@ export default function Login() {
             <h4 className="text-sm font-medium text-gray-900 mb-2">Test Credentials:</h4>
             <div className="text-sm text-gray-600 space-y-1">
               <p>
-                <strong>Admin:</strong> admin@airswift.com / Admin123!
+                <strong>Admin:</strong> admin@talex.com / Admin123!
               </p>
               <p>
                 <strong>User:</strong> testuser@example.com / TestPassword123!

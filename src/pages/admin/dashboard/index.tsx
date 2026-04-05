@@ -1092,7 +1092,7 @@ export default function AdminDashboard() {
                     <label className="block text-sm font-medium text-gray-700">Company Name</label>
                     <input
                       type="text"
-                      defaultValue="Airswift"
+                      defaultValue="Talex"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
@@ -1100,7 +1100,7 @@ export default function AdminDashboard() {
                     <label className="block text-sm font-medium text-gray-700">Contact Email</label>
                     <input
                       type="email"
-                      defaultValue="admin@airswift.com"
+                      defaultValue="admin@talex.com"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
@@ -1151,7 +1151,7 @@ export default function AdminDashboard() {
                     <label className="block text-sm font-medium text-gray-700">Email Username</label>
                     <input
                       type="text"
-                      placeholder="noreply@airswift.com"
+                      placeholder="noreply@talex.com"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>

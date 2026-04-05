@@ -107,7 +107,7 @@ const AdminEmailTemplatesPage: React.FC = () => {
       const sampleVariables = {
         applicantName: 'John Doe',
         jobTitle: 'Software Developer',
-        companyName: 'Airswift',
+        companyName: 'Talex',
         interviewDate: 'April 15, 2026 at 2:00 PM',
         zoomLink: 'https://zoom.us/j/123456789',
         interviewNotes: 'Please bring your ID and resume',

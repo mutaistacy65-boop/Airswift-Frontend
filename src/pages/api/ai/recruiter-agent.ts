@@ -96,7 +96,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                   variables: {
                     applicantName: app.fullName || 'Candidate',
                     jobTitle: app.jobId?.title || 'Position',
-                    companyName: 'Airswift'
+                    companyName: 'Talex'
                   }
                 })
               });
@@ -115,7 +115,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                   variables: {
                     applicantName: app.fullName || 'Candidate',
                     jobTitle: app.jobId?.title || 'Position',
-                    companyName: 'Airswift'
+                    companyName: 'Talex'
                   }
                 })
               });

@@ -49,7 +49,7 @@ const Report: React.FC = () => {
               </div>
             </div>
             <a
-              href="mailto:security@airswift.com?subject=Security%20Concern%20Report"
+              href="mailto:security@talex.com?subject=Security%20Concern%20Report"
               className="mt-6 inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors"
             >
               Report Security Issue
@@ -80,7 +80,7 @@ const Report: React.FC = () => {
               </div>
             </div>
             <a
-              href="mailto:support@airswift.com?subject=Technical%20Issue%20Report"
+              href="mailto:support@talex.com?subject=Technical%20Issue%20Report"
               className="mt-6 inline-block bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg transition-colors"
             >
               Report Bug
@@ -102,13 +102,13 @@ const Report: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <a
-              href="mailto:support@airswift.com?subject=Urgent%20Support%20Request"
+              href="mailto:support@talex.com?subject=Urgent%20Support%20Request"
               className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors text-center"
             >
               Email Support
             </a>
             <a
-              href="tel:+1-800-AIRSWIFT"
+              href="tel:+1-800-TALEX"
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors text-center"
             >
               Call Support
@@ -138,10 +138,10 @@ const Report: React.FC = () => {
               For critical security issues only - available 24/7
             </p>
             <a
-              href="mailto:emergency@airswift.com?subject=CRITICAL%20SECURITY%20EMERGENCY"
+              href="mailto:emergency@talex.com?subject=CRITICAL%20SECURITY%20EMERGENCY"
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
             >
-              emergency@airswift.com
+              emergency@talex.com
             </a>
           </div>
         </motion.div>
@@ -158,7 +158,7 @@ const Report: React.FC = () => {
             <h3 className="text-xl font-semibold mb-2 text-indigo-300">Our Response Commitment</h3>
             <p className="text-slate-300">
               All reports are treated with the highest priority. Security issues receive immediate attention,
-              while technical reports are addressed within 24 hours. We appreciate your help in keeping AIRSWIFT secure.
+              while technical reports are addressed within 24 hours. We appreciate your help in keeping TALEX secure.
             </p>
           </div>
         </motion.div>
