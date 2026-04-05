@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { ObjectId } from 'mongodb';
 import { openai } from '../../../lib/openai';
-import { connectToDatabase } from '@/lib/mongodb';
+import { connectDB } from '@/lib/mongodb';
+import mongoose from 'mongoose';
 
 const safeParseJSON = (text: string) => {
   try {
@@ -47,7 +48,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-      const { db } = await connectToDatabase();
+      await connectDB()
+      const db = mongoose.connection.db
       const topIds = new Set(result.topCandidates.map((item: any) => item.candidateId));
       const rejectedIds = new Set(result.rejected.map((item: any) => item.candidateId));
 

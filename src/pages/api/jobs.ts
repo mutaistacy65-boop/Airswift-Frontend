@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { connectToDatabase } from '@/lib/mongodb'
+import { connectDB } from '@/lib/mongodb'
+import mongoose from 'mongoose'
 
 type Job = {
   _id: string
@@ -17,7 +18,8 @@ export default async function handler(
   }
 
   try {
-    const { db } = await connectToDatabase()
+    await connectDB()
+    const db = mongoose.connection.db
     const jobs = await db
       .collection('jobs')
       .find({}, { projection: { title: 1, location: 1 } })

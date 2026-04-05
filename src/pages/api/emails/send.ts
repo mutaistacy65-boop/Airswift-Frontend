@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { connectToDatabase } from '@/lib/mongodb'
+import { connectDB } from '@/lib/mongodb'
+import mongoose from 'mongoose'
 import { DEFAULT_EMAIL_TEMPLATES } from '@/data/emailTemplates'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -16,7 +17,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     // Get template from database or use default
-    const { db } = await connectToDatabase()
+    await connectDB()
+    const db = mongoose.connection.db
     let template = await db.collection('emailTemplates').findOne({ id: templateId })
 
     if (!template) {

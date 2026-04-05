@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { ObjectId } from 'mongodb'
-import { connectToDatabase } from '@/lib/mongodb'
+import { connectDB } from '@/lib/mongodb'
+import mongoose from 'mongoose'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const {
@@ -12,7 +13,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ message: 'Invalid application id' })
   }
 
-  const { db } = await connectToDatabase()
+  await connectDB()
+  const db = mongoose.connection.db
 
   switch (method) {
     case 'PATCH':

@@ -20,9 +20,10 @@ export const registerUser = async (formData: RegisterFormData) => {
     });
 
     const data = await response.json();
+    console.log('REGISTER RESPONSE:', data);
 
     if (!response.ok) {
-      throw new Error(data.message || 'Registration failed');
+      throw new Error(data.message || data.error || 'Registration failed');
     }
 
     return data;
@@ -40,9 +41,10 @@ export const loginUser = async (formData: LoginFormData) => {
     });
 
     const data = await response.json();
+    console.log('LOGIN RESPONSE:', data);
 
     if (!response.ok) {
-      throw new Error(data.message || 'Login failed');
+      throw new Error(data.message || data.error || 'Login failed');
     }
 
     return data;

@@ -15,6 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
 
   const { email, otp } = req.body
+  console.log(req.body)
 
   if (!email || !otp) {
     return res.status(400).json({ message: 'Email and OTP are required' })
@@ -43,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       return res.status(500).json({ message: 'API base URL not configured' })
     }
 
-    const response = await fetch(`${apiBaseUrl}/auth/register`, {
+    const response = await fetch(`${apiBaseUrl}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(storedData.userData),

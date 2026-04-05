@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { connectToDatabase } from '@/lib/mongodb'
+import { connectDB } from '@/lib/mongodb'
+import mongoose from 'mongoose'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -8,7 +9,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { db } = await connectToDatabase()
+    await connectDB()
+    const db = mongoose.connection.db
     const apps = await db
       .collection('applications')
       .find({}, { projection: { fullName: 1, email: 1, jobId: 1, status: 1, passport: 1, nationalId: 1, createdAt: 1 } })
