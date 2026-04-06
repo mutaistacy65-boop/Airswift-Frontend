@@ -3,32 +3,45 @@ import DashboardLayout from '@/layouts/DashboardLayout'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
+import InterviewCalendar from '@/components/InterviewCalendar'
 import Loader from '@/components/Loader'
 import Button from '@/components/Button'
 import Modal from '@/components/Modal'
-import Textarea from '@/components/Textarea'
-import { jobService, JobApplication } from '@/services/jobService'
+import Input from '@/components/Input'
+import { interviewService } from '@/services/interviewService'
 import { formatDate } from '@/utils/helpers'
+import { Calendar, Clock, User, MapPin, Video } from 'lucide-react'
+
+interface Interview {
+  _id: string
+  id?: string
+  applicationId: string
+  candidateName: string
+  candidateEmail: string
+  jobTitle: string
+  scheduledDate: string
+  scheduledTime: string
+  status: 'scheduled' | 'done' | 'no-show'
+  interviewerName?: string
+  interviewType?: 'video' | 'phone' | 'in-person'
+  zoomLink?: string
+  location?: string
+  notes?: string
+}
 
 const AdminInterviewsPage: React.FC = () => {
   const { isAuthorized, isLoading } = useProtectedRoute('admin')
-  const { user } = useAuth()
   const { addNotification } = useNotification()
-
-  const [applications, setApplications] = useState<JobApplication[]>([])
+  const [interviews, setInterviews] = useState<Interview[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null)
-  const [showCompleteModal, setShowCompleteModal] = useState(false)
-  const [showRescheduleModal, setShowRescheduleModal] = useState(false)
-  const [completionNotes, setCompletionNotes] = useState('')
-  const [completing, setCompleting] = useState(false)
+  const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null)
+  const [showStatusModal, setShowStatusModal] = useState(false)
+  const [newStatus, setNewStatus] = useState<'scheduled' | 'done' | 'no-show'>('scheduled')
+  const [updatingStatus, setUpdatingStatus] = useState(false)
 
-  // Reschedule form
-  const [newDate, setNewDate] = useState('')
-  const [newTime, setNewTime] = useState('')
-  const [newZoomLink, setNewZoomLink] = useState('')
-  const [rescheduleNotes, setRescheduleNotes] = useState('')
-  const [rescheduling, setRescheduling] = useState(false)
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar')
+  const [filterStatus, setFilterStatus] = useState<'all' | 'scheduled' | 'done' | 'no-show'>('all')
+  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     if (isAuthorized) {
@@ -38,134 +51,95 @@ const AdminInterviewsPage: React.FC = () => {
 
   const fetchInterviews = async () => {
     try {
-      // This would typically call an admin API to get all applications with interviews
-      // For now, we'll simulate with sample data
-      const sampleApplications: JobApplication[] = [
-        {
-          id: '1',
-          jobId: 'job-001',
-          userId: 'user-001',
-          resumeUrl: '/resumes/sample.pdf',
-          coverLetter: 'I am very interested in this position...',
-          appliedDate: '2026-04-01',
-          status: 'interview_scheduled',
-          interviewDetails: {
-            zoomLink: 'https://zoom.us/j/123456789',
-            scheduledDate: '2026-04-05 14:00',
-            notes: 'Technical interview for software developer position'
-          }
-        },
-        {
-          id: '2',
-          jobId: 'job-002',
-          userId: 'user-002',
-          resumeUrl: '/resumes/sample2.pdf',
-          coverLetter: 'I have extensive experience...',
-          appliedDate: '2026-03-28',
-          status: 'interview_completed',
-          interviewDetails: {
-            zoomLink: 'https://zoom.us/j/987654321',
-            scheduledDate: '2026-04-02 10:00',
-            notes: 'Completed successfully - strong candidate'
-          }
-        },
-        {
-          id: '3',
-          jobId: 'job-003',
-          userId: 'user-003',
-          resumeUrl: '/resumes/sample3.pdf',
-          coverLetter: 'Housekeeping experience...',
-          appliedDate: '2026-03-30',
-          status: 'interview_scheduled',
-          interviewDetails: {
-            zoomLink: 'https://zoom.us/j/555666777',
-            scheduledDate: '2026-04-06 16:00',
-            notes: 'Housekeeping position interview'
-          }
-        }
-      ]
-      setApplications(sampleApplications)
+      setLoading(true)
+      const data = await interviewService.getAllInterviews()
+      setInterviews(Array.isArray(data) ? data : data.data || [])
     } catch (error) {
+      console.error('Error fetching interviews:', error)
       addNotification('Failed to load interviews', 'error')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleMarkCompleted = (application: JobApplication) => {
-    setSelectedApplication(application)
-    setCompletionNotes('')
-    setShowCompleteModal(true)
+  const handleStatusChange = async (interview: Interview, newSt: 'scheduled' | 'done' | 'no-show') => {
+    setSelectedInterview(interview)
+    setNewStatus(newSt)
+    setShowStatusModal(true)
   }
 
-  const handleReschedule = (application: JobApplication) => {
-    setSelectedApplication(application)
-    setNewDate('')
-    setNewTime('')
-    setNewZoomLink(application.interviewDetails?.zoomLink || '')
-    setRescheduleNotes('')
-    setShowRescheduleModal(true)
-  }
+  const confirmStatusUpdate = async () => {
+    if (!selectedInterview) return
 
-  const submitCompletion = async () => {
-    if (!selectedApplication) return
-
-    setCompleting(true)
+    setUpdatingStatus(true)
     try {
-      // Here you would call an API to mark the interview as completed
-      await updateApplicationStatus(selectedApplication.id, 'interview_completed', completionNotes)
+      await interviewService.updateInterviewStatus(
+        selectedInterview._id || selectedInterview.id || '',
+        newStatus
+      )
 
-      addNotification('Interview marked as completed!', 'success')
-      setShowCompleteModal(false)
-      fetchInterviews() // Refresh the list
+      // Update local state
+      setInterviews(
+        interviews.map((iv) =>
+          (iv._id === selectedInterview._id || iv.id === selectedInterview.id)
+            ? { ...iv, status: newStatus }
+            : iv
+        )
+      )
+
+      addNotification(`Interview status updated to "${newStatus}"`, 'success')
+      setShowStatusModal(false)
     } catch (error) {
+      console.error('Error updating interview status:', error)
       addNotification('Failed to update interview status', 'error')
     } finally {
-      setCompleting(false)
+      setUpdatingStatus(false)
     }
   }
 
-  const submitReschedule = async () => {
-    if (!selectedApplication || !newDate || !newTime || !newZoomLink) {
-      addNotification('Please fill in all required fields', 'error')
-      return
-    }
+  // Filter interviews
+  const filteredInterviews = interviews.filter((interview) => {
+    const matchesStatus = filterStatus === 'all' || interview.status === filterStatus
+    const matchesSearch =
+      searchTerm === '' ||
+      interview.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      interview.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      interview.candidateEmail.toLowerCase().includes(searchTerm.toLowerCase())
 
-    setRescheduling(true)
-    try {
-      // Here you would call an API to reschedule the interview
-      const newInterviewDetails = {
-        scheduledDate: `${newDate} ${newTime}`,
-        zoomLink: newZoomLink,
-        notes: rescheduleNotes || selectedApplication.interviewDetails?.notes
-      }
+    return matchesStatus && matchesSearch
+  })
 
-      // Update the interview details
-      console.log('Rescheduling interview for application', selectedApplication.id, newInterviewDetails)
+  // Count by status
+  const statusCounts = {
+    scheduled: interviews.filter((i) => i.status === 'scheduled').length,
+    done: interviews.filter((i) => i.status === 'done').length,
+    ['no-show']: interviews.filter((i) => i.status === 'no-show').length,
+  }
 
-      addNotification('Interview rescheduled successfully!', 'success')
-      setShowRescheduleModal(false)
-      fetchInterviews() // Refresh the list
-    } catch (error) {
-      addNotification('Failed to reschedule interview', 'error')
-    } finally {
-      setRescheduling(false)
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'scheduled':
+        return 'bg-blue-100 text-blue-800'
+      case 'done':
+        return 'bg-green-100 text-green-800'
+      case 'no-show':
+        return 'bg-red-100 text-red-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
-  const updateApplicationStatus = async (applicationId: string, status: string, notes: string) => {
-    // This would call an API to update the application status
-    console.log('Updating application', applicationId, 'to status', status, 'with notes', notes)
-  }
-
-  const getJobTypeFromId = (jobId: string) => {
-    // This would typically fetch job details, but for now we'll simulate
-    const jobTypes: {[key: string]: string} = {
-      'job-001': 'Software Developer',
-      'job-002': 'Project Manager',
-      'job-003': 'Housekeeper'
+  const getInterviewTypeIcon = (type?: string) => {
+    switch (type) {
+      case 'video':
+        return '📹'
+      case 'phone':
+        return '☎️'
+      case 'in-person':
+        return '👥'
+      default:
+        return '📞'
     }
-    return jobTypes[jobId] || 'Unknown Position'
   }
 
   if (isLoading || loading) {
@@ -177,205 +151,302 @@ const AdminInterviewsPage: React.FC = () => {
   }
 
   const sidebarItems = [
-    { label: 'Dashboard', href: '/admin/dashboard', icon: '📊' },
-    { label: 'Manage Jobs', href: '/admin/jobs', icon: '💼' },
+    { label: 'Dashboard', href: '/admin', icon: '📊' },
+    { label: 'Jobs', href: '/admin/jobs', icon: '💼' },
     { label: 'Applications', href: '/admin/applications', icon: '📋' },
     { label: 'Interviews', href: '/admin/interviews', icon: '📞' },
+    { label: 'Messages', href: '/admin/messages', icon: '✉️' },
     { label: 'Settings', href: '/admin/settings', icon: '⚙️' },
   ]
 
-  const upcomingInterviews = applications.filter(app => app.status === 'interview_scheduled')
-  const completedInterviews = applications.filter(app => app.status === 'interview_completed')
-
   return (
     <DashboardLayout sidebarItems={sidebarItems}>
-      {/* Mark Completed Modal */}
-      <Modal
-        isOpen={showCompleteModal}
-        onClose={() => setShowCompleteModal(false)}
-        onConfirm={submitCompletion}
-        confirmText={completing ? 'Marking Completed...' : 'Mark as Completed'}
-        title="Mark Interview as Completed"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-700">
-            Are you sure you want to mark this interview as completed? This will move the candidate to the next stage of the process.
-          </p>
-          <Textarea
-            label="Completion Notes (Optional)"
-            value={completionNotes}
-            onChange={(e) => setCompletionNotes(e.target.value)}
-            rows={3}
-            placeholder="Any notes about the interview outcome, candidate performance, etc..."
-          />
-        </div>
-      </Modal>
-
-      {/* Reschedule Modal */}
-      <Modal
-        isOpen={showRescheduleModal}
-        onClose={() => setShowRescheduleModal(false)}
-        onConfirm={submitReschedule}
-        confirmText={rescheduling ? 'Rescheduling...' : 'Reschedule Interview'}
-        title="Reschedule Interview"
-      >
-        <div className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">New Date</label>
-              <input
-                type="date"
-                value={newDate}
-                onChange={(e) => setNewDate(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">New Time</label>
-              <input
-                type="time"
-                value={newTime}
-                onChange={(e) => setNewTime(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                required
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-gray-700 font-semibold mb-2">Zoom Link</label>
-            <input
-              type="url"
-              value={newZoomLink}
-              onChange={(e) => setNewZoomLink(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              placeholder="https://zoom.us/j/..."
-              required
-            />
-          </div>
-          <Textarea
-            label="Reschedule Notes (Optional)"
-            value={rescheduleNotes}
-            onChange={(e) => setRescheduleNotes(e.target.value)}
-            rows={3}
-            placeholder="Reason for rescheduling, new instructions, etc..."
-          />
-        </div>
-      </Modal>
-
       <div>
-        <h1 className="text-3xl font-bold mb-8">Manage Interviews</h1>
+        <h1 className="text-3xl font-bold mb-8">Interview Management</h1>
 
-        {/* Upcoming Interviews */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-900">Upcoming Interviews</h2>
-
-          {upcomingInterviews.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-md p-8 text-center">
-              <div className="text-gray-400 text-4xl mb-4">📅</div>
-              <p className="text-gray-600">No upcoming interviews scheduled</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {upcomingInterviews.map((application) => (
-                <div key={application.id} className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-900">
-                        {getJobTypeFromId(application.jobId)}
-                      </h3>
-                      <p className="text-gray-600">
-                        Applicant: {application.userId} | Scheduled: {application.interviewDetails?.scheduledDate}
-                      </p>
-                    </div>
-                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                      Scheduled
-                    </span>
-                  </div>
-
-                  {application.interviewDetails?.notes && (
-                    <div className="mb-4">
-                      <p className="text-sm text-gray-600 mb-2">Interview Notes:</p>
-                      <p className="text-gray-700 bg-gray-50 p-3 rounded">
-                        {application.interviewDetails.notes}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex gap-3">
-                    {application.interviewDetails?.zoomLink && (
-                      <a href={application.interviewDetails.zoomLink} target="_blank" rel="noopener noreferrer">
-                        <Button className="bg-blue-600 hover:bg-blue-700">
-                          Join Zoom Meeting
-                        </Button>
-                      </a>
-                    )}
-                    <Button
-                      onClick={() => handleMarkCompleted(application)}
-                      variant="outline"
-                    >
-                      Mark Completed
-                    </Button>
-                    <Button
-                      onClick={() => handleReschedule(application)}
-                      variant="outline"
-                    >
-                      Reschedule
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <p className="text-gray-600 text-sm">Scheduled Interviews</p>
+            <p className="text-3xl font-bold text-blue-600">{statusCounts.scheduled}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <p className="text-gray-600 text-sm">Completed</p>
+            <p className="text-3xl font-bold text-green-600">{statusCounts.done}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <p className="text-gray-600 text-sm">No-Shows</p>
+            <p className="text-3xl font-bold text-red-600">{statusCounts['no-show']}</p>
+          </div>
         </div>
 
-        {/* Completed Interviews */}
-        <div>
-          <h2 className="text-2xl font-semibold mb-4 text-gray-900">Completed Interviews</h2>
-
-          {completedInterviews.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-md p-8 text-center">
-              <div className="text-gray-400 text-4xl mb-4">✅</div>
-              <p className="text-gray-600">No completed interviews yet</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {completedInterviews.map((application) => (
-                <div key={application.id} className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-900">
-                        {getJobTypeFromId(application.jobId)}
-                      </h3>
-                      <p className="text-gray-600">
-                        Applicant: {application.userId} | Completed: {application.interviewDetails?.scheduledDate}
-                      </p>
-                    </div>
-                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                      Completed
-                    </span>
-                  </div>
-
-                  {application.interviewDetails?.notes && (
-                    <div className="mb-4">
-                      <p className="text-sm text-gray-600 mb-2">Interview Notes:</p>
-                      <p className="text-gray-700 bg-gray-50 p-3 rounded">
-                        {application.interviewDetails.notes}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="bg-green-50 border border-green-200 rounded p-4">
-                    <p className="text-green-800">
-                      <strong>Interview completed successfully.</strong> The candidate has been moved to the next stage of the application process.
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* View Toggle */}
+        <div className="flex gap-4 mb-6">
+          <Button
+            onClick={() => setViewMode('calendar')}
+            className={viewMode === 'calendar' ? 'bg-blue-600' : 'bg-gray-300'}
+          >
+            📅 Calendar View
+          </Button>
+          <Button
+            onClick={() => setViewMode('list')}
+            className={viewMode === 'list' ? 'bg-blue-600' : 'bg-gray-300'}
+          >
+            📋 List View
+          </Button>
         </div>
+
+        {/* Calendar View */}
+        {viewMode === 'calendar' && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <InterviewCalendar />
+          </div>
+        )}
+
+        {/* List View */}
+        {viewMode === 'list' && (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            {/* Search and Filter */}
+            <div className="mb-6 space-y-4">
+              <div className="flex gap-4 flex-wrap">
+                <Input
+                  type="text"
+                  placeholder="Search by candidate name, email, or job title..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 min-w-[200px]"
+                />
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value as any)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">All Status</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="done">Completed</option>
+                  <option value="no-show">No-Show</option>
+                </select>
+              </div>
+
+              <p className="text-sm text-gray-600">
+                Showing {filteredInterviews.length} of {interviews.length} interviews
+              </p>
+            </div>
+
+            {/* Table View */}
+            {filteredInterviews.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-4xl mb-4">📭</div>
+                <p className="text-gray-600">No interviews found</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Candidate</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Position</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Date & Time</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Type</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredInterviews.map((interview) => (
+                      <tr key={interview._id || interview.id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4">
+                          <div>
+                            <p className="font-semibold text-gray-900">{interview.candidateName}</p>
+                            <p className="text-sm text-gray-600">{interview.candidateEmail}</p>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <p className="text-gray-900">{interview.jobTitle}</p>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="text-sm">
+                            <p className="font-semibold">{formatDate(interview.scheduledDate)}</p>
+                            <p className="text-gray-600">{interview.scheduledTime}</p>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className="text-xl">{getInterviewTypeIcon(interview.interviewType)}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <select
+                            value={interview.status}
+                            onChange={(e) =>
+                              handleStatusChange(
+                                interview,
+                                e.target.value as 'scheduled' | 'done' | 'no-show'
+                              )
+                            }
+                            className={`px-3 py-1 rounded-full text-sm font-medium border-0 cursor-pointer ${getStatusBadgeColor(
+                              interview.status
+                            )}`}
+                          >
+                            <option value="scheduled">Scheduled</option>
+                            <option value="done">Done</option>
+                            <option value="no-show">No-Show</option>
+                          </select>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex gap-2">
+                            {interview.zoomLink && (
+                              <a
+                                href={interview.zoomLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3 py-1 bg-purple-100 text-purple-700 rounded text-sm font-medium hover:bg-purple-200"
+                              >
+                                Zoom
+                              </a>
+                            )}
+                            <Button
+                              onClick={() => setSelectedInterview(interview)}
+                              variant="outline"
+                              className="text-sm px-3 py-1"
+                            >
+                              View
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Interview Details Modal */}
+      {selectedInterview && !showStatusModal && (
+        <Modal
+          isOpen={true}
+          onClose={() => setSelectedInterview(null)}
+        >
+          <div className="max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">Interview Details</h2>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <p className="text-sm text-gray-600">Candidate</p>
+                <p className="font-semibold text-gray-900">{selectedInterview.candidateName}</p>
+                <p className="text-sm text-gray-600">{selectedInterview.candidateEmail}</p>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-600">Position</p>
+                <p className="font-semibold text-gray-900">{selectedInterview.jobTitle}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Date</p>
+                  <p className="font-semibold text-gray-900">{formatDate(selectedInterview.scheduledDate)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Time</p>
+                  <p className="font-semibold text-gray-900">{selectedInterview.scheduledTime}</p>
+                </div>
+              </div>
+
+              {selectedInterview.interviewerName && (
+                <div>
+                  <p className="text-sm text-gray-600">Interviewer</p>
+                  <p className="font-semibold text-gray-900">{selectedInterview.interviewerName}</p>
+                </div>
+              )}
+
+              {selectedInterview.location && (
+                <div>
+                  <p className="text-sm text-gray-600">Location</p>
+                  <p className="font-semibold text-gray-900">{selectedInterview.location}</p>
+                </div>
+              )}
+
+              {selectedInterview.zoomLink && (
+                <div>
+                  <p className="text-sm text-gray-600">Zoom Link</p>
+                  <a
+                    href={selectedInterview.zoomLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline font-semibold break-all"
+                  >
+                    Join Meeting
+                  </a>
+                </div>
+              )}
+
+              {selectedInterview.notes && (
+                <div>
+                  <p className="text-sm text-gray-600">Notes</p>
+                  <p className="text-gray-900 bg-gray-50 p-2 rounded">{selectedInterview.notes}</p>
+                </div>
+              )}
+
+              <div>
+                <p className="text-sm text-gray-600">Status</p>
+                <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(selectedInterview.status)}`}>
+                  {selectedInterview.status}
+                </span>
+              </div>
+            </div>
+
+            <Button
+              onClick={() => setSelectedInterview(null)}
+              variant="outline"
+              className="w-full"
+            >
+              Close
+            </Button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Status Update Confirmation Modal */}
+      {showStatusModal && (
+        <Modal
+          isOpen={true}
+          onClose={() => setShowStatusModal(false)}
+        >
+          <div className="max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">Update Interview Status</h2>
+
+            <div className="bg-gray-50 p-4 rounded-lg mb-6">
+              <p className="text-sm text-gray-600 mb-2">Candidate</p>
+              <p className="font-semibold text-gray-900 mb-4">{selectedInterview?.candidateName}</p>
+
+              <p className="text-sm text-gray-600 mb-2">Change status to</p>
+              <p className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(newStatus)}`}>
+                {newStatus}
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                onClick={confirmStatusUpdate}
+                disabled={updatingStatus}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                {updatingStatus ? 'Updating...' : '✓ Confirm'}
+              </Button>
+              <Button
+                onClick={() => setShowStatusModal(false)}
+                variant="outline"
+                className="flex-1"
+                disabled={updatingStatus}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </DashboardLayout>
   )
 }

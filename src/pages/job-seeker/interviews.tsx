@@ -141,7 +141,7 @@ const InterviewsPage: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 flex-wrap">
                     <Button
                       onClick={() => handleJoinInterview(application.interviewDetails?.zoomLink || '')}
                       className="bg-blue-600 hover:bg-blue-700"
@@ -154,6 +154,13 @@ const InterviewsPage: React.FC = () => {
                       variant="outline"
                     >
                       Mark as Completed
+                    </Button>
+                    <Button
+                      onClick={() => window.location.href = `/job-seeker/reschedule?id=${application.interviewDetails?._id || ''}&application=${application.id}`}
+                      variant="outline"
+                      className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                    >
+                      📅 Reschedule
                     </Button>
                   </div>
                 </div>
