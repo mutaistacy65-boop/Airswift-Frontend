@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
+import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useNotification } from '@/context/NotificationContext'
 import Loader from '@/components/Loader'
 import Button from '@/components/Button'
@@ -59,6 +60,7 @@ interface Application {
 const AdminApplicationsPage = () => {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
+  const { isAuthorized, isLoading: protectedLoading } = useProtectedRoute('admin')
   const { addNotification } = useNotification()
   const { subscribe, isConnected } = useSocket()
 
@@ -242,7 +244,9 @@ const AdminApplicationsPage = () => {
     return matchesSearch && matchesStatus
   })
 
-  if (authLoading) return <Loader />
+  if (authLoading || protectedLoading) return <Loader />
+  
+  if (!isAuthorized) return null
 
   return (
     <DashboardLayout sidebarItems={sidebarItems}>

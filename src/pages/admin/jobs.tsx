@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
+import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useNotification } from '@/context/NotificationContext'
 import Loader from '@/components/Loader'
 import Button from '@/components/Button'
@@ -32,6 +33,7 @@ interface Job {
 const AdminJobsPage = () => {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
+  const { isAuthorized, isLoading: protectedLoading } = useProtectedRoute('admin')
   const { addNotification } = useNotification()
 
   const [jobs, setJobs] = useState<Job[]>([])
@@ -66,16 +68,10 @@ const AdminJobsPage = () => {
   ]
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'admin')) {
-      router.push('/login')
-    }
-  }, [authLoading, user, router])
-
-  useEffect(() => {
-    if (user?.role === 'admin') {
+    if (isAuthorized) {
       fetchJobs()
     }
-  }, [user])
+  }, [isAuthorized])
 
   const fetchJobs = async () => {
     try {
@@ -180,7 +176,9 @@ const AdminJobsPage = () => {
     return matchesSearch && matchesStatus
   })
 
-  if (authLoading) return <Loader />
+  if (authLoading || protectedLoading) return <Loader />
+  
+  if (!isAuthorized) return null
 
   return (
     <DashboardLayout sidebarItems={sidebarItems}>

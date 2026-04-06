@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useAuth } from '@/context/AuthContext';
+import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { adminService } from '@/services/adminService';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 
@@ -61,6 +63,7 @@ const mockCVs = [
 
 export default function AdminDashboard() {
   const { logout } = useAuth();
+  const { isAuthorized, isLoading: protectedLoading } = useProtectedRoute('admin')
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const [applications, setApplications] = useState<ApplicationItem[]>([]);
   const [form, setForm] = useState({ title: "", location: "" });
@@ -170,6 +173,21 @@ export default function AdminDashboard() {
   const toggleStatus = (id: string) => {
     setJobs(jobs.map((job) => (job._id === id ? { ...job, status: job.status === "Active" ? "Paused" : "Active" } : job)));
   };
+
+  // Protect route
+  if (protectedLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-gray-600">Verifying admin access...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthorized) {
+    return null
+  }
 
   return (
     <div className="bg-gray-100 min-h-screen font-sans">

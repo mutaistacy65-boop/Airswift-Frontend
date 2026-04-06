@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
+import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import AdminSettingsPanel from '@/components/AdminSettingsPanel'
 import Loader from '@/components/Loader'
 import { Settings as SettingsIcon } from 'lucide-react'
@@ -9,6 +10,7 @@ import { Settings as SettingsIcon } from 'lucide-react'
 export default function AdminSettings() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
+  const { isAuthorized, isLoading: protectedLoading } = useProtectedRoute('admin')
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'admin')) {
@@ -16,7 +18,9 @@ export default function AdminSettings() {
     }
   }, [authLoading, user, router])
 
-  if (authLoading) return <Loader />
+  if (authLoading || protectedLoading) return <Loader />
+  
+  if (!isAuthorized) return null
 
   const sidebarItems = [
     { label: '📊 Dashboard', href: '/admin/dashboard', icon: '📊' },

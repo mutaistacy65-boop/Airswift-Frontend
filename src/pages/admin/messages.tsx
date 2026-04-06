@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
+import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useNotification } from '@/context/NotificationContext'
 import Loader from '@/components/Loader'
 import Button from '@/components/Button'
@@ -26,6 +27,7 @@ interface Message {
 const AdminMessagesPage = () => {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
+  const { isAuthorized, isLoading: protectedLoading } = useProtectedRoute('admin')
   const { addNotification } = useNotification()
 
   const [messages, setMessages] = useState<Message[]>([])
@@ -143,7 +145,9 @@ const AdminMessagesPage = () => {
       msg.subject.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
-  if (authLoading) return <Loader />
+  if (authLoading || protectedLoading) return <Loader />
+  
+  if (!isAuthorized) return null
 
   return (
     <DashboardLayout sidebarItems={sidebarItems}>
