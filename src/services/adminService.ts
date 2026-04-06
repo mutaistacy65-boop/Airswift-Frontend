@@ -17,6 +17,11 @@ export const adminService = {
     return response.data
   },
 
+  getJobs: async () => {
+    const response = await API.get('/jobs')
+    return response.data
+  },
+
   // Applications Management
   getAllApplications: async (page = 1, limit = 10) => {
     const response = await API.get('/admin/applications', { params: { page, limit } })
@@ -65,7 +70,7 @@ export const adminService = {
 
   // Dashboard Stats
   getDashboardStats: async () => {
-    const response = await API.get('/admin/stats')
+    const response = await API.get('/dashboard/summary')
     return response.data
   },
 

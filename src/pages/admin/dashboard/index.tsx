@@ -1,28 +1,57 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useAuth } from '@/context/AuthContext';
+import { adminService } from '@/services/adminService';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 
-const lineData = [
-  { name: "Mon", applications: 20 },
-  { name: "Tue", applications: 35 },
-  { name: "Wed", applications: 28 },
-  { name: "Thu", applications: 45 },
-  { name: "Fri", applications: 60 },
-  { name: "Sat", applications: 40 },
-  { name: "Sun", applications: 70 }
-];
+type JobItem = {
+  _id: string
+  title: string
+  location: string
+  status?: string
+  applicants?: number
+}
 
-const barData = [
-  { name: "Marketing", jobs: 10 },
-  { name: "IT", jobs: 18 },
-  { name: "Finance", jobs: 8 },
-  { name: "HR", jobs: 6 }
-];
+type ApplicationItem = {
+  _id?: string
+  createdAt?: string
+  status?: string
+  fullName?: string
+  jobTitle?: string
+  aiScore?: number
+}
 
-const initialJobs = [
-  { id: 1, title: "Marketing Specialist", location: "Toronto, ON", status: "Active", applicants: 32 },
-  { id: 2, title: "Software Developer", location: "Vancouver, BC", status: "Active", applicants: 50 },
-  { id: 3, title: "Financial Analyst", location: "Ottawa, ON", status: "Paused", applicants: 21 }
-];
+type TrendData = {
+  name: string
+  applications: number
+}
+
+type LocationData = {
+  name: string
+  jobs: number
+}
+
+type DashboardSummary = {
+  totalApplications: number
+  totalJobs: number
+  totalInterviews: number
+  totalHired: number
+  averageScore: number
+  summary: {
+    applications: number
+    jobs: number
+    interviews: number
+    hired: number
+  }
+}
+
+const initialTrendData: TrendData[] = Array.from({ length: 7 }, (_, idx) => {
+  const date = new Date()
+  date.setDate(date.getDate() - (6 - idx))
+  return { name: date.toLocaleDateString('en-US', { weekday: 'short' }), applications: 0 }
+})
+
+const initialBarData: LocationData[] = []
 
 const mockCVs = [
   { id: 1, name: "Jane Smith", skills: ["React", "Node", "AWS"], score: 86 },
@@ -31,15 +60,102 @@ const mockCVs = [
 ];
 
 export default function AdminDashboard() {
-  const [jobs, setJobs] = useState(initialJobs);
+  const { logout } = useAuth();
+  const [jobs, setJobs] = useState<JobItem[]>([]);
+  const [applications, setApplications] = useState<ApplicationItem[]>([]);
   const [form, setForm] = useState({ title: "", location: "" });
+  const [dashboardStats, setDashboardStats] = useState<DashboardSummary>({
+    totalApplications: 0,
+    totalJobs: 0,
+    totalInterviews: 0,
+    totalHired: 0,
+    averageScore: 0,
+    summary: {
+      applications: 0,
+      jobs: 0,
+      interviews: 0,
+      hired: 0,
+    },
+  })
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [jobsLoading, setJobsLoading] = useState(true);
+  const [appsLoading, setAppsLoading] = useState(true);
+  const [lineData, setLineData] = useState<TrendData[]>(initialTrendData);
+  const [barData, setBarData] = useState<LocationData[]>(initialBarData);
+
+  const buildApplicationTrendData = (applications: ApplicationItem[]) => {
+    const now = new Date()
+    const days = Array.from({ length: 7 }, (_, idx) => {
+      const date = new Date(now)
+      date.setDate(date.getDate() - (6 - idx))
+      return { date, name: date.toLocaleDateString('en-US', { weekday: 'short' }), applications: 0 }
+    })
+
+    const counts = days.reduce<Record<string, number>>((acc, day) => {
+      acc[day.name] = 0
+      return acc
+    }, {})
+
+    const startDate = new Date(days[0].date)
+    startDate.setHours(0, 0, 0, 0)
+    const endDate = new Date(now)
+    endDate.setHours(23, 59, 59, 999)
+
+    applications.forEach((app) => {
+      if (!app.createdAt) return
+      const created = new Date(app.createdAt)
+      if (created < startDate || created > endDate) return
+      const label = created.toLocaleDateString('en-US', { weekday: 'short' })
+      if (label in counts) {
+        counts[label] += 1
+      }
+    })
+
+    return days.map((day) => ({ name: day.name, applications: counts[day.name] ?? 0 }))
+  }
+
+  const buildJobLocationData = (jobs: JobItem[]) => {
+    const counts = jobs.reduce<Record<string, number>>((acc, job) => {
+      const location = job.location || 'Unknown'
+      acc[location] = (acc[location] || 0) + 1
+      return acc
+    }, {})
+
+    return Object.entries(counts).map(([name, jobs]) => ({ name, jobs }))
+  }
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [stats, jobsData, applicationsData] = await Promise.all([
+          adminService.getDashboardStats(),
+          adminService.getJobs(),
+          adminService.getAllApplications(),
+        ])
+
+        setDashboardStats(stats)
+        setJobs(jobsData)
+        setApplications(applicationsData)
+        setBarData(buildJobLocationData(jobsData))
+        setLineData(buildApplicationTrendData(applicationsData))
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error)
+      } finally {
+        setStatsLoading(false)
+        setJobsLoading(false)
+        setAppsLoading(false)
+      }
+    }
+
+    fetchDashboardData()
+  }, [])
 
   const addJob = () => {
     if (!form.title || !form.location) return;
     setJobs([
       ...jobs,
       {
-        id: Date.now(),
+        _id: Date.now().toString(),
         title: form.title,
         location: form.location,
         status: "Active",
@@ -49,10 +165,10 @@ export default function AdminDashboard() {
     setForm({ title: "", location: "" });
   };
 
-  const deleteJob = (id) => setJobs(jobs.filter((job) => job.id !== id));
+  const deleteJob = (id: string) => setJobs(jobs.filter((job) => job._id !== id));
 
-  const toggleStatus = (id) => {
-    setJobs(jobs.map((job) => (job.id === id ? { ...job, status: job.status === "Active" ? "Paused" : "Active" } : job)));
+  const toggleStatus = (id: string) => {
+    setJobs(jobs.map((job) => (job._id === id ? { ...job, status: job.status === "Active" ? "Paused" : "Active" } : job)));
   };
 
   return (
@@ -64,12 +180,14 @@ export default function AdminDashboard() {
           <h1 className="text-xl font-bold text-blue-900">TALEX ADMIN</h1>
         </div>
         <nav className="flex items-center gap-6 text-sm text-gray-600">
-          <a className="text-red-500 font-semibold">Dashboard</a>
-          <a>Manage Jobs</a>
-          <a>Applicants</a>
-          <a>Messages</a>
-          <a>Settings</a>
-          <button className="bg-red-500 text-white px-4 py-1 rounded">Logout</button>
+          <Link href="/admin/dashboard" className="text-red-500 font-semibold">Dashboard</Link>
+          <Link href="/admin/jobs">Manage Jobs</Link>
+          <Link href="/admin/applications">Applicants</Link>
+          <Link href="/admin/messages">Messages</Link>
+          <Link href="/admin/settings">Settings</Link>
+          <button type="button" onClick={logout} className="bg-red-500 text-white px-4 py-1 rounded">
+            Logout
+          </button>
         </nav>
       </header>
 
@@ -77,15 +195,16 @@ export default function AdminDashboard() {
       <div className="bg-blue-900 text-white px-8 py-6">
         <h2 className="text-xl font-semibold">Welcome, Admin!</h2>
         <p className="text-sm opacity-80">Monitor and manage recruitment activities</p>
+        <p className="text-sm opacity-80 mt-2">Average score: {statsLoading ? 'Loading...' : dashboardStats.averageScore.toFixed(1)}</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-8 py-6">
         {[
-          { label: "Active Jobs", value: jobs.length },
-          { label: "Applications", value: jobs.reduce((sum, job) => sum + job.applicants, 0) },
-          { label: "Interviews", value: 48 },
-          { label: "Messages", value: 9 }
+          { label: 'Total Jobs', value: statsLoading ? 'Loading...' : dashboardStats.totalJobs },
+          { label: 'Total Applications', value: statsLoading ? 'Loading...' : dashboardStats.totalApplications },
+          { label: 'Total Interviews', value: statsLoading ? 'Loading...' : dashboardStats.totalInterviews },
+          { label: 'Total Hired', value: statsLoading ? 'Loading...' : dashboardStats.totalHired }
         ].map((stat, i) => (
           <div key={i} className="bg-white p-6 rounded-2xl shadow">
             <p className="text-gray-500">{stat.label}</p>
@@ -109,7 +228,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow">
-          <h3 className="text-lg font-semibold mb-4">Jobs by Category</h3>
+          <h3 className="text-lg font-semibold mb-4">Jobs by Location</h3>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={barData}>
               <XAxis dataKey="name" />
@@ -145,29 +264,35 @@ export default function AdminDashboard() {
           </div>
 
           <div className="space-y-3">
-            {jobs.map((job) => (
-              <div key={job.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b py-3 gap-3">
-                <div>
-                  <p className="font-semibold">{job.title}</p>
-                  <p className="text-sm text-gray-500">{job.location}</p>
-                  <p className="text-xs text-gray-500">Applicants: {job.applicants}</p>
+            {jobsLoading ? (
+              <div className="text-gray-500">Loading job list...</div>
+            ) : jobs.length === 0 ? (
+              <div className="text-gray-500">No jobs found.</div>
+            ) : (
+              jobs.map((job) => (
+                <div key={job._id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b py-3 gap-3">
+                  <div>
+                    <p className="font-semibold">{job.title}</p>
+                    <p className="text-sm text-gray-500">{job.location}</p>
+                    <p className="text-xs text-gray-500">Applicants: {job.applicants ?? 0}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      disabled
+                      className="text-xs px-2 py-1 rounded bg-yellow-100"
+                    >
+                      {job.status ?? 'Active'}
+                    </button>
+                    <button
+                      disabled
+                      className="text-xs px-2 py-1 bg-red-500 text-white rounded"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => toggleStatus(job.id)}
-                    className="text-xs px-2 py-1 rounded bg-yellow-100"
-                  >
-                    {job.status}
-                  </button>
-                  <button
-                    onClick={() => deleteJob(job.id)}
-                    className="text-xs px-2 py-1 bg-red-500 text-white rounded"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
