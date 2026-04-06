@@ -6,7 +6,13 @@ import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { adminService } from '@/services/adminService';
 import MetricCard from '@/components/MetricCard';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
-import { TrendingUp, Users, Briefcase, Calendar, AlertTriangle, CheckCircle, Clock, DollarSign, Activity, Bell, Settings, Download, FileText } from 'lucide-react';
+import { TrendingUp, Users, Briefcase, Calendar, AlertTriangle, CheckCircle, Clock, DollarSign, Activity, Bell, Settings, Download, FileText, User } from 'lucide-react';
+import {
+  buildJobLocationData,
+  buildApplicationTrendData,
+  buildConversionData,
+  generateAlerts,
+} from '@/utils/dashboardHelpers';
 
 type JobItem = {
   _id: string
@@ -111,87 +117,6 @@ export default function AdminDashboard() {
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [conversionData, setConversionData] = useState<any[]>([]);
-
-  const buildApplicationTrendData = (applications: ApplicationItem[]) => {
-    const now = new Date()
-    const days = Array.from({ length: 7 }, (_, idx) => {
-      const date = new Date(now)
-      date.setDate(date.getDate() - (6 - idx))
-      return { date, name: date.toLocaleDateString('en-US', { weekday: 'short' }), applications: 0 }
-    })
-
-    const counts = days.reduce<Record<string, number>>((acc, day) => {
-      acc[day.name] = 0
-      return acc
-    }, {})
-
-    const startDate = new Date(days[0].date)
-    startDate.setHours(0, 0, 0, 0)
-    const endDate = new Date(now)
-    endDate.setHours(23, 59, 59, 999)
-
-    applications.forEach((app) => {
-      if (!app.createdAt) return
-      const created = new Date(app.createdAt)
-      if (created < startDate || created > endDate) return
-      const label = created.toLocaleDateString('en-US', { weekday: 'short' })
-      if (label in counts) {
-        counts[label] += 1
-      }
-    })
-
-    return days.map((day) => ({ name: day.name, applications: counts[day.name] ?? 0 }))
-  }
-
-  const buildConversionData = (applications: ApplicationItem[]) => {
-    const stages = ['Applied', 'Under Review', 'Shortlisted', 'Interview', 'Hired']
-    const counts = stages.reduce((acc, stage) => ({ ...acc, [stage]: 0 }), {} as Record<string, number>)
-
-    applications.forEach(app => {
-      const status = app.status
-      if (status === 'Submitted' || status === 'pending') counts['Applied']++
-      else if (status === 'Under Review' || status === 'reviewed') counts['Under Review']++
-      else if (status === 'Shortlisted' || status === 'shortlisted') counts['Shortlisted']++
-      else if (status?.includes('interview')) counts['Interview']++
-      else if (status === 'Hired' || status === 'accepted' || status === 'visa_ready') counts['Hired']++
-    })
-
-    return stages.map(stage => ({ name: stage, value: counts[stage] }))
-  }
-
-  const generateAlerts = (stats: DashboardSummary, applications: ApplicationItem[]) => {
-    const newAlerts: AlertItem[] = []
-    
-    if (stats.totalApplications > 50) {
-      newAlerts.push({
-        id: '1',
-        type: 'info',
-        message: 'High application volume this week!',
-        timestamp: new Date().toISOString()
-      })
-    }
-
-    const pendingReviews = applications.filter(app => app.status === 'pending' || app.status === 'Submitted').length
-    if (pendingReviews > 10) {
-      newAlerts.push({
-        id: '2',
-        type: 'warning',
-        message: `${pendingReviews} applications pending review`,
-        timestamp: new Date().toISOString()
-      })
-    }
-
-    if (stats.conversionRate < 5) {
-      newAlerts.push({
-        id: '3',
-        type: 'error',
-        message: 'Low conversion rate detected',
-        timestamp: new Date().toISOString()
-      })
-    }
-
-    return newAlerts
-  }
 
   const generateActivities = (applications: ApplicationItem[], jobs: JobItem[]) => {
     const activities: ActivityItem[] = []
@@ -373,25 +298,13 @@ export default function AdminDashboard() {
             icon={<TrendingUp className="w-6 h-6" />}
             trend={{ value: 5, isPositive: true }}
           />
-              <span className="text-green-600">+2.1% from last month</span>
-            </div>
-          </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Avg. Time to Hire</p>
-                <p className="text-2xl font-bold text-gray-900">{statsLoading ? '...' : `${dashboardStats.avgTimeToHire} days`}</p>
-              </div>
-              <div className="bg-orange-100 p-3 rounded-lg">
-                <Clock className="w-6 h-6 text-orange-600" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-sm">
-              <TrendingUp className="w-4 h-4 text-red-500 mr-1" />
-              <span className="text-red-600">+1 day from last month</span>
-            </div>
-          </div>
+          <MetricCard
+            title="Avg. Time to Hire"
+            value={statsLoading ? '...' : `${dashboardStats.avgTimeToHire} days`}
+            icon={<Clock className="w-6 h-6" />}
+            trend={{ value: 1, isPositive: true }}
+          />
         </div>
 
         {/* Charts Section */}

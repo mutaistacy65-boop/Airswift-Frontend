@@ -387,8 +387,6 @@ const JobSeekerDashboard: React.FC = () => {
       </main>
     </div>
   )
-    </div>
-  )
 }
 
 export default JobSeekerDashboard
