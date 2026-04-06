@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
 
   try {
-    const response = await fetch('https://airswift-backend-fjt3.onrender.com/api/auth/resend-otp', {
+    const response = await fetch('https://talex-backend.onrender.com/api/auth/resend-otp', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

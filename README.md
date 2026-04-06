@@ -261,7 +261,7 @@ WebSocket: end-voice-interview   - End interview session
 DB_HOST=your-db-host
 DB_USER=your-db-user
 DB_PASSWORD=your-db-password
-DB_NAME=airswift_db
+DB_NAME=talex_db
 
 # Authentication
 JWT_SECRET=your-jwt-secret
@@ -272,7 +272,7 @@ BREVO_API_KEY=your-brevo-key
 CLOUDINARY_URL=your-cloudinary-url
 
 # Application
-FRONTEND_URL=https://airswift-frontend.vercel.app
+FRONTEND_URL=https://talex-frontend.vercel.app
 PORT=5000
 ```
 
@@ -309,7 +309,7 @@ PORT=5000
 ## Quick Start Guide
 
 ### For Job Seekers
-1. Register account at https://airswift-frontend.vercel.app
+1. Register account at https://talex-frontend.vercel.app
 2. Verify email with OTP
 3. Complete profile with documents
 4. Browse and apply for jobs
