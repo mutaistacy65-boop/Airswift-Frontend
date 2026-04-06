@@ -7,8 +7,7 @@ export default function VerifyOTP() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleVerify = async (event) => {
-    event.preventDefault();
+  const handleVerify = async () => {
     setError("");
     setMessage("");
 
@@ -33,7 +32,7 @@ export default function VerifyOTP() {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.message || "Verification failed");
+      if (!res.ok) throw new Error(data.message);
 
       setMessage(data.message || "OTP verified successfully.");
       setEmail("");
@@ -84,7 +83,7 @@ export default function VerifyOTP() {
               </p>
             </div>
 
-            <form className="space-y-5" onSubmit={handleVerify}>
+            <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleVerify(); }}>
               <label className="block">
                 <span className="text-sm font-medium text-slate-700">Email address</span>
                 <input
