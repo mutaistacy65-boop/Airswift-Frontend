@@ -118,4 +118,9 @@ export const jobService = {
     const response = await API.get('/api/jobs')
     return response.data
   },
+
+  getJobAnalytics: async () => {
+    const response = await API.get('/jobs/dashboard/categories')
+    return response.data
+  },
 }

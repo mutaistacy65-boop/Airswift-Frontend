@@ -60,6 +60,30 @@ const signJwt = (user: any) =>
     },
   )
 
+export const verifyToken = (req: NextApiRequest) => {
+  return new Promise((resolve, reject) => {
+    const token = req.cookies.token || req.headers.authorization?.replace('Bearer ', '')
+
+    if (!token) {
+      reject(new Error('No token provided'))
+      return
+    }
+
+    jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
+      if (err) {
+        reject(new Error('Invalid token'))
+        return
+    }
+
+      resolve({
+        userId: decoded.id,
+        email: decoded.email,
+        role: decoded.role
+      })
+    })
+  })
+}
+
 const loginHandler = async (req: NextApiRequest, res: NextApiResponse, requireAdmin = false) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' })
