@@ -56,7 +56,7 @@ export default async function handler(
       applicantName: application.fullName,
       applicantEmail: application.email,
       jobTitle: application.jobTitle,
-      companyName: jobDetails?.company || 'Airswift',
+      companyName: jobDetails?.company || 'TALEX',
       offerDetails: {
         salary: offerDetails?.salary || 'TBD',
         startDate: offerDetails?.startDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
@@ -124,7 +124,7 @@ Dear ${application.fullName},
 
 JOB OFFER - ${application.jobTitle}
 
-We are pleased to offer you the position of ${application.jobTitle} at ${job?.company || 'Airswift'}. We were impressed by your qualifications and experience, and we believe you will be a valuable addition to our team.
+We are pleased to offer you the position of ${application.jobTitle} at ${job?.company || 'TALEX'}. We were impressed by your qualifications and experience, and we believe you will be a valuable addition to our team.
 
 POSITION DETAILS:
 - Job Title: ${application.jobTitle}
@@ -148,13 +148,13 @@ This offer is contingent upon:
 
 Please indicate your acceptance of this offer by signing and returning this letter by ${new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US')}.
 
-We look forward to welcoming you to the ${job?.company || 'Airswift'} team!
+We look forward to welcoming you to the ${job?.company || 'TALEX'} team!
 
 Sincerely,
 
 [Authorized Signatory]
 Human Resources
-${job?.company || 'Airswift'}
+${job?.company || 'TALEX'}
 
 ACCEPTANCE OF OFFER:
 

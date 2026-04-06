@@ -4,7 +4,7 @@ import mongoose from 'mongoose'
 import { verifyToken } from '@/lib/authController'
 
 const defaultSettings = {
-  platformName: 'Airswift',
+  platformName: 'TALEX',
   maxJobsPerDay: 50,
   maxApplicationsPerDay: 100,
   emailNotificationsEnabled: true,

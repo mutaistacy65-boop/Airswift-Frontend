@@ -128,7 +128,7 @@ const RescheduleInterviewPage: React.FC = () => {
           newTime,
           interview.zoomLink,
           interview.interviewerName,
-          'Airswift'
+          'TALEX'
         )
       } catch (emailError) {
         console.error('Email sending failed:', emailError)

@@ -67,7 +67,7 @@ export default async function handler(
     const emailPromises = applications.map(async (application) => {
       try {
         // Prepare email content
-        let subject = customSubject || (template ? template.subject : 'Airswift Update')
+        let subject = customSubject || (template ? template.subject : 'TALEX Update')
         let body = customMessage || (template ? template.body : 'Please check your application status.')
 
         // Replace variables
@@ -75,7 +75,7 @@ export default async function handler(
           ...variables,
           applicantName: application.fullName || 'Applicant',
           jobTitle: application.jobTitle || 'Position',
-          companyName: 'Airswift'
+          companyName: 'TALEX'
         }
 
         Object.entries(emailVariables).forEach(([key, value]) => {

@@ -35,11 +35,11 @@ export default function Login() {
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10 text-center max-w-md">
           <div className="mb-8">
-            <div className="text-6xl mb-4">🌍</div>
+            <div className="text-6xl mb-4">💼</div>
           </div>
           <h1 className="text-4xl font-bold mb-4">Welcome Back</h1>
           <p className="text-lg opacity-90 mb-8">
-            Continue your journey to find the perfect job opportunity with Airswift
+            Continue your journey to find the perfect job opportunity with TALEX
           </p>
           <div className="flex items-center justify-center space-x-4 text-sm">
             <div className="flex items-center">
@@ -63,8 +63,8 @@ export default function Login() {
         <div className="w-full max-w-md space-y-8">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary">Airswift</h1>
-            <p className="text-gray-600 mt-2">Connecting Global Talent to Opportunity</p>
+          <h1 className="text-3xl font-bold text-primary">TALEX</h1>
+            <p className="text-gray-600 mt-2">Your Career Journey Starts Here</p>
           </div>
 
           <div className="text-center">

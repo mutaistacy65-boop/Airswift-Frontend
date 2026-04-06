@@ -39,10 +39,10 @@ const Navbar: React.FC = () => {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group cursor-pointer">
           <div className="bg-primary p-2 rounded-lg group-hover:shadow-md transition-all">
-            🌍
+            💼
           </div>
           <span className="hidden sm:inline text-xl md:text-2xl font-bold text-primary">
-            Airswift
+            TALEX
           </span>
         </Link>
 

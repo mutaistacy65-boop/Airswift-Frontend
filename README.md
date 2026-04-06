@@ -1,7 +1,7 @@
-# Airswift Job Portal - Complete System Documentation
+# TALEX Job Portal - Complete System Documentation
 
 ## Overview
-Airswift is a comprehensive job portal platform designed specifically for Canada-based immigration jobs. The system connects job seekers with employers through an AI-powered application process, featuring voice interviews, automated CV analysis, and secure document management.
+TALEX is a comprehensive job portal platform designed specifically for Canada-based immigration jobs. The system connects job seekers with employers through an AI-powered application process, featuring voice interviews, automated CV analysis, and secure document management.
 
 )## Architecture Overview
 
@@ -336,7 +336,7 @@ This comprehensive system provides a complete solution for AI-powered recruitmen
 
 ## 🔗 API Integration
 
-The frontend integrates with the Airswift backend API. Key endpoints:
+The frontend integrates with the TALEX backend API. Key endpoints:
 
 - **Authentication**: `/api/auth/login`, `/api/auth/register`
 - **Jobs**: `/api/jobs`, `/api/jobs/:id`
@@ -412,4 +412,4 @@ For support or questions, please contact the development team or create an issue
 
 ---
 
-**Airswift** - Connecting talent with opportunity in Canada 🇨🇦
+**TALEX** - Connecting talent with opportunity in Canada 🇨🇦
