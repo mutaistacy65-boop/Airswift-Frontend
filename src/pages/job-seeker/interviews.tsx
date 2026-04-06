@@ -156,7 +156,7 @@ const InterviewsPage: React.FC = () => {
                       Mark as Completed
                     </Button>
                     <Button
-                      onClick={() => window.location.href = `/job-seeker/reschedule?id=${application.interviewDetails?._id || ''}&application=${application.id}`}
+                      onClick={() => window.location.href = `/job-seeker/reschedule?id=${application.id}&application=${application.id}`}
                       variant="outline"
                       className="text-orange-600 border-orange-300 hover:bg-orange-50"
                     >

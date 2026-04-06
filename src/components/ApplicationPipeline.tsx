@@ -10,17 +10,18 @@ interface Application {
   fullName: string
   email: string
   jobId: { title: string } | string
-  status: 'pending' | 'reviewed' | 'shortlisted' | 'rejected' | 'interview-scheduled'
+  status: 'Submitted' | 'Under Review' | 'Shortlisted' | 'Interview Scheduled' | 'Hired' | 'Rejected' | 'rejected' | 'pending' | 'reviewed' | 'accepted' | 'interview-scheduled' | 'shortlisted'
   cv?: string
   appliedDate?: string
 }
 
 const STATUSES = [
-  { id: 'pending', label: 'Pending', color: 'bg-yellow-100', borderColor: 'border-yellow-300' },
-  { id: 'reviewed', label: 'Reviewed', color: 'bg-blue-100', borderColor: 'border-blue-300' },
-  { id: 'shortlisted', label: 'Shortlisted', color: 'bg-green-100', borderColor: 'border-green-300' },
-  { id: 'interview-scheduled', label: 'Interviews', color: 'bg-purple-100', borderColor: 'border-purple-300' },
-  { id: 'rejected', label: 'Rejected', color: 'bg-red-100', borderColor: 'border-red-300' },
+  { id: 'Submitted', label: 'Submitted', color: 'bg-yellow-100', borderColor: 'border-yellow-300' },
+  { id: 'Under Review', label: 'Under Review', color: 'bg-blue-100', borderColor: 'border-blue-300' },
+  { id: 'Shortlisted', label: 'Shortlisted', color: 'bg-green-100', borderColor: 'border-green-300' },
+  { id: 'Interview Scheduled', label: 'Interview Scheduled', color: 'bg-purple-100', borderColor: 'border-purple-300' },
+  { id: 'Hired', label: 'Hired', color: 'bg-emerald-100', borderColor: 'border-emerald-300' },
+  { id: 'Rejected', label: 'Rejected', color: 'bg-red-100', borderColor: 'border-red-300' },
 ]
 
 interface ApplicationPipelineProps {

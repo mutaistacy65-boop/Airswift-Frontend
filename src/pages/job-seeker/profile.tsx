@@ -7,6 +7,7 @@ import Loader from '@/components/Loader'
 import Button from '@/components/Button'
 import Input from '@/components/Input'
 import Textarea from '@/components/Textarea'
+import { profileService } from '@/services/profileService'
 
 interface UserProfile {
   name: string
@@ -21,7 +22,7 @@ interface UserProfile {
 
 const ProfilePage: React.FC = () => {
   const { isAuthorized, isLoading } = useProtectedRoute('user')
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
   const { addNotification } = useNotification()
 
   const [profile, setProfile] = useState<UserProfile>({
@@ -37,6 +38,7 @@ const ProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [skillInput, setSkillInput] = useState('')
+  const [cvFile, setCvFile] = useState<File | null>(null)
 
   useEffect(() => {
     if (isAuthorized && user) {
@@ -80,15 +82,43 @@ const ProfilePage: React.FC = () => {
   }
 
   const handleSave = async () => {
+    if (!cvFile) {
+      addNotification('Please upload your CV before profile setup.', 'error')
+      return
+    }
+
     setSaving(true)
     try {
-      // Here you would typically call an API to update the profile
-      // For now, we'll just simulate the save
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const formData = new FormData()
+      formData.append('name', profile.name)
+      formData.append('phone', profile.phone)
+      formData.append('location', profile.location)
+      formData.append('cv', cvFile)
 
-      addNotification('Profile updated successfully!', 'success')
-    } catch (error) {
-      addNotification('Failed to update profile', 'error')
+      const data = await profileService.setupProfile(formData)
+
+      if (data?.profile) {
+        setProfile(prev => ({
+          ...prev,
+          name: data.profile.name || prev.name,
+          skills: data.profile.skills || prev.skills,
+          education: data.profile.education || prev.education,
+          experience: data.profile.experience || prev.experience,
+        }))
+
+        updateUser({
+          name: data.profile.name || profile.name,
+          skills: data.profile.skills || profile.skills,
+          education: data.profile.education || profile.education,
+          experience: data.profile.experience || profile.experience,
+          location: profile.location,
+          phone: profile.phone,
+        })
+      }
+
+      addNotification(data?.message || 'Profile setup complete!', 'success')
+    } catch (error: any) {
+      addNotification(error?.message || 'Failed to setup profile', 'error')
     } finally {
       setSaving(false)
     }
@@ -143,6 +173,19 @@ const ProfilePage: React.FC = () => {
                 onChange={(e) => handleInputChange('location', e.target.value)}
                 placeholder="City, Country"
               />
+              <div className="w-full">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Upload CV</label>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={(e) => setCvFile(e.target.files?.[0] || null)}
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                />
+                {cvFile && (
+                  <p className="text-sm text-gray-600 mt-2">Selected file: {cvFile.name}</p>
+                )}
+                <p className="text-xs text-gray-500 mt-2">Upload your CV to automatically populate skills, experience, and education from the profile setup endpoint.</p>
+              </div>
             </div>
           </div>
 
@@ -223,7 +266,7 @@ const ProfilePage: React.FC = () => {
               disabled={saving}
               size="lg"
             >
-              {saving ? 'Saving...' : 'Save Profile'}
+              {saving ? 'Saving...' : cvFile ? 'Upload CV & Setup Profile' : 'Select CV to Setup Profile'}
             </Button>
           </div>
         </div>

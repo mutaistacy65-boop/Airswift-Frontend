@@ -38,12 +38,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Load user from token on mount
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-    
-    if (token) {
-      setUser({ token })
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token')
+      const storedUser = localStorage.getItem('user')
+
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser))
+        } catch {
+          setUser(token ? { token } : null)
+        }
+      } else if (token) {
+        setUser({ token })
+      }
     }
-    
+
     setIsLoading(false)
   }, [])
 

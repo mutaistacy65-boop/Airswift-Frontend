@@ -24,7 +24,7 @@ export const adminService = {
   },
 
   updateApplicationStatus: async (id: string, status: string) => {
-    const response = await API.put(`/admin/applications/${id}/status`, { status })
+    const response = await API.patch(`/admin/applications/${id}`, { status })
     return response.data
   },
 

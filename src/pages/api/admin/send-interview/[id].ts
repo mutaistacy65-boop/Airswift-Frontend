@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ message: 'Application not found' })
     }
 
-    await db.collection('interviewNotifications').insertOne({
+    const interviewResult = await db.collection('interviewNotifications').insertOne({
       applicationId: new ObjectId(id),
       email,
       name,
@@ -39,6 +39,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       date,
       createdAt: new Date(),
     })
+
+    await db.collection('applications').updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          interviewId: interviewResult.insertedId,
+          status: 'Interview Scheduled',
+          updatedAt: new Date(),
+        },
+      }
+    )
 
     console.log(`Interview email would be sent to ${email} (${name}) with link ${meetLink} on ${date}`)
 

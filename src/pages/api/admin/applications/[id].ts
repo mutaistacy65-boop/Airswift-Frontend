@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return res.status(400).json({ message: 'Status is required' })
         }
 
-        const updateResult = await db.collection('applications').updateOne(
+        const updateResult = await db.collection('applications').findOneAndUpdate(
           { _id: new ObjectId(id) },
           {
             $set: {
@@ -32,14 +32,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               updatedAt: new Date(),
               notes,
             },
-          }
+          },
+          { returnDocument: 'after' }
         )
 
-        if (updateResult.matchedCount === 0) {
+        if (!updateResult.value) {
           return res.status(404).json({ message: 'Application not found' })
         }
 
-        return res.status(200).json({ message: 'Application status updated' })
+        const updatedApplication = {
+          ...updateResult.value,
+          id: updateResult.value._id.toString(),
+          _id: updateResult.value._id.toString(),
+        }
+
+        return res.status(200).json({ success: true, application: updatedApplication })
       } catch (error: any) {
         console.error('Error updating application', error)
         return res.status(500).json({ message: 'Internal server error' })

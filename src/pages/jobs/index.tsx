@@ -14,6 +14,7 @@ const JobsPage: React.FC = () => {
   const { isAuthenticated, isLoading: authLoading } = useAuth()
   const [jobs, setJobs] = useState<Job[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [location, setLocation] = useState('')
   const [jobType, setJobType] = useState('')
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -28,16 +29,19 @@ const JobsPage: React.FC = () => {
     if (!authLoading && isAuthenticated) {
       fetchJobs()
     }
-  }, [searchQuery, jobType, page, authLoading, isAuthenticated, router])
+  }, [searchQuery, location, jobType, page, authLoading, isAuthenticated, router])
 
   const fetchJobs = async () => {
     setLoading(true)
     try {
-      const filters: any = {}
-      if (jobType) filters.type = jobType
-      if (searchQuery) filters.search = searchQuery
+      const filters: any = {
+        type: jobType || undefined,
+        location: location || undefined,
+        page,
+        limit: 10,
+      }
 
-      const data = await jobService.getAllJobs(page, 10)
+      const data = await jobService.searchJobs(searchQuery, filters)
       if (page === 1) {
         setJobs(data.jobs || data)
       } else {
@@ -61,13 +65,22 @@ const JobsPage: React.FC = () => {
         <p className="text-gray-600 mb-8">Find your next career opportunity from our curated job listings</p>
 
         {/* Filters */}
-        <div className="bg-white p-6 rounded-lg shadow-sm mb-8 grid md:grid-cols-2 gap-4 border border-gray-100">
-          <Input
-            label="Search Jobs"
-            placeholder="Job title, company, location..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value)
+<div className="bg-white p-6 rounded-lg shadow-sm mb-8 grid lg:grid-cols-3 gap-4 border border-gray-100">
+            <Input
+              label="Search Jobs"
+              placeholder="Job title, company, location..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setPage(1)
+              }}
+            />
+            <Input
+              label="Location"
+              placeholder="Toronto, Nairobi, Remote..."
+              value={location}
+              onChange={(e) => {
+                setLocation(e.target.value)
               setPage(1)
             }}
           />

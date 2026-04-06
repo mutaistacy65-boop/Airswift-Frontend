@@ -17,10 +17,27 @@ export interface JobApplication {
   id: string
   jobId: string
   userId: string
-  resumeUrl: string
-  coverLetter: string
-  appliedDate: string
-  status: 'pending' | 'reviewed' | 'accepted' | 'interview_scheduled' | 'interview_completed' | 'visa_payment_pending' | 'visa_processing' | 'visa_ready' | 'rejected'
+  resumeUrl?: string
+  coverLetter?: string
+  appliedDate?: string
+  createdAt?: string
+  updatedAt?: string
+  status:
+    | 'Submitted'
+    | 'Under Review'
+    | 'Shortlisted'
+    | 'Interview Scheduled'
+    | 'Hired'
+    | 'Rejected'
+    | 'rejected'
+    | 'pending'
+    | 'reviewed'
+    | 'accepted'
+    | 'interview_scheduled'
+    | 'interview_completed'
+    | 'visa_payment_pending'
+    | 'visa_processing'
+    | 'visa_ready'
   documents?: {
     passport?: string
     nationalId?: string
@@ -32,6 +49,15 @@ export interface JobApplication {
     scheduledDate?: string
     notes?: string
   }
+  aiScore?: number
+  resumeSnapshot?: string
+  interviewId?: string | null
+  notes?: string
+  applicantName?: string
+  applicantEmail?: string
+  applicantPhone?: string
+  jobTitle?: string
+  jobLocation?: string
 }
 
 export const jobService = {
@@ -45,8 +71,8 @@ export const jobService = {
     return response.data
   },
 
-  searchJobs: async (query: string, filters?: any) => {
-    const response = await API.get('/api/jobs/search', { params: { q: query, ...filters } })
+  searchJobs: async (keyword: string, filters?: any) => {
+    const response = await API.get('/api/jobs/search', { params: { keyword, ...filters } })
     return response.data
   },
 
@@ -56,7 +82,6 @@ export const jobService = {
     formData.append('cv', cv)
     if (coverLetter) formData.append('coverLetter', coverLetter)
 
-    // Add additional documents if provided
     if (additionalData) {
       for (const [key, value] of additionalData.entries()) {
         if (key !== 'jobId' && key !== 'cv' && key !== 'coverLetter') {
@@ -65,7 +90,7 @@ export const jobService = {
       }
     }
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : ''
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : ''
 
     const response = await API.post('/applications/apply', formData, {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -73,8 +98,9 @@ export const jobService = {
     return response.data
   },
 
-  getMyApplications: async () => {
-    const response = await API.get('/applications/my')
+  getMyApplications: async (userId?: string) => {
+    const params = userId ? { userId } : undefined
+    const response = await API.get('/applications/my', { params })
     return response.data
   },
 

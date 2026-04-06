@@ -4,6 +4,7 @@ import DashboardLayout from '@/layouts/DashboardLayout'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
+import { useSocket } from '@/hooks/useSocket'
 import Loader from '@/components/Loader'
 import Button from '@/components/Button'
 import MpesaPaymentModal from '@/components/MpesaPaymentModal'
@@ -18,6 +19,7 @@ const ApplicationsPage: React.FC = () => {
   const { isAuthorized, isLoading } = useProtectedRoute('user')
   const { user } = useAuth()
   const { addNotification } = useNotification()
+  const { subscribe } = useSocket()
   const router = useRouter()
 
   const [applications, setApplications] = useState<JobApplication[]>([])
@@ -26,15 +28,53 @@ const ApplicationsPage: React.FC = () => {
   const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null)
   const [paymentProcessing, setPaymentProcessing] = useState(false)
 
+  // Socket listeners for real-time updates
   useEffect(() => {
-    if (isAuthorized) {
+    // Listen for application status updates
+    const unsubscribeStatus = subscribe('statusUpdate', (data: any) => {
+      const updatedApplications = applications.map(app =>
+        app.id === data.applicationId || app.id === data.id
+          ? { ...app, status: data.status as any }
+          : app
+      )
+      setApplications(updatedApplications)
+      addNotification(`Status updated: ${data.status}`, 'success')
+    })
+
+    // Listen for interview scheduling updates
+    const unsubscribeInterview = subscribe('interviewUpdate', (data: any) => {
+      const updatedApplications = applications.map(app =>
+        app.id === data.applicationId || app.id === data.id
+          ? {
+              ...app,
+              status: 'Interview Scheduled' as any,
+              interviewDetails: {
+                zoomLink: data.zoomLink || '',
+                scheduledDate: data.date || '',
+                notes: data.notes || '',
+              },
+            }
+          : app
+      )
+      setApplications(updatedApplications)
+      addNotification(`Interview scheduled on ${formatDate(data.date)}`, 'info')
+    })
+
+    return () => {
+      unsubscribeStatus()
+      unsubscribeInterview()
+    }
+  }, [applications, subscribe, addNotification])
+
+  useEffect(() => {
+    if (isAuthorized && user?.id) {
       fetchApplications()
     }
-  }, [isAuthorized])
+  }, [isAuthorized, user?.id])
 
   const fetchApplications = async () => {
     try {
-      const data = await jobService.getMyApplications()
+      const data = await jobService.getMyApplications(user?.id)
       setApplications(data)
     } catch (error) {
       addNotification('Failed to load applications', 'error')
@@ -45,21 +85,49 @@ const ApplicationsPage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100/50 text-yellow-700 border border-yellow-200'
-      case 'reviewed': return 'bg-secondary/10 text-secondary border border-secondary/20'
-      case 'accepted': return 'badge-success'
-      case 'rejected': return 'badge-danger'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'Submitted':
+      case 'pending':
+        return 'bg-yellow-100/50 text-yellow-700 border border-yellow-200'
+      case 'Under Review':
+      case 'reviewed':
+        return 'bg-secondary/10 text-secondary border border-secondary/20'
+      case 'Shortlisted':
+      case 'accepted':
+        return 'badge-success'
+      case 'Interview Scheduled':
+      case 'interview_scheduled':
+        return 'bg-purple-100 text-purple-700 border border-purple-200'
+      case 'Hired':
+        return 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+      case 'Rejected':
+      case 'rejected':
+        return 'badge-danger'
+      default:
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'pending': return 'Under Review'
-      case 'reviewed': return 'In Review'
-      case 'accepted': return 'Shortlisted'
-      case 'rejected': return 'Not Selected'
-      default: return status
+      case 'Submitted':
+      case 'pending':
+        return 'Submitted'
+      case 'Under Review':
+      case 'reviewed':
+        return 'Under Review'
+      case 'Shortlisted':
+      case 'accepted':
+        return 'Shortlisted'
+      case 'Interview Scheduled':
+      case 'interview_scheduled':
+        return 'Interview Scheduled'
+      case 'Hired':
+        return 'Hired'
+      case 'Rejected':
+      case 'rejected':
+        return 'Not Selected'
+      default:
+        return status
     }
   }
 
@@ -130,26 +198,31 @@ const ApplicationsPage: React.FC = () => {
   }
 
   const generateTimelineSteps = (application: JobApplication) => {
+    const inReview = ['Under Review', 'reviewed', 'Shortlisted', 'accepted', 'Interview Scheduled', 'interview_scheduled', 'Hired']
+    const isShortlisted = ['Shortlisted', 'accepted', 'Interview Scheduled', 'interview_scheduled', 'Hired']
+    const isInterviewScheduled = ['Interview Scheduled', 'interview_scheduled', 'Hired']
+    const isHired = ['Hired']
+
     const steps: TimelineStepLocal[] = [
       {
         id: 'applied',
         title: 'Application Submitted',
         description: 'Your application has been received and is being reviewed by our team.',
-        status: 'completed',
+        status: ['Submitted', 'pending', 'reviewed', 'accepted', 'Shortlisted', 'Interview Scheduled', 'interview_scheduled', 'Hired'].includes(application.status) ? 'completed' : 'current',
         date: formatDate(application.appliedDate),
       },
       {
         id: 'review',
         title: 'Under Review',
         description: 'Our hiring team is carefully reviewing your qualifications and experience.',
-        status: ['reviewed', 'accepted', 'interview_scheduled', 'interview_completed', 'visa_payment_pending', 'visa_processing', 'visa_ready'].includes(application.status) ? 'completed' : 'current',
+        status: inReview.includes(application.status) ? 'completed' : 'current',
       },
       {
         id: 'shortlisted',
         title: 'Shortlisted',
         description: 'Congratulations! You have been shortlisted for this position.',
-        status: ['accepted', 'interview_scheduled', 'interview_completed', 'visa_payment_pending', 'visa_processing', 'visa_ready'].includes(application.status) ? 'completed' : 'pending',
-        action: application.status === 'accepted' ? (
+        status: isShortlisted.includes(application.status) ? 'completed' : 'pending',
+        action: ['Shortlisted', 'accepted'].includes(application.status) ? (
           <Button
             onClick={() => {
               setSelectedApplication(application)
@@ -164,42 +237,27 @@ const ApplicationsPage: React.FC = () => {
       {
         id: 'interview',
         title: 'Interview',
-        description: 'Schedule and complete your Zoom interview with the hiring team.',
-        status: ['interview_scheduled', 'interview_completed', 'visa_payment_pending', 'visa_processing', 'visa_ready'].includes(application.status) ? 'completed' : 'pending',
+        description: 'Schedule and complete your interview with the hiring team.',
+        status: isInterviewScheduled.includes(application.status) ? 'completed' : 'pending',
       },
       {
-        id: 'payment',
-        title: 'Visa Payment',
-        description: 'Complete the visa processing fee payment.',
-        status: ['visa_payment_pending', 'visa_processing', 'visa_ready'].includes(application.status) ? 'completed' : 'pending',
-        action: application.status === 'interview_completed' ? (
-          <Button
-            onClick={() => {
-              setSelectedApplication(application)
-              setShowPaymentModal(true)
-            }}
-            className="bg-indigo-600 hover:bg-indigo-700 text-sm"
-          >
-            Pay Visa Fee (30,000 KSH)
-          </Button>
-        ) : undefined,
-      },
-      {
-        id: 'processing',
-        title: 'Visa Processing',
-        description: 'Your visa application is being processed by Canadian immigration authorities.',
-        status: application.status === 'visa_ready' ? 'completed' : application.status === 'visa_processing' ? 'current' : 'pending',
-      },
-      {
-        id: 'ready',
-        title: 'Visa Ready',
-        description: 'Your visa has been approved and is ready for collection.',
-        status: application.status === 'visa_ready' ? 'completed' : 'pending',
+        id: 'outcome',
+        title: 'Final Outcome',
+        description:
+          application.status === 'Hired'
+            ? 'You have been hired. Congratulations!'
+            : application.status === 'Rejected' || application.status === 'rejected'
+            ? 'Your application was not successful.'
+            : 'Await the final hiring decision.',
+        status: isHired.includes(application.status)
+          ? 'completed'
+          : application.status === 'Rejected' || application.status === 'rejected'
+          ? 'failed'
+          : 'pending',
       },
     ]
 
-    // Handle rejected status
-    if (application.status === 'rejected') {
+    if (application.status === 'Rejected' || application.status === 'rejected') {
       steps[1].status = 'failed'
       steps[1].description = 'Unfortunately, your application was not successful at this time.'
     }
@@ -227,10 +285,10 @@ const ApplicationsPage: React.FC = () => {
       <MpesaPaymentModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
-        onConfirm={selectedApplication?.status === 'accepted' ? handleInterviewPayment : handleVisaPayment}
-        amount={selectedApplication?.status === 'accepted' ? PAYMENT_AMOUNTS.INTERVIEW_FEE : PAYMENT_AMOUNTS.VISA_PROCESSING}
-        description={selectedApplication?.status === 'accepted' ? 'Interview fee' : 'Visa processing fee'}
-        currency={selectedApplication?.status === 'accepted' ? 'USD' : 'KES'}
+        onConfirm={['Shortlisted', 'accepted'].includes(selectedApplication?.status || '') ? handleInterviewPayment : handleVisaPayment}
+        amount={['Shortlisted', 'accepted'].includes(selectedApplication?.status || '') ? PAYMENT_AMOUNTS.INTERVIEW_FEE : PAYMENT_AMOUNTS.VISA_PROCESSING}
+        description={['Shortlisted', 'accepted'].includes(selectedApplication?.status || '') ? 'Interview fee' : 'Visa processing fee'}
+        currency={['Shortlisted', 'accepted'].includes(selectedApplication?.status || '') ? 'USD' : 'KES'}
       />
 
       <div>

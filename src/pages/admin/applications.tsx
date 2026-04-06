@@ -16,17 +16,39 @@ import { Eye, Mail, Send, FileText, BarChart3, Trash2 } from 'lucide-react'
 
 interface Application {
   _id: string
+  id?: string
   fullName: string
   email: string
   phone?: string
   jobId: { title: string; _id: string } | string
-  status: 'pending' | 'reviewed' | 'shortlisted' | 'rejected' | 'interview-scheduled'
+  status:
+    | 'Submitted'
+    | 'Under Review'
+    | 'Shortlisted'
+    | 'Interview Scheduled'
+    | 'Hired'
+    | 'Rejected'
+    | 'rejected'
+    | 'pending'
+    | 'reviewed'
+    | 'shortlisted'
+    | 'accepted'
+    | 'interview-scheduled'
   cv?: string
   coverLetter?: string
   qualifications?: string[]
   experience?: string
   cvScore?: number
+  aiScore?: number
+  notes?: string
+  interviewId?: string | null
+  jobTitle?: string
+  jobLocation?: string
+  applicantName?: string
+  applicantEmail?: string
+  applicantPhone?: string
   createdAt: string
+  updatedAt?: string
   documents?: {
     passport?: string
     nationalId?: string
@@ -79,18 +101,49 @@ const AdminApplicationsPage = () => {
 
   // Subscribe to real-time updates
   useEffect(() => {
-    const unsubscribe = subscribe('applicationUpdate', (data: any) => {
-      addNotification(`New application from ${data.fullName}`, 'success')
-      fetchApplications()
+    // Listen for new applications
+    const unsubscribeNewApp = subscribe('newApplication', (data: any) => {
+      const newApp: Application = {
+        _id: data._id || data.id,
+        id: data._id || data.id,
+        fullName: data.applicantName || data.fullName || 'Unknown',
+        email: data.applicantEmail || data.email || '',
+        phone: data.applicantPhone || data.phone,
+        jobId: data.jobId || { title: 'N/A' },
+        status: data.status || 'Submitted',
+        cv: data.documents?.cv,
+        coverLetter: data.coverLetter,
+        aiScore: data.aiScore,
+        notes: data.notes,
+        interviewId: data.interviewId,
+        jobTitle: data.jobTitle,
+        jobLocation: data.jobLocation,
+        applicantName: data.applicantName,
+        applicantEmail: data.applicantEmail,
+        applicantPhone: data.applicantPhone,
+        createdAt: data.createdAt || new Date().toISOString(),
+        updatedAt: data.updatedAt,
+        documents: data.documents,
+      }
+      setApplications(prev => [newApp, ...prev])
+      addNotification(`New application from ${newApp.fullName}`, 'success')
     })
 
-    const unsubscribe2 = subscribe('applicationStatusChanged', (data: any) => {
-      fetchApplications()
+    // Listen for status updates 
+    const unsubscribeStatus = subscribe('statusUpdate', (data: any) => {
+      setApplications(prev =>
+        prev.map(app =>
+          app._id === data.applicationId || app._id === data.id
+            ? { ...app, status: data.status as any }
+            : app
+        )
+      )
+      addNotification(`Application status updated to ${data.status}`, 'info')
     })
 
     return () => {
-      unsubscribe?.()
-      unsubscribe2?.()
+      unsubscribeNewApp?.()
+      unsubscribeStatus?.()
     }
   }, [subscribe, addNotification])
 
@@ -107,7 +160,6 @@ const AdminApplicationsPage = () => {
   }
 
   const handleStatusChange = (appId: string, newStatus: string) => {
-    // The ApplicationPipeline component handles this
     setApplications(
       applications.map(app => (app._id === appId ? { ...app, status: newStatus as any } : app))
     )
@@ -167,7 +219,7 @@ const AdminApplicationsPage = () => {
   const openEmailModal = (app: Application) => {
     setSelectedApplication(app)
     // Prepare email template based on status
-    if (app.status === 'shortlisted') {
+    if (app.status === 'shortlisted' || app.status === 'Shortlisted') {
       setEmailSubject(`You've been shortlisted! - ${typeof app.jobId === 'object' ? app.jobId.title : app.jobId}`)
       setEmailBody(`Hi ${app.fullName},\n\nGreat news! You have been shortlisted for the position. We will contact you soon with interview details.\n\nBest regards,\nThe Recruitment Team`)
     } else {
@@ -223,25 +275,25 @@ const AdminApplicationsPage = () => {
           <div className="bg-white rounded-lg p-4 shadow-md">
             <p className="text-sm text-gray-600">Pending</p>
             <p className="text-2xl font-bold text-yellow-600">
-              {applications.filter(a => a.status === 'pending').length}
+              {applications.filter(a => a.status === 'pending' || a.status === 'Submitted').length}
             </p>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-md">
             <p className="text-sm text-gray-600">Shortlisted</p>
             <p className="text-2xl font-bold text-green-600">
-              {applications.filter(a => a.status === 'shortlisted').length}
+              {applications.filter(a => a.status === 'shortlisted' || a.status === 'Shortlisted' || a.status === 'accepted').length}
             </p>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-md">
             <p className="text-sm text-gray-600">Interviews</p>
             <p className="text-2xl font-bold text-purple-600">
-              {applications.filter(a => a.status === 'interview-scheduled').length}
+              {applications.filter(a => a.status === 'interview-scheduled' || a.status === 'Interview Scheduled').length}
             </p>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-md">
             <p className="text-sm text-gray-600">Rejected</p>
             <p className="text-2xl font-bold text-red-600">
-              {applications.filter(a => a.status === 'rejected').length}
+              {applications.filter(a => a.status === 'rejected' || a.status === 'Rejected').length}
             </p>
           </div>
         </div>

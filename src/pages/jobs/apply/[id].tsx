@@ -94,9 +94,22 @@ const JobApplicationPage: React.FC = () => {
       if (cv) formData.append('cv', cv)
 
       // Add certificates
-      certificates.forEach((cert, index) => {
-        formData.append(`certificates[${index}]`, cert)
+      certificates.forEach((cert) => {
+        formData.append('certificates', cert)
       })
+
+      if (user?.id) {
+        formData.append('userId', user.id)
+      }
+      if (user?.name) {
+        formData.append('userName', user.name)
+      }
+      if (user?.email) {
+        formData.append('userEmail', user.email)
+      }
+      if (user?.phone) {
+        formData.append('userPhone', user.phone)
+      }
 
       await jobService.applyForJob(id as string, cv, coverLetter, formData)
 

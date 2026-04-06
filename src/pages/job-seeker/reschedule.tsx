@@ -328,7 +328,7 @@ const RescheduleInterviewPage: React.FC = () => {
 
       {/* Success Confirmation Modal */}
       {showConfirmation && (
-        <Modal isOpen={true}>
+        <Modal isOpen={true} onClose={() => setShowConfirmation(false)}>
           <div className="text-center">
             <div className="text-green-500 text-5xl mb-4">✓</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Interview Rescheduled!</h2>
