@@ -119,9 +119,10 @@ const loginHandler = async (req: NextApiRequest, res: NextApiResponse, requireAd
       // TODO: Send OTP via email
       console.log(`Login verification OTP for ${email}: ${otp}`)
 
-      return res.status(200).json({
-        requiresVerification: true,
-        message: 'Account not verified. OTP sent to your email.'
+      return res.status(401).json({
+        redirect: "/verify-otp",
+        email,
+        message: 'Account not verified. Please verify your email.'
       })
     }
 
@@ -140,7 +141,7 @@ const loginHandler = async (req: NextApiRequest, res: NextApiResponse, requireAd
 
     return res.status(200).json({
       success: true,
-      token,
+      accessToken: token,
       user: sanitizeUser(user),
     })
   } catch (error: any) {

@@ -4,8 +4,9 @@ import { useRouter } from "next/router";
 import { useAuth } from '@/context/AuthContext';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { adminService } from '@/services/adminService';
+import MetricCard from '@/components/MetricCard';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
-import { TrendingUp, Users, Briefcase, Calendar, AlertTriangle, CheckCircle, Clock, DollarSign, Activity, Bell, Settings, Download } from 'lucide-react';
+import { TrendingUp, Users, Briefcase, Calendar, AlertTriangle, CheckCircle, Clock, DollarSign, Activity, Bell, Settings, Download, FileText } from 'lucide-react';
 
 type JobItem = {
   _id: string
@@ -352,50 +353,26 @@ export default function AdminDashboard() {
 
         {/* Enhanced Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Applications</p>
-                <p className="text-2xl font-bold text-gray-900">{statsLoading ? '...' : dashboardStats.totalApplications}</p>
-              </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <FileText className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-sm">
-              <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-              <span className="text-green-600">+12% from last month</span>
-            </div>
-          </div>
+          <MetricCard
+            title="Total Applications"
+            value={statsLoading ? '...' : dashboardStats.totalApplications}
+            icon={<FileText className="w-6 h-6" />}
+            trend={{ value: 12, isPositive: true }}
+          />
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Active Jobs</p>
-                <p className="text-2xl font-bold text-gray-900">{statsLoading ? '...' : dashboardStats.totalJobs}</p>
-              </div>
-              <div className="bg-green-100 p-3 rounded-lg">
-                <Briefcase className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-sm">
-              <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-              <span className="text-green-600">+8% from last month</span>
-            </div>
-          </div>
+          <MetricCard
+            title="Active Jobs"
+            value={statsLoading ? '...' : dashboardStats.totalJobs}
+            icon={<Briefcase className="w-6 h-6" />}
+            trend={{ value: 8, isPositive: true }}
+          />
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Conversion Rate</p>
-                <p className="text-2xl font-bold text-gray-900">{statsLoading ? '...' : `${dashboardStats.conversionRate.toFixed(1)}%`}</p>
-              </div>
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-sm">
-              <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+          <MetricCard
+            title="Conversion Rate"
+            value={statsLoading ? '...' : `${dashboardStats.conversionRate.toFixed(1)}%`}
+            icon={<TrendingUp className="w-6 h-6" />}
+            trend={{ value: 5, isPositive: true }}
+          />
               <span className="text-green-600">+2.1% from last month</span>
             </div>
           </div>

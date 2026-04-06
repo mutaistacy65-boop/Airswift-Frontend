@@ -59,50 +59,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-      const res = await fetch(`${API_URL}/api/auth/login`, {
+      const res = await fetch('/api/auth/login', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
 
-      console.log("LOGIN RESPONSE:", data);
-
-      if (data.requiresVerification) {
-        // store email temporarily
-        localStorage.setItem('verifyEmail', email);
-
-        // redirect
-        router.push('/verify-otp');
-        return;
+      if (!res.ok) {
+        if (data?.redirect === "/verify-otp") {
+          router.push(`/verify-otp?email=${data.email}`);
+          return;
+        } else {
+          throw new Error(data?.message || "Login failed");
+        }
       }
 
-      if (data.token) {
-        // Store token in localStorage
-        localStorage.setItem('token', data.token)
-        setUser({ ...data.user, token: data.token })
+      const { accessToken, user } = data;
 
-        // Redirect based on role
-        const redirectPath = data.user?.role === 'admin' ? '/admin/dashboard' : '/job-seeker/dashboard'
-        router.push(redirectPath)
+      // SUCCESS → go dashboard
+      localStorage.setItem('token', accessToken);
+      localStorage.setItem('role', user.role);
+
+      // 👇 ROLE CHECK
+      if (user.role === 'admin') {
+        router.push('/admin/dashboard');
       } else {
-        throw new Error(data.message || data.error || 'Login failed')
+        router.push('/dashboard');
       }
+
     } catch (error: any) {
-      console.error('Login error:', error)
-      
-      // Handle OTP verification redirect
-      if (error.response?.data?.redirect === "/verify-otp") {
-        router.push("/verify-otp?email=" + email);
-        return;
-      }
-      
-      const errorMessage = error?.message || 'Login failed'
-      throw new Error(errorMessage)
+      throw new Error(error?.message || "Login failed");
     } finally {
       setIsLoading(false)
     }

@@ -21,10 +21,10 @@ const Button: React.FC<ButtonProps> = ({
   const baseStyles = 'font-semibold rounded-lg transition-all duration-200 inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
   
   const variants = {
-    primary: 'bg-primary hover:bg-green-600 text-white shadow-md hover:shadow-lg hover:shadow-green-500/30 active:scale-95',
-    secondary: 'bg-secondary hover:bg-blue-600 text-white shadow-md hover:shadow-lg hover:shadow-blue-500/30 active:scale-95',
-    accent: 'bg-accent hover:bg-orange-500 text-white shadow-md hover:shadow-lg hover:shadow-orange-500/30 active:scale-95',
-    danger: 'bg-red-500 hover:bg-red-600 text-white shadow-md hover:shadow-lg hover:shadow-red-500/30 active:scale-95',
+    primary: 'bg-primary hover:bg-primary-dark text-white shadow-sm hover:shadow-md active:scale-95',
+    secondary: 'border border-border bg-surface hover:bg-gray-50 text-text-primary transition-all active:scale-95',
+    accent: 'bg-accent hover:bg-green-600 text-white shadow-sm hover:shadow-md active:scale-95',
+    danger: 'bg-danger hover:bg-red-600 text-white shadow-sm hover:shadow-md active:scale-95',
     outline: 'border-2 border-primary text-primary hover:bg-primary hover:text-white transition-all active:scale-95',
   }
 

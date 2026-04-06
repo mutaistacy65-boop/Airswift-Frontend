@@ -1,6 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --primary: #0A66C2;
+  --primary-dark: #004182;
+  --primary-light: #E8F0FE;
+  --accent: #22C55E;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --background: #F8FAFC;
+  --surface: #FFFFFF;
+  --text-primary: #111827;
+  --text-secondary: #6B7280;
+  --border: #E5E7EB;
+}
 
 * {
   margin: 0;
@@ -15,13 +31,11 @@ body {
 }
 
 body {
-  background-color: #f8f9fa;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  background-color: var(--background);
+  font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 code {
@@ -56,15 +70,15 @@ body {
 }
 
 .btn-primary {
-  @apply bg-primary text-white hover:bg-green-600 shadow-sm hover:shadow-md;
+  @apply bg-primary text-white hover:bg-primary-dark shadow-sm hover:shadow-md;
 }
 
 .btn-secondary {
-  @apply bg-secondary text-white hover:bg-blue-600 shadow-sm hover:shadow-md;
+  @apply border border-border bg-surface hover:bg-gray-50 text-text-primary shadow-sm hover:shadow-md;
 }
 
 .btn-accent {
-  @apply bg-accent text-white hover:bg-orange-500 shadow-sm hover:shadow-md;
+  @apply bg-accent text-white hover:bg-green-600 shadow-sm hover:shadow-md;
 }
 
 .btn-outline {

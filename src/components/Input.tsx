@@ -30,7 +30,7 @@ const Input: React.FC<InputProps> = ({
           </div>
         )}
         <input
-          className={`w-full px-4 py-3 ${icon ? 'pl-12' : ''} bg-white border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 transition-all duration-200 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 hover:border-gray-400 ${className}`}
+          className={`w-full px-4 py-3 ${icon ? 'pl-12' : ''} bg-surface border border-border rounded-lg text-text-primary placeholder:text-text-secondary transition-all duration-200 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 hover:border-gray-400 ${className}`}
           {...props}
         />
       </div>

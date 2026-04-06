@@ -38,11 +38,11 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex justify-between items-center">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group cursor-pointer">
-          <div className="bg-gradient-to-br from-primary to-teal p-2 rounded-lg group-hover:shadow-lg group-hover:shadow-primary/50 transition-all">
-            <Plane className="text-white" size={24} />
+          <div className="bg-primary p-2 rounded-lg group-hover:shadow-md transition-all">
+            🌍
           </div>
-          <span className="hidden sm:inline text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            TALEX
+          <span className="hidden sm:inline text-xl md:text-2xl font-bold text-primary">
+            Airswift
           </span>
         </Link>
 

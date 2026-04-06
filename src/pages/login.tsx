@@ -31,17 +31,15 @@ export default function Login() {
   return (
     <div className="min-h-screen flex">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary via-secondary to-accent p-12 flex-col justify-center items-center text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/20"></div>
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary via-primary-dark to-primary-light p-12 flex-col justify-center items-center text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10 text-center max-w-md">
           <div className="mb-8">
-            <svg className="w-20 h-20 mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-            </svg>
+            <div className="text-6xl mb-4">🌍</div>
           </div>
           <h1 className="text-4xl font-bold mb-4">Welcome Back</h1>
           <p className="text-lg opacity-90 mb-8">
-            Continue your journey to find the perfect job opportunity with Talex
+            Continue your journey to find the perfect job opportunity with Airswift
           </p>
           <div className="flex items-center justify-center space-x-4 text-sm">
             <div className="flex items-center">
@@ -65,8 +63,8 @@ export default function Login() {
         <div className="w-full max-w-md space-y-8">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <h1 className="text-3xl font-bold text-primary">Talex</h1>
-            <p className="text-gray-600 mt-2">Your Career Journey Starts Here</p>
+          <h1 className="text-3xl font-bold text-primary">Airswift</h1>
+            <p className="text-gray-600 mt-2">Connecting Global Talent to Opportunity</p>
           </div>
 
           <div className="text-center">

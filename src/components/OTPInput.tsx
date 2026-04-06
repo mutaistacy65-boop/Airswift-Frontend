@@ -1,65 +1,63 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 
-export default function OTPInput({ onChange }) {
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const inputs = useRef([]);
-
-  useEffect(() => {
-    inputs.current[0]?.focus();
-  }, []);
+export default function OTPInput({ length = 6, onComplete }) {
+  const [otp, setOtp] = useState(Array(length).fill(""));
+  const inputsRef = useRef([]);
 
   const handleChange = (value, index) => {
-    if (!/^\d?$/.test(value)) return;
+    if (!/^\d*$/.test(value)) return;
 
     const newOtp = [...otp];
-    newOtp[index] = value;
+    newOtp[index] = value.slice(-1);
     setOtp(newOtp);
 
-    // Move to next input
-    if (value && index < 5) {
-      inputs.current[index + 1].focus();
+    // Move forward
+    if (value && index < length - 1) {
+      inputsRef.current[index + 1].focus();
     }
 
-    onChange(newOtp.join(""));
+    // Complete OTP
+    if (newOtp.every((digit) => digit !== "")) {
+      onComplete(newOtp.join(""));
+    }
   };
 
   const handleKeyDown = (e, index) => {
-    // Move back on delete
     if (e.key === "Backspace" && !otp[index] && index > 0) {
-      inputs.current[index - 1].focus();
+      inputsRef.current[index - 1].focus();
     }
   };
 
   const handlePaste = (e) => {
-    const paste = e.clipboardData.getData("text").slice(0, 6);
-    if (!/^\d+$/.test(paste)) return;
+    const pasteData = e.clipboardData.getData("text").trim();
+    if (!/^\d+$/.test(pasteData)) return;
 
-    const newOtp = paste.split("");
-    setOtp(newOtp);
+    const digits = pasteData.slice(0, length).split("");
+    const newOtp = [...otp];
 
-    newOtp.forEach((digit, i) => {
-      if (inputs.current[i]) {
-        inputs.current[i].value = digit;
-      }
+    digits.forEach((digit, i) => {
+      newOtp[i] = digit;
     });
 
-    onChange(paste);
+    setOtp(newOtp);
+
+    if (digits.length === length) {
+      onComplete(digits.join(""));
+    }
   };
 
   return (
-    <div className="flex justify-between gap-2" onPaste={handlePaste}>
+    <div className="flex gap-3 justify-center" onPaste={handlePaste}>
       {otp.map((digit, index) => (
         <input
           key={index}
           type="text"
           maxLength={1}
-          ref={(el) => {
-            inputs.current[index] = el;
-          }}
-          className="w-12 h-12 text-center text-xl border rounded-lg focus:ring-2 focus:ring-blue-500"
           value={digit}
+          ref={(el) => { inputsRef.current[index] = el }}
           onChange={(e) => handleChange(e.target.value, index)}
           onKeyDown={(e) => handleKeyDown(e, index)}
+          className="w-12 h-14 text-center text-xl font-semibold bg-gray-100 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white focus:border-primary focus:shadow-md transition-all duration-200 focus:scale-105"
         />
       ))}
     </div>

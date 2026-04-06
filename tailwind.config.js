@@ -8,13 +8,23 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+      },
       colors: {
-        primary: '#10b981',
-        secondary: '#3b82f6',
-        accent: '#f97316',
-        success: '#10b981',
-        warning: '#f59e0b',
-        danger: '#ef4444',
+        primary: '#0A66C2',
+        'primary-dark': '#004182',
+        'primary-light': '#E8F0FE',
+        accent: '#22C55E',
+        success: '#22C55E',
+        warning: '#F59E0B',
+        danger: '#EF4444',
+        background: '#F8FAFC',
+        surface: '#FFFFFF',
+        'text-primary': '#111827',
+        'text-secondary': '#6B7280',
+        border: '#E5E7EB',
+        // Keep some existing colors for compatibility
         purple: '#8b5cf6',
         teal: '#14b8a6',
       },
