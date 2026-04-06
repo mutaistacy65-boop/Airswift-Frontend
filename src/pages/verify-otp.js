@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
 import OTPInput from "../components/OTPInput";
+import { verifyOTP } from '../api/auth'
 
 export default function VerifyOTP() {
   const router = useRouter();
@@ -18,39 +19,16 @@ export default function VerifyOTP() {
     console.log("OTP:", otp);
 
     try {
-      const res = await fetch(
-        "https://airswift-backend-fjt3.onrender.com/api/auth/verify-otp",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, otp }),
-        }
-      );
+      const data = await verifyOTP(email, otp)
 
-      const data = await res.json();
+      setMessage("✅ OTP Verified Successfully!");
 
-      if (res.ok) {
-        setMessage("✅ OTP Verified Successfully!");
-        // Assuming the API returns user data and token
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-          // Redirect to dashboard based on role
-          const redirectPath = data.user?.role === 'admin' ? '/admin/dashboard' : '/job-seeker/dashboard';
-          setTimeout(() => {
-            router.push(redirectPath);
-          }, 1500);
-        } else {
-          setTimeout(() => {
-            router.push("/login");
-          }, 1500);
-        }
-      } else {
-        setMessage(data.message || "Invalid OTP");
-      }
+      // After OTP verification, redirect back to login page for user to login again
+      setTimeout(() => {
+        router.push('/login')
+      }, 1500)
     } catch (error) {
-      setMessage("❌ Server error");
+      setMessage(error?.message || 'Invalid OTP')
     }
 
     setLoading(false);

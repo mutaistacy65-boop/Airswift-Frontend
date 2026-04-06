@@ -78,6 +78,29 @@ const loginHandler = async (req: NextApiRequest, res: NextApiResponse, requireAd
       return res.status(401).json({ message: 'Invalid credentials' })
     }
 
+    // Check if user is verified
+    if (!user.isVerified) {
+      // Send OTP automatically
+      const otp = Math.floor(100000 + Math.random() * 900000).toString()
+
+      // Store OTP (in production, use Redis/database)
+      const otpStorage = (global as any).loginOtpStorage || new Map()
+      ;(global as any).loginOtpStorage = otpStorage
+
+      otpStorage.set(email, {
+        otp,
+        expires: Date.now() + 5 * 60 * 1000, // 5 minutes
+      })
+
+      // TODO: Send OTP via email
+      console.log(`Login verification OTP for ${email}: ${otp}`)
+
+      return res.status(200).json({
+        requiresVerification: true,
+        message: 'Account not verified. OTP sent to your email.'
+      })
+    }
+
     if (requireAdmin && user.role !== 'admin') {
       return res.status(403).json({ message: 'Access denied' })
     }

@@ -72,6 +72,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       console.log("LOGIN RESPONSE:", data);
 
+      if (data.requiresVerification) {
+        router.push(`/verify-otp?email=${encodeURIComponent(email)}`)
+        return
+      }
+
       if (data.token) {
         // Store token in localStorage
         localStorage.setItem('token', data.token)
