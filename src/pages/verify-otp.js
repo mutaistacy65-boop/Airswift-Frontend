@@ -15,6 +15,8 @@ export default function VerifyOTP() {
     setLoading(true);
     setMessage("");
 
+    console.log("OTP:", otp);
+
     try {
       const res = await fetch(
         "https://airswift-backend-fjt3.onrender.com/api/auth/verify-otp",

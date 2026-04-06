@@ -9,11 +9,13 @@ export default function ForgotPassword() {
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setMessage('')
 
     if (!email.trim()) {
       setError('Please enter your email address.')
@@ -25,7 +27,21 @@ export default function ForgotPassword() {
     try {
       const response = await forgotPassword(email)
 
-      setSubmitted(true)
+      if (response.type === "NOT_VERIFIED") {
+        // show message and redirect to verification page
+        setMessage("Your account is not verified. We've sent a verification code to your email.")
+        setSubmitted(true)
+        setTimeout(() => {
+          router.push(`/verify-otp?email=${encodeURIComponent(email)}`)
+        }, 2000)
+      } else if (response.type === "RESET_SENT") {
+        // show normal reset message
+        setMessage("Check your email for reset instructions")
+        setSubmitted(true)
+      } else {
+        // default success
+        setSubmitted(true)
+      }
     } catch (err: any) {
       console.error(err)
       setError(err.message || 'Unable to submit request. Please try again later.')
@@ -89,7 +105,7 @@ export default function ForgotPassword() {
                 <h3 className="text-lg font-semibold text-green-800">Check your email!</h3>
               </div>
               <p className="text-green-700 mb-3">
-                We've sent password reset instructions to <strong>{email}</strong>
+                {message ? message : <>We've sent password reset instructions to <strong>{email}</strong></>}
               </p>
               <p className="text-sm text-green-600">
                 If you don't see the email in your inbox, check your spam folder.
