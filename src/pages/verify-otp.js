@@ -1,15 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import OTPInput from "../components/OTPInput";
 import { verifyOTP } from '../api/auth'
 
 export default function VerifyOTP() {
   const router = useRouter();
-  const { email } = router.query;
+  const [email, setEmail] = useState("");
 
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const storedEmail = localStorage.getItem('verifyEmail');
+    if (storedEmail) {
+      setEmail(storedEmail);
+    } else {
+      // If no email in localStorage, redirect to login
+      router.push('/login');
+    }
+  }, [router]);
 
   const handleVerify = async (e) => {
     e.preventDefault();
@@ -22,6 +32,9 @@ export default function VerifyOTP() {
       const data = await verifyOTP(email, otp)
 
       setMessage("✅ OTP Verified Successfully!");
+
+      // Clear stored email after successful verification
+      localStorage.removeItem('verifyEmail');
 
       // After OTP verification, redirect back to login page for user to login again
       setTimeout(() => {
