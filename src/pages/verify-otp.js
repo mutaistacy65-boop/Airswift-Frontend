@@ -12,14 +12,22 @@ export default function VerifyOTP() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const storedEmail = localStorage.getItem('verifyEmail');
-    if (storedEmail) {
-      setEmail(storedEmail);
+    const { email: emailParam } = router.query;
+    
+    if (emailParam) {
+      setEmail(emailParam);
+      // Also store in localStorage for consistency
+      localStorage.setItem('verifyEmail', emailParam);
     } else {
-      // If no email in localStorage, redirect to login
-      router.push('/login');
+      const storedEmail = localStorage.getItem('verifyEmail');
+      if (storedEmail) {
+        setEmail(storedEmail);
+      } else {
+        // If no email in localStorage or query param, redirect to login
+        router.push('/login');
+      }
     }
-  }, [router]);
+  }, [router.query]);
 
   const handleVerify = async (e) => {
     e.preventDefault();

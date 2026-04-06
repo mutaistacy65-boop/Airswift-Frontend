@@ -94,6 +94,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error: any) {
       console.error('Login error:', error)
+      
+      // Handle OTP verification redirect
+      if (error.response?.data?.redirect === "/verify-otp") {
+        router.push("/verify-otp?email=" + email);
+        return;
+      }
+      
       const errorMessage = error?.message || 'Login failed'
       throw new Error(errorMessage)
     } finally {
