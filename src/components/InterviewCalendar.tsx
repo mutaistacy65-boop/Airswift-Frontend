@@ -77,7 +77,7 @@ const InterviewCalendar: React.FC<InterviewCalendarProps> = ({ onRefresh }) => {
 
     try {
       setSaving(true)
-      await adminService.scheduleInterview('', formData)
+      await adminService.scheduleInterview(formData)
       addNotification('Interview scheduled successfully', 'success')
       setFormData({
         candidateName: '',

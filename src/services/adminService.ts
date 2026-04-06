@@ -131,32 +131,6 @@ export const adminService = {
   getJobAnalytics: async () => {
     const response = await API.get('/jobs/dashboard/categories')
     return response.data
-  }
-}
-    const response = await API.put(`/admin/interviews/${id}`, interviewData)
-    return response.data
-  },
-
-  // Users Management
-  getAllUsers: async (page = 1, limit = 10) => {
-    const response = await API.get('/admin/users', { params: { page, limit } })
-    return response.data
-  },
-
-  updateUserStatus: async (userId: string, status: string) => {
-    const response = await API.put(`/admin/users/${userId}`, { status })
-    return response.data
-  },
-
-  deleteUser: async (userId: string) => {
-    const response = await API.delete(`/admin/users/${userId}`)
-    return response.data
-  },
-
-  // Dashboard Stats
-  getDashboardStats: async () => {
-    const response = await API.get('/dashboard/summary')
-    return response.data
   },
 
   // Settings Management
@@ -168,5 +142,5 @@ export const adminService = {
   updateSettings: async (settings: any) => {
     const response = await API.put('/admin/settings', settings)
     return response.data
-  },
+  }
 }

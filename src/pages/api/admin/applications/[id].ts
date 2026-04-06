@@ -145,7 +145,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const updateResult = await db.collection('applications').findOneAndUpdate(
           { _id: new ObjectId(id) },
           {
-            $push: { adminNotes: noteData },
+            $push: { adminNotes: noteData } as any,
             $set: { updatedAt: new Date() }
           },
           { returnDocument: 'after' }
