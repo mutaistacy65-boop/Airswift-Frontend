@@ -1,22 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/router";
+import OTPInput from "../components/OTPInput";
 
 export default function VerifyOTP() {
-  const [email, setEmail] = useState("");
+  const router = useRouter();
+  const { email } = router.query;
+
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleVerify = async () => {
-    setError("");
-    setMessage("");
-
-    if (!email || !otp) {
-      setError("Email and OTP are required");
-      return;
-    }
-
+  const handleVerify = async (e) => {
+    e.preventDefault();
     setLoading(true);
+    setMessage("");
 
     try {
       const res = await fetch(
@@ -32,110 +29,97 @@ export default function VerifyOTP() {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.message);
+      if (res.ok) {
+        setMessage("✅ OTP Verified Successfully!");
+        // Assuming the API returns user data and token
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+          // Redirect to dashboard based on role
+          const redirectPath = data.user?.role === 'admin' ? '/admin/dashboard' : '/job-seeker/dashboard';
+          setTimeout(() => {
+            router.push(redirectPath);
+          }, 1500);
+        } else {
+          setTimeout(() => {
+            router.push("/login");
+          }, 1500);
+        }
+      } else {
+        setMessage(data.message || "Invalid OTP");
+      }
+    } catch (error) {
+      setMessage("❌ Server error");
+    }
 
-      setMessage(data.message || "OTP verified successfully.");
-      setEmail("");
-      setOtp("");
-    } catch (err) {
-      setError(err?.message || "OTP verification failed");
-    } finally {
-      setLoading(false);
+    setLoading(false);
+  };
+
+  const handleResend = async () => {
+    setMessage("Resending OTP...");
+
+    try {
+      const res = await fetch(
+        "https://airswift-backend-fjt3.onrender.com/api/auth/resend-otp",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessage("📩 OTP resent successfully!");
+      } else {
+        setMessage(data.message || "Failed to resend OTP");
+      }
+    } catch (error) {
+      setMessage("❌ Error resending OTP");
     }
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-5xl bg-white shadow-2xl rounded-3xl overflow-hidden grid lg:grid-cols-2">
-        <div className="hidden lg:flex flex-col justify-center gap-6 p-12 bg-gradient-to-br from-sky-700 via-cyan-600 to-emerald-500 text-white">
-          <div>
-            <p className="uppercase tracking-[0.3em] text-sm font-semibold opacity-90">
-              Airswift Secure Access
-            </p>
-            <h1 className="mt-6 text-4xl font-bold leading-tight">
-              Verify your email to finish signing up.
-            </h1>
-          </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
+        <h2 className="text-2xl font-bold text-center mb-4">
+          Verify Your Email
+        </h2>
 
-          <p className="text-slate-100/90 text-base leading-7">
-            Enter the one-time password sent to your inbox. This helps us protect your account and keep your profile secure.
-          </p>
+        <p className="text-sm text-gray-500 text-center mb-6">
+          Enter the 6-digit code sent to <br />
+          <span className="font-semibold">{email}</span>
+        </p>
 
-          <div className="rounded-3xl bg-white/10 p-6 backdrop-blur-md border border-white/10">
-            <h2 className="text-lg font-semibold">Need help?</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-200/90">
-              If you didn&apos;t receive the code, check your spam folder or request a new one from the form.
-            </p>
-          </div>
-        </div>
+        <form onSubmit={handleVerify}>
+          <OTPInput onChange={setOtp} />
 
-        <div className="p-8 sm:p-12">
-          <div className="max-w-md mx-auto">
-            <div className="text-center mb-10">
-              <p className="text-sm text-sky-600 font-semibold uppercase tracking-[0.25em]">
-                Verify OTP
-              </p>
-              <h2 className="mt-4 text-3xl font-bold text-slate-900">
-                Enter your verification code
-              </h2>
-              <p className="mt-3 text-sm text-slate-500">
-                We sent a 6-digit code to your email address. Use it below to complete verification.
-              </p>
-            </div>
+          <button
+            type="submit"
+            className="w-full mt-4 bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700"
+            disabled={loading || otp.length !== 6}
+          >
+            {loading ? "Verifying..." : "Verify OTP"}
+          </button>
+        </form>
 
-            <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleVerify(); }}>
-              <label className="block">
-                <span className="text-sm font-medium text-slate-700">Email address</span>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-                />
-              </label>
+        <button
+          onClick={handleResend}
+          className="w-full mt-3 text-blue-500 hover:underline text-sm"
+        >
+          Resend Code
+        </button>
 
-              <label className="block">
-                <span className="text-sm font-medium text-slate-700">Verification code</span>
-                <input
-                  type="text"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  placeholder="123456"
-                  maxLength={6}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-                />
-              </label>
+        {message && (
+          <p className="text-center mt-4 text-sm text-gray-700">{message}</p>
+        )}
 
-              {error && (
-                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                  {error}
-                </div>
-              )}
-
-              {message && (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                  {message}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="inline-flex w-full items-center justify-center rounded-2xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-              >
-                {loading ? "Verifying..." : "Verify OTP"}
-              </button>
-            </form>
-
-            <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
-              <p>
-                Can&apos;t find the code? Please wait a moment, then request a new OTP from the email you used to sign up.
-              </p>
-            </div>
-          </div>
-        </div>
+        {loading && (
+          <p className="text-center mt-2 text-sm text-blue-600">Verifying...</p>
+        )}
       </div>
-    </main>
+    </div>
   );
 }

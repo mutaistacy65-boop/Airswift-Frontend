@@ -88,17 +88,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const data = await registerUser(userData)
 
-      if (data.token) {
-        // Store token in localStorage
-        localStorage.setItem('token', data.token)
-        setUser({ ...data.user, token: data.token })
-        
-        // Redirect to dashboard or verification page
-        const redirectPath = data.user?.role === 'admin' ? '/admin/dashboard' : '/job-seeker/dashboard'
-        router.push(redirectPath)
-      } else {
-        throw new Error(data.message || data.error || 'Registration failed')
-      }
+      // After successful registration, redirect to OTP verification
+      router.push(`/verify-otp?email=${userData.email}`)
     } catch (error: any) {
       console.error('Registration error:', error)
       const errorMessage = error?.message || 'Registration failed'

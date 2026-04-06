@@ -3,7 +3,7 @@
 ## Overview
 Airswift is a comprehensive job portal platform designed specifically for Canada-based immigration jobs. The system connects job seekers with employers through an AI-powered application process, featuring voice interviews, automated CV analysis, and secure document management.
 
-## Architecture Overview
+)## Architecture Overview
 
 ### Tech Stack
 - **Backend**: Node.js with Express.js
