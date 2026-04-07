@@ -17,6 +17,7 @@ interface User {
   education?: string
   location?: string
   token?: string
+  isVerified?: boolean
 }
 
 interface AuthContextType {

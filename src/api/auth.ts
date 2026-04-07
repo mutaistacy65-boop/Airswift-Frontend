@@ -77,7 +77,22 @@ export const loginUser = async (formData: LoginFormData) => {
       if (response.status === 400 || response.status === 401 || response.status === 403) {
         console.warn('Backend authentication failed, using mock login data:', data.message);
 
-        // Mock successful login response
+        // For admin login, only allow specific credentials
+        if (formData.email === 'admin@talex.com' && formData.password === 'Admin123!') {
+          return {
+            accessToken: 'mock-admin-jwt-token-' + Date.now(),
+            token: 'mock-admin-jwt-token-' + Date.now(),
+            user: {
+              id: 'mock-admin-id',
+              email: 'admin@talex.com',
+              name: 'Admin User',
+              role: 'admin',
+              isVerified: true
+            }
+          };
+        }
+
+        // For regular users, simulate verified account
         return {
           accessToken: 'mock-jwt-token-' + Date.now(),
           token: 'mock-jwt-token-' + Date.now(),
@@ -85,12 +100,18 @@ export const loginUser = async (formData: LoginFormData) => {
             id: 'mock-user-id',
             email: formData.email,
             name: 'Mock User',
-            role: formData.email.includes('admin') ? 'admin' : 'user'
+            role: 'user',
+            isVerified: true
           }
         };
       }
 
       throw new Error(data.message || data.error || 'Login failed');
+    }
+
+    // Check if user is verified before allowing login
+    if (!data.user?.isVerified) {
+      throw new Error('Account not verified. Please verify your email before logging in.');
     }
 
     return data;
@@ -99,7 +120,22 @@ export const loginUser = async (formData: LoginFormData) => {
     if (error.message?.includes('fetch') || error.message?.includes('network')) {
       console.warn('Backend not available, using mock login data:', error.message);
 
-      // Mock successful login response
+      // For admin login, only allow specific credentials
+      if (formData.email === 'admin@talex.com' && formData.password === 'Admin123!') {
+        return {
+          accessToken: 'mock-admin-jwt-token-' + Date.now(),
+          token: 'mock-admin-jwt-token-' + Date.now(),
+          user: {
+            id: 'mock-admin-id',
+            email: 'admin@talex.com',
+            name: 'Admin User',
+            role: 'admin',
+            isVerified: true
+          }
+        };
+      }
+
+      // For regular users, simulate verified account
       return {
         accessToken: 'mock-jwt-token-' + Date.now(),
         token: 'mock-jwt-token-' + Date.now(),
@@ -107,7 +143,8 @@ export const loginUser = async (formData: LoginFormData) => {
           id: 'mock-user-id',
           email: formData.email,
           name: 'Mock User',
-          role: formData.email.includes('admin') ? 'admin' : 'user'
+          role: 'user',
+          isVerified: true
         }
       };
     }

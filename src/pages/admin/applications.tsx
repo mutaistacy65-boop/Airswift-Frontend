@@ -90,13 +90,13 @@ const AdminApplicationsPage = () => {
   ]
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'admin')) {
-      router.push('/login')
+    if (!authLoading && (!user || user.role !== 'admin' || user.email !== 'admin@talex.com')) {
+      router.push('/unauthorized')
     }
   }, [authLoading, user, router])
 
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (user?.role === 'admin' && user?.email === 'admin@talex.com') {
       fetchApplications()
     }
   }, [user])

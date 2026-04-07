@@ -10,7 +10,7 @@ export default function AdminIndex() {
     if (!isLoading) {
       if (!user) {
         router.push('/login')
-      } else if (user.role === 'admin') {
+      } else if (user.role === 'admin' && user.email === 'admin@talex.com') {
         router.push('/admin/dashboard')
       } else {
         router.push('/unauthorized')

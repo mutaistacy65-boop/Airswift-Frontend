@@ -14,7 +14,8 @@ export default function AdminRoute({ children }) {
       return
     }
 
-    if (user.role !== 'admin') {
+    // Only allow admin role AND specific admin email
+    if (user.role !== 'admin' || user.email !== 'admin@talex.com') {
       router.push('/unauthorized')
       return
     }
