@@ -108,13 +108,80 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (userData: any) => {
     setIsLoading(true)
     try {
+      // Step 1: Try to register the user
       const data = await registerUser(userData)
 
-      // After successful registration, redirect to OTP verification
-      router.push(`/verify-otp?email=${userData.email}`)
+      // Step 2: Mark this as a registration verification flow
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('verifyType', 'registration')
+      }
+
+      // Step 3: Send OTP code to the email
+      try {
+        const response = await fetch(`${typeof window !== 'undefined' ? window.location.origin : ''}/api/auth/send-registration-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: userData.email })
+        })
+
+        const otpResponse = await response.json()
+
+        if (!response.ok) {
+          console.warn('Failed to send OTP, but registration succeeded:', otpResponse)
+          // Continue with OTP verification anyway
+        }
+      } catch (otpError) {
+        console.warn('Error sending OTP, but registration succeeded:', otpError)
+        // Continue with OTP verification anyway
+      }
+
+      // Step 4: Redirect to OTP verification page with registration type
+      router.push(`/verify-otp?email=${userData.email}&type=registration`)
     } catch (error: any) {
       console.error('Registration error:', error)
+      
+      // Check if email already exists but is not verified
+      const errorCode = (error as any)?.code || (error as any)?.data?.code
       const errorMessage = error?.message || 'Registration failed'
+      
+      // If email exists but not verified, send OTP and redirect to verification
+      if (
+        errorCode === 'EMAIL_EXISTS_UNVERIFIED' ||
+        errorCode === 'EMAIL_UNVERIFIED' ||
+        errorMessage.toLowerCase().includes('email already exists') ||
+        errorMessage.toLowerCase().includes('not verified')
+      ) {
+        console.log('Email exists but not verified, sending OTP...')
+        
+        // Mark as registration verification flow
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('verifyType', 'registration')
+        }
+
+        // Send OTP to the email
+        try {
+          const response = await fetch(`${typeof window !== 'undefined' ? window.location.origin : ''}/api/auth/send-registration-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: userData.email })
+          })
+
+          const otpResponse = await response.json()
+
+          if (!response.ok) {
+            console.warn('Failed to send OTP:', otpResponse)
+          }
+        } catch (otpError) {
+          console.warn('Error sending OTP:', otpError)
+        }
+
+        // Redirect to OTP verification page
+        router.push(`/verify-otp?email=${userData.email}&type=registration`)
+        setIsLoading(false)
+        return
+      }
+
+      // For other errors, throw the error
       throw new Error(errorMessage)
     } finally {
       setIsLoading(false)

@@ -8,9 +8,14 @@ export default function VerifyOTP() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [isRegistration, setIsRegistration] = useState(false);
 
   useEffect(() => {
-    const { email: emailParam } = router.query;
+    const { email: emailParam, type } = router.query;
+    
+    // Determine if this is a registration OTP or general OTP
+    const verifyType = type === 'registration' || localStorage.getItem('verifyType') === 'registration';
+    setIsRegistration(verifyType);
     
     if (emailParam) {
       setEmail(emailParam);
@@ -32,18 +37,31 @@ export default function VerifyOTP() {
     setMessage("");
 
     try {
-      await axios.post('/api/auth/verify-otp', {
+      // Use verify-registration-otp for registration, verify-otp for general verification
+      const endpoint = isRegistration ? '/api/auth/verify-registration-otp' : '/api/auth/verify-otp';
+      
+      const response = await axios.post(endpoint, {
         email,
         otp
       });
 
       alert("Verified successfully");
+      
+      // Clear verification type from localStorage
+      localStorage.removeItem('verifyType');
 
-      // 👉 Redirect back to login
-      router.push('/login');
+      // 👉 Redirect based on verification type
+      if (isRegistration) {
+        // Registration complete, redirect to login
+        router.push('/login');
+      } else {
+        // Regular OTP verification, redirect to dashboard
+        router.push('/dashboard');
+      }
 
     } catch (err) {
-      alert("Invalid OTP");
+      console.error('Verification error:', err);
+      alert(err.response?.data?.message || "Invalid OTP");
     }
 
     setLoading(false);
@@ -53,7 +71,10 @@ export default function VerifyOTP() {
     setMessage("Resending OTP...");
 
     try {
-      await axios.post('/api/auth/resend-otp', { email });
+      // Use send-registration-otp for registration, resend-otp for general
+      const endpoint = isRegistration ? '/api/auth/send-registration-otp' : '/api/auth/resend-otp';
+      
+      await axios.post(endpoint, { email });
       setMessage("📩 OTP resent successfully!");
     } catch (err) {
       setMessage("❌ Failed to resend OTP");
@@ -65,15 +86,20 @@ export default function VerifyOTP() {
       
       <div className="bg-white p-8 rounded-xl shadow-md w-[350px] text-center">
         
-        <h2 className="text-2xl font-bold mb-2">Verify Code</h2>
+        <h2 className="text-2xl font-bold mb-2">
+          {isRegistration ? 'Verify Your Account' : 'Verify Code'}
+        </h2>
         <p className="text-gray-500 mb-6">
-          Enter the 6-digit code sent to your email
+          {isRegistration 
+            ? 'Enter the 6-digit OTP code sent to your email to complete registration'
+            : 'Enter the 6-digit code sent to your email'
+          }
         </p>
 
         <OTPInput length={6} onComplete={handleComplete} />
 
         <p className="text-sm text-gray-400 mt-6">
-          Didn’t receive code? <span className="text-blue-600 cursor-pointer" onClick={handleResend}>Resend</span>
+          Didn't receive code? <span className="text-blue-600 cursor-pointer" onClick={handleResend}>Resend OTP</span>
         </p>
 
         {message && (

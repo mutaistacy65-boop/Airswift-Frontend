@@ -26,7 +26,13 @@ export const registerUser = async (formData: RegisterFormData) => {
     console.log("REGISTER RESPONSE:", result);
 
     if (!res.ok) {
-      throw new Error(result.message || "Registration failed");
+      // Return the error response with all details
+      // Backend might indicate if email is unverified
+      const error = new Error(result.message || "Registration failed");
+      (error as any).code = result.code;
+      (error as any).status = res.status;
+      (error as any).data = result;
+      throw error;
     }
 
     return result;
