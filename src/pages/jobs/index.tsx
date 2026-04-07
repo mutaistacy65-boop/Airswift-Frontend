@@ -11,7 +11,7 @@ import { JOB_TYPES } from '@/utils/constants'
 
 const JobsPage: React.FC = () => {
   const router = useRouter()
-  const { isAuthenticated, isLoading: authLoading } = useAuth()
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth()
   const [jobs, setJobs] = useState<Job[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [location, setLocation] = useState('')
@@ -21,19 +21,21 @@ const JobsPage: React.FC = () => {
   const [hasMore, setHasMore] = useState(true)
   const { addNotification } = useNotification()
 
-  // Authentication check - redirect if not authenticated
+  // Strong authentication guard - redirect immediately if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/login')
+      // Not authenticated, redirect to login
+      router.replace('/login')
+      return
     }
   }, [authLoading, isAuthenticated, router])
 
-  // Fetch jobs only when authenticated
+  // Fetch jobs only when fully authenticated and loading is complete
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
+    if (!authLoading && isAuthenticated && user) {
       fetchJobs()
     }
-  }, [searchQuery, location, jobType, page, authLoading, isAuthenticated])
+  }, [searchQuery, location, jobType, page, authLoading, isAuthenticated, user])
 
   const fetchJobs = async () => {
     setLoading(true)
@@ -60,13 +62,14 @@ const JobsPage: React.FC = () => {
   }
 
   return (
+    // Only render main content if authenticated and loading complete
     authLoading || !isAuthenticated ? (
       <Loader />
     ) : (
-    <MainLayout>
-      <div>
-        <h1 className="text-4xl font-bold mb-2 text-gray-900">Browse Opportunities</h1>
-        <p className="text-gray-600 mb-8">Find your next career opportunity from our curated job listings</p>
+      <MainLayout>
+        <div>
+          <h1 className="text-4xl font-bold mb-2 text-gray-900">Browse Opportunities</h1>
+          <p className="text-gray-600 mb-8">Find your next career opportunity from our curated job listings</p>
 
         {/* Filters */}
 <div className="bg-white p-6 rounded-lg shadow-sm mb-8 grid lg:grid-cols-3 gap-4 border border-gray-100">
