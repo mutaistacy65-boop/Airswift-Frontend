@@ -4,8 +4,7 @@ import cookie from 'cookie'
 import jwt from 'jsonwebtoken'
 import mongoose from 'mongoose'
 import crypto from 'crypto'
-import { connectDB } from '@/lib/mongodb'
-import User from '@/lib/models/User'
+import { sendEmail } from '@/lib/emailService'
 
 const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'change_me'
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'refresh_secret_change_me'
@@ -166,6 +165,13 @@ const loginHandler = async (req: NextApiRequest, res: NextApiResponse, requireAd
 
     user.refreshToken = hashedRefreshToken
     await user.save()
+
+    // Send login alert email (non-blocking)
+    try {
+      await sendEmail(user.email, "Login Alert", "You logged in");
+    } catch (err: any) {
+      console.log("Email failed but login continues", err.message);
+    }
 
     res.setHeader('Set-Cookie', createTokenCookie(accessToken))
 

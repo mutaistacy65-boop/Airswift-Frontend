@@ -283,3 +283,30 @@ export const sendPasswordResetEmail = async (
     throw error
   }
 }
+
+/**
+ * General send email function
+ */
+export const sendEmail = async (to: string, subject: string, text: string, html?: string) => {
+  try {
+    const transporter = await initializeTransporter()
+
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || 'noreply@airswift.com',
+      to,
+      subject,
+      text,
+      html: html || text,
+    }
+
+    const result = await transporter.sendMail(mailOptions)
+
+    console.log('✅ Email sent to:', to)
+    console.log('📧 Message ID:', result.messageId)
+
+    return result
+  } catch (error) {
+    console.error('❌ Error sending email:', error)
+    throw error
+  }
+}
