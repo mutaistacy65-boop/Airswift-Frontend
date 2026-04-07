@@ -21,21 +21,12 @@ const JobsPage: React.FC = () => {
   const [hasMore, setHasMore] = useState(true)
   const { addNotification } = useNotification()
 
-  // Strong authentication guard - redirect immediately if not authenticated
+  // Fetch jobs - allow browsing without authentication
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      // Not authenticated, redirect to login
-      router.replace('/login')
-      return
-    }
-  }, [authLoading, isAuthenticated, router])
-
-  // Fetch jobs only when fully authenticated and loading is complete
-  useEffect(() => {
-    if (!authLoading && isAuthenticated && user) {
+    if (!authLoading) {
       fetchJobs()
     }
-  }, [searchQuery, location, jobType, page, authLoading, isAuthenticated, user])
+  }, [searchQuery, location, jobType, page, authLoading])
 
   const fetchJobs = async () => {
     setLoading(true)
@@ -62,8 +53,8 @@ const JobsPage: React.FC = () => {
   }
 
   return (
-    // Only render main content if authenticated and loading complete
-    authLoading || !isAuthenticated ? (
+    // Show loader only during auth loading, then show jobs for everyone
+    authLoading ? (
       <Loader />
     ) : (
       <MainLayout>
