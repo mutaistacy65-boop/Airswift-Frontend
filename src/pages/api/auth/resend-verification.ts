@@ -43,19 +43,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     user.verificationTokenExpires = expiresAt
     await user.save()
 
-    // Send verification email
+    // Send verification email (non-blocking)
     try {
       await sendVerificationEmail(email, user.name, token)
-    } catch (emailError) {
-      console.error('Failed to send verification email:', emailError)
-      return res.status(500).json({ 
-        message: 'Failed to send verification email. Please try again.' 
-      })
+      console.log(`✅ Verification email resent to: ${email}`)
+    } catch (emailError: any) {
+      console.error(`❌ Email failed for resend verification (${email}):`, emailError.message)
+      // Don't fail the request if email fails - token is still valid and user can retry
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Verification email has been sent! Check your inbox.',
+      message: 'If an account exists with this email, a verification link has been sent. Check your inbox or spam folder.',
     })
   } catch (error: any) {
     console.error('Resend verification error:', error)

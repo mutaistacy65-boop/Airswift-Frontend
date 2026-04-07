@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer'
+import { emailLogger } from '@/lib/emailLogger'
 
 /**
  * Email service using NodeMailer
@@ -304,9 +305,16 @@ export const sendEmail = async (to: string, subject: string, text: string, html?
     console.log('✅ Email sent to:', to)
     console.log('📧 Message ID:', result.messageId)
 
+    // Log successful send
+    emailLogger.logSent(to, subject, result.messageId)
+
     return result
   } catch (error) {
     console.error('❌ Error sending email:', error)
+
+    // Log failed send
+    emailLogger.logFailed(to, subject, error instanceof Error ? error : new Error(String(error)))
+
     throw error
   }
 }
