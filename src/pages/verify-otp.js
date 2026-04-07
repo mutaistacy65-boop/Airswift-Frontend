@@ -66,7 +66,7 @@ export default function VerifyOTP() {
         
         if (user && accessToken) {
           // Store authentication data
-          localStorage.setItem('token', accessToken);
+          localStorage.setItem('accessToken', accessToken);
           localStorage.setItem('user', JSON.stringify(user));
           localStorage.setItem('role', user.role);
           

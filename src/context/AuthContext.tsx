@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Load user from token on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('accessToken')
       const storedUser = localStorage.getItem('user')
       const role = localStorage.getItem('role')
 
@@ -51,14 +51,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(parsedUser)
         } catch (e) {
           // Invalid stored user, clear everything
-          localStorage.removeItem('token')
+          localStorage.removeItem('accessToken')
           localStorage.removeItem('user')
           localStorage.removeItem('role')
           setUser(null)
         }
       } else {
         // No valid token+user combo, ensure clean state
-        localStorage.removeItem('token')
+        localStorage.removeItem('accessToken')
         localStorage.removeItem('user')
         localStorage.removeItem('role')
         setUser(null)
@@ -105,7 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // Save all authentication data
-      localStorage.setItem('token', authToken)
+      localStorage.setItem('accessToken', authToken)
       localStorage.setItem('user', JSON.stringify(currentUser))
       localStorage.setItem('role', currentUser.role)
       
