@@ -139,6 +139,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       router.push(`/verify-otp?email=${userData.email}&type=registration`)
     } catch (error: any) {
       console.error('Registration error:', error)
+      console.log('Error details:', {
+        message: error?.message,
+        code: (error as any)?.code,
+        status: (error as any)?.status,
+        data: (error as any)?.data
+      })
       
       // Check if email already exists but is not verified
       const errorCode = (error as any)?.code || (error as any)?.data?.code
@@ -148,8 +154,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (
         errorCode === 'EMAIL_EXISTS_UNVERIFIED' ||
         errorCode === 'EMAIL_UNVERIFIED' ||
+        errorCode === 'USER_EXISTS' ||
+        errorCode === 'USER_ALREADY_EXISTS' ||
+        (error as any)?.status === 409 || // Conflict status for existing user
+        (error as any)?.status === 400 || // Bad request for existing user
+        errorMessage.toLowerCase().includes('user already exists') ||
         errorMessage.toLowerCase().includes('email already exists') ||
-        errorMessage.toLowerCase().includes('not verified')
+        errorMessage.toLowerCase().includes('not verified') ||
+        errorMessage.toLowerCase().includes('already registered') ||
+        errorMessage === 'User already exists' // Exact match for the error shown
       ) {
         console.log('Email exists but not verified, sending OTP...')
         

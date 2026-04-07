@@ -32,6 +32,12 @@ export const registerUser = async (formData: RegisterFormData) => {
       (error as any).code = result.code;
       (error as any).status = res.status;
       (error as any).data = result;
+      console.log("Registration error details:", {
+        status: res.status,
+        message: result.message,
+        code: result.code,
+        fullResponse: result
+      });
       throw error;
     }
 
