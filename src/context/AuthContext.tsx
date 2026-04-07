@@ -59,38 +59,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
-      const res = await fetch('/api/auth/login', {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const data = await loginUser({ email, password })
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        if (data?.redirect === "/verify-otp") {
-          router.push(`/verify-otp?email=${data.email}`);
-          return;
-        } else {
-          throw new Error(data?.message || "Login failed");
-        }
+      if (data?.redirect === '/verify-otp') {
+        router.push(`/verify-otp?email=${data.email}`)
+        return
       }
 
-      const { accessToken, user } = data;
+      const authToken = data.accessToken || data.token
+      const currentUser = data.user
 
-      // SUCCESS → go dashboard
-      localStorage.setItem('token', accessToken);
-      localStorage.setItem('role', user.role);
+      if (!authToken || !currentUser) {
+        throw new Error('Login failed')
+      }
 
-      // 👇 ROLE CHECK
-      if (user.role === 'admin') {
-        router.push('/admin/dashboard');
+      localStorage.setItem('token', authToken)
+      localStorage.setItem('role', currentUser.role)
+
+      if (currentUser.role === 'admin') {
+        router.push('/admin/dashboard')
       } else {
-        router.push('/dashboard');
+        router.push('/dashboard')
       }
-
     } catch (error: any) {
-      throw new Error(error?.message || "Login failed");
+      throw new Error(error?.message || 'Login failed')
     } finally {
       setIsLoading(false)
     }

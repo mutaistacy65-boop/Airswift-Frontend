@@ -1,16 +1,18 @@
 // Base API URL
+import { apiFetch, storeAuthTokens, clearAuthTokens } from '@/utils/apiFetch'
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const AuthService = {
-  // Registration
-  register: async (name: string, email: string, password: string) => {
+  // Registration with email verification
+  register: async (name: string, email: string, password: string, role?: string) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, role: role || 'user' }),
       });
 
       const result = await res.json();
@@ -40,11 +42,13 @@ const AuthService = {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+        throw new Error(data.message || 'Login failed');
       }
 
-      // Store token
-      localStorage.setItem('accessToken', data.accessToken);
+      // Store both tokens and user data
+      if (data.accessToken && data.refreshToken) {
+        storeAuthTokens(data.accessToken, data.refreshToken)
+      }
       localStorage.setItem('user', JSON.stringify(data.user));
 
       return data;
@@ -56,27 +60,16 @@ const AuthService = {
 
   // Get Profile (Protected)
   getProfile: async () => {
-    const token = localStorage.getItem('accessToken');
-
-    if (!token) {
-      throw new Error('No token found');
-    }
-
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
+      const response = await apiFetch('/api/auth/profile', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         // Token expired or invalid
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('user');
+        clearAuthTokens();
         throw new Error(data.message || 'Unauthorized');
       }
 
@@ -89,23 +82,16 @@ const AuthService = {
 
   // Logout
   logout: async () => {
-    const token = localStorage.getItem('accessToken');
-
     try {
-      await fetch(`${API_BASE_URL}/api/auth/logout`, {
+      await apiFetch('/api/auth/logout', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
       });
     } catch (error) {
       console.error('Logout error:', error);
     }
 
     // Clear local storage
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
+    clearAuthTokens();
   },
 
   // Get stored user
@@ -119,9 +105,65 @@ const AuthService = {
     return !!localStorage.getItem('accessToken');
   },
 
-  // Get token
-  getToken: () => {
+  // Get access token
+  getAccessToken: () => {
     return localStorage.getItem('accessToken');
+  },
+
+  // Get refresh token
+  getRefreshToken: () => {
+    return localStorage.getItem('refreshToken');
+  },
+
+  // Verify email with token
+  verifyEmail: async (token: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/verify?token=${token}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Email verification failed');
+      }
+
+      // Store both tokens from verification
+      if (data.accessToken && data.refreshToken) {
+        storeAuthTokens(data.accessToken, data.refreshToken)
+      }
+      if (data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Email verification error:', error);
+      throw error;
+    }
+  },
+
+  // Resend verification email
+  resendVerificationEmail: async (email: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to resend verification email');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Resend verification error:', error);
+      throw error;
+    }
   }
 };
 

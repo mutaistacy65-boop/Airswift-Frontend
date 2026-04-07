@@ -1,16 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import bcrypt from 'bcryptjs'
+import { connectDB } from '@/lib/mongodb'
+import User from '@/lib/models/User'
+import crypto from 'crypto'
 
-type Data = {
-  message: string
-}
-
-export default function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' })
   }
 
   const { token, password } = req.body
 
+  // Validation
   if (!token || !password) {
     return res.status(400).json({ message: 'Token and password are required' })
   }
@@ -19,15 +20,42 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<Data>)
     return res.status(400).json({ message: 'Password must be at least 6 characters long' })
   }
 
-  // Mock behavior: in production this will validate the token and update the password
-  console.log(`Mock password reset request received. Token: ${token}, New password length: ${password.length}`)
+  try {
+    await connectDB()
 
-  // In a real implementation, you would:
-  // 1. Validate the token (check if it's valid and not expired)
-  // 2. Find the user associated with the token
-  // 3. Hash the new password
-  // 4. Update the user's password in the database
-  // 5. Invalidate the token
+    // Hash the token using SHA256 for comparison
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex')
 
-  return res.status(200).json({ message: 'Password reset successfully' })
+    // Find user with matching reset token
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() },
+    })
+
+    if (!user) {
+      return res.status(400).json({
+        message: 'Invalid or expired password reset token',
+      })
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    // Update user password and clear reset token
+    user.password = hashedPassword
+    user.resetPasswordToken = null
+    user.resetPasswordExpires = null
+    await user.save()
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password reset successfully! You can now login with your new password.',
+    })
+  } catch (error: any) {
+    console.error('Password reset error:', error)
+    return res.status(500).json({ message: 'Internal server error' })
+  }
 }

@@ -3,9 +3,12 @@ import bcrypt from 'bcryptjs'
 import cookie from 'cookie'
 import jwt from 'jsonwebtoken'
 import mongoose from 'mongoose'
+import crypto from 'crypto'
 import { connectDB } from '@/lib/mongodb'
+import User from '@/lib/models/User'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change_me'
+const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'change_me'
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'refresh_secret_change_me'
 const TOKEN_MAX_AGE = 60 * 60 * 24 // 1 day in seconds
 
 const createTokenCookie = (token: string) =>
@@ -23,12 +26,12 @@ const sanitizeUser = (user: any) => ({
   name: user.name,
   role: user.role,
   phone: user.phone,
+  isVerified: user.isVerified,
 })
 
 const findUserByEmail = async (email: string) => {
   await connectDB()
-  const db = mongoose.connection.db
-  return db.collection('users').findOne({ email })
+  return User.findOne({ email: email.toLowerCase() })
 }
 
 const verifyPassword = async (password: string, storedPassword: string | undefined) => {
@@ -54,11 +57,26 @@ const signJwt = (user: any) =>
       email: user.email,
       role: user.role,
     },
-    JWT_SECRET,
+    JWT_ACCESS_SECRET,
     {
-      expiresIn: '1d',
-    },
+      expiresIn: '15m', // Short-lived access token
+    }
   )
+
+const signRefreshToken = (user: any) => {
+  const refreshToken = jwt.sign(
+    {
+      id: user._id?.toString?.(),
+      email: user.email,
+    },
+    JWT_REFRESH_SECRET,
+    {
+      expiresIn: '7d', // Long-lived refresh token
+    }
+  )
+
+  return refreshToken
+}
 
 export const verifyToken = (req: NextApiRequest) => {
   return new Promise((resolve, reject) => {
@@ -69,16 +87,16 @@ export const verifyToken = (req: NextApiRequest) => {
       return
     }
 
-    jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
+    jwt.verify(token, JWT_ACCESS_SECRET, (err: any, decoded: any) => {
       if (err) {
         reject(new Error('Invalid token'))
         return
-    }
+      }
 
       resolve({
         userId: decoded.id,
         email: decoded.email,
-        role: decoded.role
+        role: decoded.role,
       })
     })
   })
@@ -136,12 +154,25 @@ const loginHandler = async (req: NextApiRequest, res: NextApiResponse, requireAd
       return res.status(401).json({ message: 'Invalid credentials' })
     }
 
-    const token = signJwt(user)
-    res.setHeader('Set-Cookie', createTokenCookie(token))
+    // Generate tokens
+    const accessToken = signJwt(user)
+    const refreshToken = signRefreshToken(user)
+
+    // Hash and store refresh token
+    const hashedRefreshToken = crypto
+      .createHash('sha256')
+      .update(refreshToken)
+      .digest('hex')
+
+    user.refreshToken = hashedRefreshToken
+    await user.save()
+
+    res.setHeader('Set-Cookie', createTokenCookie(accessToken))
 
     return res.status(200).json({
       success: true,
-      accessToken: token,
+      accessToken,
+      refreshToken,
       user: sanitizeUser(user),
     })
   } catch (error: any) {

@@ -1,10 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { connectDB } from '@/lib/mongodb'
+import User from '@/lib/models/User'
+import { generateVerificationToken } from '@/lib/emailVerificationHelper'
+import { sendPasswordResetEmail } from '@/lib/emailService'
+import crypto from 'crypto'
 
-type Data = {
-  message: string
-}
-
-export default function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' })
   }
@@ -15,18 +16,43 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<Data>)
     return res.status(400).json({ message: 'Email is required' })
   }
 
-  // Mock behavior: in production this will trigger a real email send.
-  // Generate a mock reset token (in production, this would be a secure JWT or similar)
-  const resetToken = `reset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  try {
+    await connectDB()
 
-  // Mock email content
-  const resetLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`
+    // Find user by email
+    const user = await User.findOne({ email: email.toLowerCase() })
 
-  console.log(`Mock forgot password request received for: ${email}`)
-  console.log(`Reset link: ${resetLink}`)
-  console.log(`Mock email would contain: "Click here to reset your password: ${resetLink}"`)
+    if (!user) {
+      // For security, don't reveal if email exists
+      return res.status(200).json({
+        message: 'If an account exists with this email, a password reset link has been sent.'
+      })
+    }
 
-  // In production, you would send an actual email here using a service like SendGrid, Mailgun, etc.
+    // Generate reset token (1 hour expiry)
+    const { token: resetToken, hashedToken, expiresAt } = generateVerificationToken(60)
 
-  return res.status(200).json({ message: 'Password reset instructions sent to your email.' })
+    // Update user with reset token
+    user.resetPasswordToken = hashedToken
+    user.resetPasswordExpires = expiresAt
+    await user.save()
+
+    // Send reset email
+    try {
+      await sendPasswordResetEmail(email, user.name, resetToken)
+    } catch (emailError) {
+      console.error('Failed to send password reset email:', emailError)
+      return res.status(500).json({
+        message: 'Failed to send password reset email. Please try again.'
+      })
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password reset link has been sent to your email! Check your inbox.',
+    })
+  } catch (error: any) {
+    console.error('Forgot password error:', error)
+    return res.status(500).json({ message: 'Internal server error' })
+  }
 }

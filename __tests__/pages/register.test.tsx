@@ -40,7 +40,7 @@ describe('Register Page', () => {
     expect(screen.getByText('Create Account')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter your full name')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter your email')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Enter password')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Create a strong password')).toBeInTheDocument();
   });
 
   test('shows error when fields are empty', async () => {
@@ -107,7 +107,7 @@ describe('Register Page', () => {
 
     const nameInput = screen.getByPlaceholderText('Enter your full name');
     const emailInput = screen.getByPlaceholderText('Enter your email');
-    const passwordInput = screen.getByPlaceholderText('Enter password');
+    const passwordInput = screen.getByPlaceholderText('Create a strong password');
     const submitButton = screen.getByRole('button', { name: /create account/i });
 
     await user.type(nameInput, 'Test User');
