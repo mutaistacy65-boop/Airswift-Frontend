@@ -37,7 +37,7 @@ describe('Register Page', () => {
       </AuthProvider>
     );
 
-    expect(screen.getByText('Create Account')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter your full name')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter your email')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Create a strong password')).toBeInTheDocument();
@@ -52,8 +52,11 @@ describe('Register Page', () => {
       </AuthProvider>
     );
 
-    const submitButton = screen.getByRole('button', { name: /create account/i });
-    await user.click(submitButton);
+    const form = screen.getByTestId('register-form');
+    const termsCheckbox = screen.getByLabelText(/i agree to the/i);
+    
+    await user.click(termsCheckbox);
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(screen.getByText('Please fill in all fields')).toBeInTheDocument();
@@ -76,13 +79,15 @@ describe('Register Page', () => {
 
     const nameInput = screen.getByPlaceholderText('Enter your full name');
     const emailInput = screen.getByPlaceholderText('Enter your email');
-    const passwordInput = screen.getByPlaceholderText('Enter password');
-    const submitButton = screen.getByRole('button', { name: /create account/i });
+    const passwordInput = screen.getByPlaceholderText('Create a strong password');
+    const termsCheckbox = screen.getByLabelText(/i agree to the/i);
+    const form = screen.getByTestId('register-form');
 
     await user.type(nameInput, 'Test User');
     await user.type(emailInput, 'testuser@example.com');
     await user.type(passwordInput, 'TestPassword123!');
-    await user.click(submitButton);
+    await user.click(termsCheckbox);
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(mockRegisterUser).toHaveBeenCalledWith({
@@ -108,12 +113,14 @@ describe('Register Page', () => {
     const nameInput = screen.getByPlaceholderText('Enter your full name');
     const emailInput = screen.getByPlaceholderText('Enter your email');
     const passwordInput = screen.getByPlaceholderText('Create a strong password');
-    const submitButton = screen.getByRole('button', { name: /create account/i });
+    const termsCheckbox = screen.getByLabelText(/i agree to the/i);
+    const form = screen.getByTestId('register-form');
 
     await user.type(nameInput, 'Test User');
     await user.type(emailInput, 'existing@example.com');
     await user.type(passwordInput, 'TestPassword123!');
-    await user.click(submitButton);
+    await user.click(termsCheckbox);
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(screen.getByText(errorMessage)).toBeInTheDocument();
