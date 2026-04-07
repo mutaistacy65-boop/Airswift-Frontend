@@ -6,6 +6,21 @@ const API = axios.create({
   withCredentials: true,
 });
 
+// Add request interceptor to include auth token
+API.interceptors.request.use(
+  (config) => {
+    // Add authorization header if token exists
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Add response interceptor to handle token refresh
 API.interceptors.response.use(
   (response) => response,
