@@ -13,14 +13,19 @@ export default function VerifyOTP() {
   useEffect(() => {
     const { email: emailParam, type } = router.query;
     
-    // Determine if this is a registration OTP or general OTP
-    const verifyType = type === 'registration' || localStorage.getItem('verifyType') === 'registration';
-    setIsRegistration(verifyType);
+    // Determine verification type: registration, verification, or general
+    const verifyType = type || localStorage.getItem('verifyType');
+    const isVerificationFlow = type === 'verification' || verifyType === 'verification';
+    setIsRegistration(type === 'registration' || verifyType === 'registration');
     
     if (emailParam) {
       setEmail(emailParam);
       // Also store in localStorage for consistency
       localStorage.setItem('verifyEmail', emailParam);
+      // Store verification type
+      if (type) {
+        localStorage.setItem('verifyType', type);
+      }
     } else {
       const storedEmail = localStorage.getItem('verifyEmail');
       if (storedEmail) {
@@ -55,8 +60,26 @@ export default function VerifyOTP() {
         // Registration complete, redirect to login
         router.push('/login');
       } else {
-        // Regular OTP verification, redirect to dashboard
-        router.push('/dashboard');
+        // For verification flow, the user should be logged in now
+        // The verify-otp API should return authentication tokens
+        const { user, accessToken } = response.data;
+        
+        if (user && accessToken) {
+          // Store authentication data
+          localStorage.setItem('token', accessToken);
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem('role', user.role);
+          
+          // Redirect based on role
+          if (user.role === 'admin') {
+            router.push('/admin/dashboard');
+          } else {
+            router.push('/dashboard');
+          }
+        } else {
+          // Fallback to dashboard if no auth data
+          router.push('/dashboard');
+        }
       }
 
     } catch (err) {
@@ -71,8 +94,14 @@ export default function VerifyOTP() {
     setMessage("Resending OTP...");
 
     try {
-      // Use send-registration-otp for registration, resend-otp for general
-      const endpoint = isRegistration ? '/api/auth/send-registration-otp' : '/api/auth/resend-otp';
+      // Determine which endpoint to use based on verification type
+      let endpoint;
+      if (isRegistration) {
+        endpoint = '/api/auth/send-registration-otp';
+      } else {
+        // For verification flow, use resend-verification
+        endpoint = '/api/auth/resend-verification';
+      }
       
       await axios.post(endpoint, { email });
       setMessage("📩 OTP resent successfully!");

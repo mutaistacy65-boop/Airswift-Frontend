@@ -74,7 +74,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await loginUser({ email, password })
 
       if (data?.redirect === '/verify-otp') {
-        router.push(`/verify-otp?email=${data.email}`)
+        // Send verification OTP for unverified account
+        try {
+          const response = await fetch(`${typeof window !== 'undefined' ? window.location.origin : ''}/api/auth/resend-verification`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: data.email })
+          })
+
+          const otpResponse = await response.json()
+
+          if (!response.ok) {
+            console.warn('Failed to send verification OTP:', otpResponse)
+            // Continue with redirect anyway
+          }
+        } catch (otpError) {
+          console.warn('Error sending verification OTP:', otpError)
+          // Continue with redirect anyway
+        }
+
+        router.push(`/verify-otp?email=${data.email}&type=verification`)
         return
       }
 

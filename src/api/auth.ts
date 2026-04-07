@@ -111,7 +111,13 @@ export const loginUser = async (formData: LoginFormData) => {
 
     // Check if user is verified before allowing login
     if (!data.user?.isVerified) {
-      throw new Error('Account not verified. Please verify your email before logging in.');
+      // Return special response for unverified accounts
+      return {
+        redirect: '/verify-otp',
+        email: data.user.email,
+        message: 'Account not verified. OTP sent to your email.',
+        user: data.user
+      };
     }
 
     return data;
