@@ -23,12 +23,15 @@ export default function AdminSettings() {
   if (!isAuthorized) return null
 
   const sidebarItems = [
-    { label: '📊 Dashboard', href: '/admin/dashboard', icon: '📊' },
-    { label: '💼 Jobs', href: '/admin/jobs', icon: '💼' },
-    { label: '👥 Applicants', href: '/admin/applications', icon: '👥' },
-    { label: '📞 Interviews', href: '/admin/interviews', icon: '📞' },
-    { label: '💬 Messages', href: '/admin/messages', icon: '💬' },
-    { label: '⚙️ Settings', href: '/admin/settings', icon: '⚙️' },
+    { label: '📊 Dashboard', href: '/admin/dashboard' },
+    { label: '👥 Users', href: '/admin/users' },
+    { label: '💼 Jobs', href: '/admin/jobs' },
+    { label: '📝 Applications', href: '/admin/applications' },
+    { label: '📞 Interviews', href: '/admin/interviews' },
+    { label: '💰 Payments', href: '/admin/payments' },
+    { label: '📋 Audit Logs', href: '/admin/audit' },
+    { label: '🔍 Health', href: '/admin/health' },
+    { label: '⚙️ Settings', href: '/admin/settings' },
   ]
 
   return (

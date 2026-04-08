@@ -132,12 +132,15 @@ const AdminCategoriesPage: React.FC = () => {
   }
 
   const sidebarItems = [
-    { label: 'Dashboard', href: '/admin/dashboard', icon: '📊' },
-    { label: 'Manage Jobs', href: '/admin/jobs', icon: '💼' },
-    { label: 'Categories', href: '/admin/categories', icon: '🏷️' },
-    { label: 'Applications', href: '/admin/applications', icon: '📋' },
-    { label: 'Interviews', href: '/admin/interviews', icon: '📞' },
-    { label: 'Settings', href: '/admin/settings', icon: '⚙️' },
+    { label: '📊 Dashboard', href: '/admin/dashboard' },
+    { label: '👥 Users', href: '/admin/users' },
+    { label: '💼 Jobs', href: '/admin/jobs' },
+    { label: '📝 Applications', href: '/admin/applications' },
+    { label: '📞 Interviews', href: '/admin/interviews' },
+    { label: '💰 Payments', href: '/admin/payments' },
+    { label: '📋 Audit Logs', href: '/admin/audit' },
+    { label: '🔍 Health', href: '/admin/health' },
+    { label: '⚙️ Settings', href: '/admin/settings' },
   ]
 
   const activeCategories = categories.filter(cat => cat.isActive)

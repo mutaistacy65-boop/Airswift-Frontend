@@ -142,5 +142,160 @@ export const adminService = {
   updateSettings: async (settings: any) => {
     const response = await API.put('/admin/settings', settings)
     return response.data
+  },
+
+  // User Management
+  getUsers: async (params?: any) => {
+    const response = await API.get('/admin/users', { params })
+    return response.data
+  },
+
+  getUser: async (id: string) => {
+    const response = await API.get(`/admin/users/${id}`)
+    return response.data
+  },
+
+  updateUser: async (id: string, userData: any) => {
+    const response = await API.put(`/admin/users/${id}`, userData)
+    return response.data
+  },
+
+  deleteUser: async (id: string) => {
+    const response = await API.delete(`/admin/users/${id}`)
+    return response.data
+  },
+
+  activateUser: async (id: string) => {
+    const response = await API.patch(`/admin/users/${id}/activate`)
+    return response.data
+  },
+
+  deactivateUser: async (id: string) => {
+    const response = await API.patch(`/admin/users/${id}/deactivate`)
+    return response.data
+  },
+
+  changeUserRole: async (id: string, role: string) => {
+    const response = await API.patch(`/admin/users/${id}/role`, { role })
+    return response.data
+  },
+
+  // Payment Management
+  getPayments: async (params?: any) => {
+    const response = await API.get('/admin/payments', { params })
+    return response.data
+  },
+
+  updatePaymentStatus: async (id: string, status: string, notes?: string) => {
+    const response = await API.put(`/admin/payments/${id}/status`, { status, notes })
+    return response.data
+  },
+
+  getPaymentStats: async () => {
+    const response = await API.get('/admin/payments/stats')
+    return response.data
+  },
+
+  // Audit & Reports
+  getAuditLogs: async (params?: any) => {
+    const response = await API.get('/admin/audit', { params })
+    return response.data
+  },
+
+  getAuditStats: async () => {
+    const response = await API.get('/admin/audit/stats')
+    return response.data
+  },
+
+  getReports: async () => {
+    const response = await API.get('/admin/reports')
+    return response.data
+  },
+
+  updateReportStatus: async (id: string, status: string) => {
+    const response = await API.put(`/admin/reports/${id}/status`, { status })
+    return response.data
+  },
+
+  // System Health
+  getSystemHealth: async () => {
+    const response = await API.get('/admin/health')
+    return response.data
+  },
+
+  // Email Management
+  sendEmail: async (emailData: any) => {
+    const response = await API.post('/admin/email/send', emailData)
+    return response.data
+  },
+
+  // Bulk Operations on Applications
+  bulkDeleteApplications: async (applicationIds: string[], reason?: string) => {
+    const response = await API.delete('/admin/applications/bulk-delete', {
+      data: { applicationIds, reason }
+    })
+    return response.data
+  },
+
+  sendInterviewInvitation: async (applicationId: string, interviewData: any) => {
+    const response = await API.post(`/admin/send-interview/${applicationId}`, interviewData)
+    return response.data
+  },
+
+  // Email Templates
+  getEmailTemplates: async () => {
+    const response = await API.get('/admin/email-templates')
+    return response.data
+  },
+
+  createEmailTemplate: async (templateData: any) => {
+    const response = await API.post('/admin/email-templates', templateData)
+    return response.data
+  },
+
+  updateEmailTemplate: async (id: string, templateData: any) => {
+    const response = await API.put(`/admin/email-templates/${id}`, templateData)
+    return response.data
+  },
+
+  deleteEmailTemplate: async (id: string) => {
+    const response = await API.delete(`/admin/email-templates/${id}`)
+    return response.data
+  },
+
+  // Analytics
+  getApplicationsOverTime: async (days: number = 30) => {
+    const response = await API.get('/admin/dashboard/applications-over-time', { params: { days } })
+    return response.data
+  },
+
+  getCVScoreDistribution: async () => {
+    const response = await API.get('/admin/dashboard/cv-score-distribution')
+    return response.data
+  },
+
+  getJobApplicationDistribution: async () => {
+    const response = await API.get('/admin/dashboard/job-application-distribution')
+    return response.data
+  },
+
+  getInterviewStats: async () => {
+    const response = await API.get('/admin/dashboard/interview-stats')
+    return response.data
+  },
+
+  getHiringFunnel: async () => {
+    const response = await API.get('/admin/dashboard/hiring-funnel')
+    return response.data
+  },
+
+  getTopSkills: async () => {
+    const response = await API.get('/admin/dashboard/top-skills')
+    return response.data
+  },
+
+  getAverageTimeToHire: async () => {
+    const response = await API.get('/admin/dashboard/average-time-to-hire')
+    return response.data
   }
 }
