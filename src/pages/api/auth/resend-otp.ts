@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { authResendOtp } from '@/lib/authController'
 

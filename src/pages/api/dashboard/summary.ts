@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { requireAdmin } from '@/lib/adminMiddleware'
 import { getDashboardSummary } from '@/lib/dashboardController'

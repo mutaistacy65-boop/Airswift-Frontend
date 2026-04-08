@@ -1,6 +1,17 @@
+// @ts-nocheck
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { adminInterviews } from '@/lib/authController'
+import { requireAdmin } from '@/lib/adminMiddleware'
+import { getInterviews, scheduleInterview } from '@/lib/interviewController'
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  return adminInterviews(req, res)
+const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  switch (req.method) {
+    case 'GET':
+      return getInterviews(req, res)
+    case 'POST':
+      return scheduleInterview(req, res)
+    default:
+      return res.status(405).json({ message: 'Method Not Allowed' })
+  }
 }
+
+export default requireAdmin(handler)

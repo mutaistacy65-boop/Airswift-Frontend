@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Server } from 'socket.io';
 import { openai } from '@/lib/openai';

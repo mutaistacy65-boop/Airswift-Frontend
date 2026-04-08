@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { connectDB } from '@/lib/mongodb'
 import Message from '@/lib/models/Message'

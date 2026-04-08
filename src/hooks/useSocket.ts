@@ -15,6 +15,7 @@ export type SocketEventType =
   | 'messageReceived'
   | 'audit_log'
   | 'new_message'
+  | 'new_notification'
   | 'connect'
   | 'disconnect'
   | 'error'

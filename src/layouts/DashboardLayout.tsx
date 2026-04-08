@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
-  sidebarItems: { label: string; href: string; icon?: string }[]
+  sidebarItems?: { label: string; href: string; icon?: string }[]
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, sidebarItems }) => {

@@ -77,8 +77,20 @@ export default function AdminApplicationsPage() {
   }
 
   if (user?.role !== 'admin') {
+    const sidebarItems = [
+      { label: '📊 Dashboard', href: '/admin/dashboard' },
+      { label: '👥 Users', href: '/admin/users' },
+      { label: '💼 Jobs', href: '/admin/jobs' },
+      { label: '📝 Applications', href: '/admin/applications' },
+      { label: '📞 Interviews', href: '/admin/interviews' },
+      { label: '💰 Payments', href: '/admin/payments' },
+      { label: '📋 Audit Logs', href: '/admin/audit' },
+      { label: '🔍 Health', href: '/admin/health' },
+      { label: '⚙️ Settings', href: '/admin/settings' },
+    ]
+    
     return (
-      <DashboardLayout>
+      <DashboardLayout sidebarItems={sidebarItems}>
         <div className="bg-red-100 border border-red-400 rounded p-4">
           <p className="text-red-700">Only admins can view applications.</p>
         </div>
@@ -96,8 +108,20 @@ export default function AdminApplicationsPage() {
   })
 
   if (loading) {
+    const sidebarItems = [
+      { label: '📊 Dashboard', href: '/admin/dashboard' },
+      { label: '👥 Users', href: '/admin/users' },
+      { label: '💼 Jobs', href: '/admin/jobs' },
+      { label: '📝 Applications', href: '/admin/applications' },
+      { label: '📞 Interviews', href: '/admin/interviews' },
+      { label: '💰 Payments', href: '/admin/payments' },
+      { label: '📋 Audit Logs', href: '/admin/audit' },
+      { label: '🔍 Health', href: '/admin/health' },
+      { label: '⚙️ Settings', href: '/admin/settings' },
+    ]
+    
     return (
-      <DashboardLayout>
+      <DashboardLayout sidebarItems={sidebarItems}>
         <div className="flex justify-center items-center h-screen">
           <div className="text-xl text-gray-600">Loading...</div>
         </div>
@@ -105,8 +129,20 @@ export default function AdminApplicationsPage() {
     )
   }
 
+  const sidebarItems = [
+    { label: '📊 Dashboard', href: '/admin/dashboard' },
+    { label: '👥 Users', href: '/admin/users' },
+    { label: '💼 Jobs', href: '/admin/jobs' },
+    { label: '📝 Applications', href: '/admin/applications' },
+    { label: '📞 Interviews', href: '/admin/interviews' },
+    { label: '💰 Payments', href: '/admin/payments' },
+    { label: '📋 Audit Logs', href: '/admin/audit' },
+    { label: '🔍 Health', href: '/admin/health' },
+    { label: '⚙️ Settings', href: '/admin/settings' },
+  ]
+
   return (
-    <DashboardLayout>
+    <DashboardLayout sidebarItems={sidebarItems}>
       <div>
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Applications Management</h1>

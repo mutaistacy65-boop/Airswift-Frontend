@@ -387,7 +387,7 @@ export default function SendMessagePage() {
             )}
             <div className="mt-2 p-3 bg-blue-50 rounded border border-blue-200">
               <p className="text-blue-900 text-xs font-medium">
-                💡 Available variables: {{name}}, {{date}}, {{time}}, {{job_title}}
+                {`💡 Available variables: {{name}}, {{date}}, {{time}}, {{job_title}}`}
               </p>
             </div>
           </div>

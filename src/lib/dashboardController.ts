@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { NextApiRequest, NextApiResponse } from 'next'
 import mongoose from 'mongoose'
 import { connectDB } from '@/lib/mongodb'

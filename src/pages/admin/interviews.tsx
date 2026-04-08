@@ -8,9 +8,10 @@ import Loader from '@/components/Loader'
 import Button from '@/components/Button'
 import Modal from '@/components/Modal'
 import Input from '@/components/Input'
-import { interviewService } from '@/services/interviewService'
+import Textarea from '@/components/Textarea'
+import { adminService } from '@/services/adminService'
 import { formatDate } from '@/utils/helpers'
-import { Calendar, Clock, User, MapPin, Video } from 'lucide-react'
+import { Calendar, Clock, User, MapPin, Video, Phone, Plus, Filter, Search } from 'lucide-react'
 
 interface Interview {
   _id: string
@@ -21,39 +22,74 @@ interface Interview {
   jobTitle: string
   scheduledDate: string
   scheduledTime: string
-  status: 'scheduled' | 'done' | 'no-show'
+  status: 'scheduled' | 'completed' | 'no-show' | 'cancelled' | 'rescheduled'
   interviewerName?: string
-  interviewType?: 'video' | 'phone' | 'in-person'
+  interviewType?: 'HR' | 'Technical' | 'Final'
+  mode?: 'online' | 'in-person' | 'phone'
   zoomLink?: string
   location?: string
   notes?: string
+  duration?: number
 }
 
 const AdminInterviewsPage: React.FC = () => {
   const { isAuthorized, isLoading } = useProtectedRoute('admin')
   const { addNotification } = useNotification()
   const [interviews, setInterviews] = useState<Interview[]>([])
+  const [stats, setStats] = useState({
+    scheduled: 0,
+    completed: 0,
+    noShow: 0,
+    cancelled: 0,
+    conversionRate: 0
+  })
   const [loading, setLoading] = useState(true)
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null)
   const [showStatusModal, setShowStatusModal] = useState(false)
-  const [newStatus, setNewStatus] = useState<'scheduled' | 'done' | 'no-show'>('scheduled')
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [showDetailModal, setShowDetailModal] = useState(false)
+  const [newStatus, setNewStatus] = useState<'scheduled' | 'completed' | 'no-show' | 'cancelled' | 'rescheduled'>('scheduled')
   const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [scheduling, setScheduling] = useState(false)
 
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar')
-  const [filterStatus, setFilterStatus] = useState<'all' | 'scheduled' | 'done' | 'no-show'>('all')
+  const [filterStatus, setFilterStatus] = useState<'all' | 'scheduled' | 'completed' | 'no-show' | 'cancelled' | 'rescheduled'>('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [dateFilter, setDateFilter] = useState('')
+
+  // Schedule form state
+  const [scheduleForm, setScheduleForm] = useState({
+    candidateName: '',
+    candidateEmail: '',
+    jobTitle: '',
+    interviewerName: '',
+    scheduledDate: '',
+    scheduledTime: '',
+    interviewType: 'HR' as 'HR' | 'Technical' | 'Final',
+    mode: 'online' as 'online' | 'in-person' | 'phone',
+    location: '',
+    zoomLink: '',
+    notes: ''
+  })
 
   useEffect(() => {
     if (isAuthorized) {
       fetchInterviews()
+      fetchStats()
     }
   }, [isAuthorized])
 
   const fetchInterviews = async () => {
     try {
       setLoading(true)
-      const data = await interviewService.getAllInterviews()
-      setInterviews(Array.isArray(data) ? data : data.data || [])
+      const response = await adminService.getInterviews({
+        page: 1,
+        limit: 100,
+        status: filterStatus !== 'all' ? filterStatus : undefined,
+        candidateName: searchTerm || undefined,
+        dateFrom: dateFilter || undefined
+      })
+      setInterviews(response.interviews || [])
     } catch (error) {
       console.error('Error fetching interviews:', error)
       addNotification('Failed to load interviews', 'error')
@@ -62,7 +98,16 @@ const AdminInterviewsPage: React.FC = () => {
     }
   }
 
-  const handleStatusChange = async (interview: Interview, newSt: 'scheduled' | 'done' | 'no-show') => {
+  const fetchStats = async () => {
+    try {
+      const statsData = await adminService.getInterviewStats()
+      setStats(statsData)
+    } catch (error) {
+      console.error('Error fetching interview stats:', error)
+    }
+  }
+
+  const handleStatusChange = async (interview: Interview, newSt: 'scheduled' | 'completed' | 'no-show' | 'cancelled' | 'rescheduled') => {
     setSelectedInterview(interview)
     setNewStatus(newSt)
     setShowStatusModal(true)
@@ -73,7 +118,7 @@ const AdminInterviewsPage: React.FC = () => {
 
     setUpdatingStatus(true)
     try {
-      await interviewService.updateInterviewStatus(
+      await adminService.updateInterviewStatus(
         selectedInterview._id || selectedInterview.id || '',
         newStatus
       )
@@ -89,11 +134,63 @@ const AdminInterviewsPage: React.FC = () => {
 
       addNotification(`Interview status updated to "${newStatus}"`, 'success')
       setShowStatusModal(false)
+      fetchStats() // Refresh stats
     } catch (error) {
       console.error('Error updating interview status:', error)
       addNotification('Failed to update interview status', 'error')
     } finally {
       setUpdatingStatus(false)
+    }
+  }
+
+  const handleScheduleInterview = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!scheduleForm.candidateName || !scheduleForm.candidateEmail || !scheduleForm.jobTitle ||
+        !scheduleForm.scheduledDate || !scheduleForm.scheduledTime) {
+      addNotification('Please fill in all required fields', 'error')
+      return
+    }
+
+    setScheduling(true)
+    try {
+      const interviewData = {
+        candidateName: scheduleForm.candidateName,
+        candidateEmail: scheduleForm.candidateEmail,
+        jobTitle: scheduleForm.jobTitle,
+        interviewerName: scheduleForm.interviewerName,
+        scheduledDate: scheduleForm.scheduledDate,
+        scheduledTime: scheduleForm.scheduledTime,
+        interviewType: scheduleForm.interviewType,
+        mode: scheduleForm.mode,
+        location: scheduleForm.location,
+        zoomLink: scheduleForm.zoomLink,
+        notes: scheduleForm.notes
+      }
+
+      await adminService.scheduleInterview(interviewData)
+      addNotification('Interview scheduled successfully', 'success')
+      setShowScheduleModal(false)
+      setScheduleForm({
+        candidateName: '',
+        candidateEmail: '',
+        jobTitle: '',
+        interviewerName: '',
+        scheduledDate: '',
+        scheduledTime: '',
+        interviewType: 'HR',
+        mode: 'online',
+        location: '',
+        zoomLink: '',
+        notes: ''
+      })
+      fetchInterviews()
+      fetchStats()
+    } catch (error: any) {
+      console.error('Error scheduling interview:', error)
+      addNotification(error?.message || 'Failed to schedule interview', 'error')
+    } finally {
+      setScheduling(false)
     }
   }
 
@@ -109,21 +206,18 @@ const AdminInterviewsPage: React.FC = () => {
     return matchesStatus && matchesSearch
   })
 
-  // Count by status
-  const statusCounts = {
-    scheduled: interviews.filter((i) => i.status === 'scheduled').length,
-    done: interviews.filter((i) => i.status === 'done').length,
-    ['no-show']: interviews.filter((i) => i.status === 'no-show').length,
-  }
-
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'scheduled':
         return 'bg-blue-100 text-blue-800'
-      case 'done':
+      case 'completed':
         return 'bg-green-100 text-green-800'
       case 'no-show':
         return 'bg-red-100 text-red-800'
+      case 'cancelled':
+        return 'bg-gray-100 text-gray-800'
+      case 'rescheduled':
+        return 'bg-yellow-100 text-yellow-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -131,12 +225,23 @@ const AdminInterviewsPage: React.FC = () => {
 
   const getInterviewTypeIcon = (type?: string) => {
     switch (type) {
-      case 'video':
-        return '📹'
-      case 'phone':
-        return '☎️'
-      case 'in-person':
+      case 'HR':
         return '👥'
+      case 'Technical':
+        return '💻'
+      case 'Final':
+        return '🏆'
+      default:
+        return '📞'
+    }
+  }
+
+  const getModeIcon = (mode?: string) => {
+    switch (mode) {
+      case 'online':
+        return '💻'
+      case 'in-person':
+        return '🏢'
       default:
         return '📞'
     }
@@ -168,34 +273,47 @@ const AdminInterviewsPage: React.FC = () => {
         <h1 className="text-3xl font-bold mb-8">Interview Management</h1>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <p className="text-gray-600 text-sm">Scheduled Interviews</p>
-            <p className="text-3xl font-bold text-blue-600">{statusCounts.scheduled}</p>
+            <p className="text-3xl font-bold text-blue-600">{stats.scheduled}</p>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <p className="text-gray-600 text-sm">Completed</p>
-            <p className="text-3xl font-bold text-green-600">{statusCounts.done}</p>
+            <p className="text-3xl font-bold text-green-600">{stats.completed}</p>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <p className="text-gray-600 text-sm">No-Shows</p>
-            <p className="text-3xl font-bold text-red-600">{statusCounts['no-show']}</p>
+            <p className="text-3xl font-bold text-red-600">{stats.noShow}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <p className="text-gray-600 text-sm">Conversion Rate</p>
+            <p className="text-3xl font-bold text-purple-600">{stats.conversionRate}%</p>
           </div>
         </div>
 
-        {/* View Toggle */}
-        <div className="flex gap-4 mb-6">
+        {/* View Toggle and Actions */}
+        <div className="flex gap-4 mb-6 justify-between items-center">
+          <div className="flex gap-4">
+            <Button
+              onClick={() => setViewMode('calendar')}
+              className={viewMode === 'calendar' ? 'bg-blue-600' : 'bg-gray-300'}
+            >
+              📅 Calendar View
+            </Button>
+            <Button
+              onClick={() => setViewMode('list')}
+              className={viewMode === 'list' ? 'bg-blue-600' : 'bg-gray-300'}
+            >
+              📋 List View
+            </Button>
+          </div>
           <Button
-            onClick={() => setViewMode('calendar')}
-            className={viewMode === 'calendar' ? 'bg-blue-600' : 'bg-gray-300'}
+            onClick={() => setShowScheduleModal(true)}
+            className="bg-green-600 hover:bg-green-700"
           >
-            📅 Calendar View
-          </Button>
-          <Button
-            onClick={() => setViewMode('list')}
-            className={viewMode === 'list' ? 'bg-blue-600' : 'bg-gray-300'}
-          >
-            📋 List View
+            <Plus size={16} className="mr-2" />
+            Schedule Interview
           </Button>
         </div>
 
@@ -212,13 +330,15 @@ const AdminInterviewsPage: React.FC = () => {
             {/* Search and Filter */}
             <div className="mb-6 space-y-4">
               <div className="flex gap-4 flex-wrap">
-                <Input
-                  type="text"
-                  placeholder="Search by candidate name, email, or job title..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1 min-w-[200px]"
-                />
+                <div className="flex-1 min-w-[200px]">
+                  <Input
+                    type="text"
+                    placeholder="Search by candidate name, email, or job title..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    icon={<Search size={16} />}
+                  />
+                </div>
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value as any)}
@@ -226,9 +346,17 @@ const AdminInterviewsPage: React.FC = () => {
                 >
                   <option value="all">All Status</option>
                   <option value="scheduled">Scheduled</option>
-                  <option value="done">Completed</option>
+                  <option value="completed">Completed</option>
                   <option value="no-show">No-Show</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="rescheduled">Rescheduled</option>
                 </select>
+                <Input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  placeholder="Filter by date"
+                />
               </div>
 
               <p className="text-sm text-gray-600">
@@ -249,8 +377,9 @@ const AdminInterviewsPage: React.FC = () => {
                     <tr className="border-b">
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Candidate</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Position</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Interviewer</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Date & Time</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Type</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Type/Mode</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
                     </tr>
@@ -268,13 +397,19 @@ const AdminInterviewsPage: React.FC = () => {
                           <p className="text-gray-900">{interview.jobTitle}</p>
                         </td>
                         <td className="py-3 px-4">
+                          <p className="text-gray-900">{interview.interviewerName || 'Not assigned'}</p>
+                        </td>
+                        <td className="py-3 px-4">
                           <div className="text-sm">
                             <p className="font-semibold">{formatDate(interview.scheduledDate)}</p>
                             <p className="text-gray-600">{interview.scheduledTime}</p>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-center">
-                          <span className="text-xl">{getInterviewTypeIcon(interview.interviewType)}</span>
+                        <td className="py-3 px-4">
+                          <div className="text-center">
+                            <div className="text-lg">{getInterviewTypeIcon(interview.interviewType)}</div>
+                            <div className="text-xs text-gray-500 mt-1">{getModeIcon(interview.mode)}</div>
+                          </div>
                         </td>
                         <td className="py-3 px-4">
                           <select
@@ -282,7 +417,7 @@ const AdminInterviewsPage: React.FC = () => {
                             onChange={(e) =>
                               handleStatusChange(
                                 interview,
-                                e.target.value as 'scheduled' | 'done' | 'no-show'
+                                e.target.value as 'scheduled' | 'completed' | 'no-show' | 'cancelled' | 'rescheduled'
                               )
                             }
                             className={`px-3 py-1 rounded-full text-sm font-medium border-0 cursor-pointer ${getStatusBadgeColor(
@@ -290,24 +425,29 @@ const AdminInterviewsPage: React.FC = () => {
                             )}`}
                           >
                             <option value="scheduled">Scheduled</option>
-                            <option value="done">Done</option>
+                            <option value="completed">Completed</option>
                             <option value="no-show">No-Show</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="rescheduled">Rescheduled</option>
                           </select>
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex gap-2">
-                            {interview.zoomLink && (
+                            {interview.zoomLink && interview.mode === 'online' && (
                               <a
                                 href={interview.zoomLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="px-3 py-1 bg-purple-100 text-purple-700 rounded text-sm font-medium hover:bg-purple-200"
                               >
-                                Zoom
+                                Join
                               </a>
                             )}
                             <Button
-                              onClick={() => setSelectedInterview(interview)}
+                              onClick={() => {
+                                setSelectedInterview(interview)
+                                setShowDetailModal(true)
+                              }}
                               variant="outline"
                               className="text-sm px-3 py-1"
                             >
@@ -326,10 +466,13 @@ const AdminInterviewsPage: React.FC = () => {
       </div>
 
       {/* Interview Details Modal */}
-      {selectedInterview && !showStatusModal && (
+      {selectedInterview && showDetailModal && (
         <Modal
           isOpen={true}
-          onClose={() => setSelectedInterview(null)}
+          onClose={() => {
+            setSelectedInterview(null)
+            setShowDetailModal(false)
+          }}
         >
           <div className="max-w-md w-full">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Interview Details</h2>
@@ -401,7 +544,10 @@ const AdminInterviewsPage: React.FC = () => {
             </div>
 
             <Button
-              onClick={() => setSelectedInterview(null)}
+              onClick={() => {
+                setSelectedInterview(null)
+                setShowDetailModal(false)
+              }}
               variant="outline"
               className="w-full"
             >
@@ -447,6 +593,194 @@ const AdminInterviewsPage: React.FC = () => {
                 Cancel
               </Button>
             </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Schedule Interview Modal */}
+      {showScheduleModal && (
+        <Modal
+          isOpen={true}
+          onClose={() => {
+            setShowScheduleModal(false)
+            setScheduleForm({
+              candidateName: '',
+              candidateEmail: '',
+              jobTitle: '',
+              interviewerName: '',
+              scheduledDate: '',
+              scheduledTime: '',
+              interviewType: 'HR',
+              mode: 'online',
+              location: '',
+              zoomLink: '',
+              notes: ''
+            })
+          }}
+        >
+          <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Schedule New Interview</h2>
+
+            <form onSubmit={handleScheduleInterview} className="space-y-6">
+              {/* Candidate Information */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Candidate Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    label="Candidate Name"
+                    value={scheduleForm.candidateName}
+                    onChange={(e) => setScheduleForm({...scheduleForm, candidateName: e.target.value})}
+                    required
+                  />
+                  <Input
+                    label="Candidate Email"
+                    type="email"
+                    value={scheduleForm.candidateEmail}
+                    onChange={(e) => setScheduleForm({...scheduleForm, candidateEmail: e.target.value})}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Job Information */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Job Information</h3>
+                <Input
+                  label="Job Title"
+                  value={scheduleForm.jobTitle}
+                  onChange={(e) => setScheduleForm({...scheduleForm, jobTitle: e.target.value})}
+                  required
+                />
+              </div>
+
+              {/* Interview Details */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Interview Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Interviewer Name</label>
+                    <Input
+                      value={scheduleForm.interviewerName}
+                      onChange={(e) => setScheduleForm({...scheduleForm, interviewerName: e.target.value})}
+                      placeholder="Enter interviewer name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Interview Type</label>
+                    <select
+                      value={scheduleForm.interviewType}
+                      onChange={(e) => setScheduleForm({...scheduleForm, interviewType: e.target.value as 'HR' | 'Technical' | 'Final'})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="HR">HR Interview</option>
+                      <option value="Technical">Technical Interview</option>
+                      <option value="Final">Final Interview</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Mode</label>
+                    <select
+                      value={scheduleForm.mode}
+                      onChange={(e) => setScheduleForm({...scheduleForm, mode: e.target.value as 'online' | 'in-person' | 'phone'})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="online">Online</option>
+                      <option value="in-person">In-Person</option>
+                      <option value="phone">Phone</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                    <Input
+                      value={scheduleForm.location}
+                      onChange={(e) => setScheduleForm({...scheduleForm, location: e.target.value})}
+                      placeholder="Office address or meeting room"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Scheduling */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Scheduling</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    label="Date"
+                    type="date"
+                    value={scheduleForm.scheduledDate}
+                    onChange={(e) => setScheduleForm({...scheduleForm, scheduledDate: e.target.value})}
+                    required
+                  />
+                  <Input
+                    label="Time"
+                    type="time"
+                    value={scheduleForm.scheduledTime}
+                    onChange={(e) => setScheduleForm({...scheduleForm, scheduledTime: e.target.value})}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Online Meeting Details */}
+              {scheduleForm.mode === 'online' && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800">Online Meeting Details</h3>
+                  <Input
+                    label="Zoom/Meeting Link"
+                    type="url"
+                    value={scheduleForm.zoomLink}
+                    onChange={(e) => setScheduleForm({...scheduleForm, zoomLink: e.target.value})}
+                    placeholder="https://zoom.us/..."
+                  />
+                </div>
+              )}
+
+              {/* Notes */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Additional Notes</h3>
+                <Textarea
+                  value={scheduleForm.notes}
+                  onChange={(e) => setScheduleForm({...scheduleForm, notes: e.target.value})}
+                  placeholder="Any special instructions or notes for the interview..."
+                  rows={3}
+                />
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="submit"
+                  disabled={scheduling}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  {scheduling ? 'Scheduling...' : '✓ Schedule Interview'}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setShowScheduleModal(false)
+                    setScheduleForm({
+                      candidateName: '',
+                      candidateEmail: '',
+                      jobTitle: '',
+                      interviewerName: '',
+                      scheduledDate: '',
+                      scheduledTime: '',
+                      interviewType: 'HR',
+                      mode: 'online',
+                      location: '',
+                      zoomLink: '',
+                      notes: ''
+                    })
+                  }}
+                  variant="outline"
+                  className="flex-1"
+                  disabled={scheduling}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
           </div>
         </Modal>
       )}

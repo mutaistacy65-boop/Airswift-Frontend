@@ -99,6 +99,31 @@ export const adminService = {
     return response.data
   },
 
+  rescheduleInterview: async (id: string, newDate: string, newTime: string, reason?: string) => {
+    const response = await API.post(`/admin/interviews/${id}/reschedule`, {
+      scheduledAt: `${newDate}T${newTime}`,
+      reason
+    })
+    return response.data
+  },
+
+  updateInterviewStatus: async (id: string, status: string) => {
+    const response = await API.post(`/admin/interviews/${id}/status`, { status })
+    return response.data
+  },
+
+  getInterviewCalendar: async (month: number, year: number) => {
+    const response = await API.get('/admin/interviews/calendar', {
+      params: { month, year }
+    })
+    return response.data
+  },
+
+  getInterviewStats: async () => {
+    const response = await API.get('/admin/interviews/stats')
+    return response.data
+  },
+
   // AI CV Analysis
   analyzeCV: async (applicationId: string) => {
     const response = await API.post('/admin/cv-scoring/analyze', { applicationId })
@@ -279,7 +304,7 @@ export const adminService = {
     return response.data
   },
 
-  getInterviewStats: async () => {
+  getInterviewDashboardStats: async () => {
     const response = await API.get('/admin/dashboard/interview-stats')
     return response.data
   },

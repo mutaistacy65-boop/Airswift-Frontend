@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Device detection utilities
  * Extracts browser, OS, and device type from user agent

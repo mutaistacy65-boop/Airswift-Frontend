@@ -211,7 +211,7 @@ export default function EmailTemplatesPage() {
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="text-gray-500 text-xs mt-2">
-                  Available variables: {{name}}, {{date}}, {{time}}, {{job_title}}
+                  {`Available variables: {{name}}, {{date}}, {{time}}, {{job_title}}`}
                 </p>
               </div>
 
