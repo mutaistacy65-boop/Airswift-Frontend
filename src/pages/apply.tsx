@@ -1,10 +1,27 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import MainLayout from '@/layouts/MainLayout'
 import ApplicationForm from '@/components/ApplicationForm'
+import axios from 'axios'
 
 export default function ApplicationPage() {
   const router = useRouter()
+
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const res = await axios.get('/api/user/status')
+
+        if (res.data.hasApplied) {
+          router.push('/dashboard')
+        }
+      } catch (err) {
+        router.push('/login')
+      }
+    }
+
+    check()
+  }, [])
 
   const handleApplicationSuccess = () => {
     router.push('/dashboard')

@@ -112,14 +112,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Update auth context state
       setUser(currentUser)
 
-      // Redirect based on role and submission status
+      // Redirect based on role and application status
       if (currentUser.role === 'admin') {
         router.push('/admin/dashboard')
       } else {
-        // Check if user has submitted an application
-        if (!currentUser.has_submitted) {
-          router.push('/apply')
-        } else {
+        // Check user status via API
+        try {
+          const statusRes = await fetch('/api/user/status', {
+            headers: {
+              'Authorization': `Bearer ${authToken}`
+            }
+          })
+          const statusData = await statusRes.json()
+          
+          if (!statusData.hasApplied) {
+            router.push('/apply')
+          } else {
+            router.push('/dashboard')
+          }
+        } catch (error) {
+          console.error('Error checking user status:', error)
+          // Fallback to dashboard if status check fails
           router.push('/dashboard')
         }
       }

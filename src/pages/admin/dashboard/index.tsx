@@ -8,6 +8,7 @@ import MetricCard from '@/components/MetricCard';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, FunnelChart, Funnel, LabelList } from "recharts";
 import { TrendingUp, Users, Briefcase, Calendar, AlertTriangle, CheckCircle, Clock, DollarSign, Activity, Bell, Settings, Download, FileText, User } from 'lucide-react';
 import axios from 'axios'
+import AdminPayments from '@/components/AdminPayments'
 
 export default function AdminDashboard() {
   const { logout } = useAuth();
@@ -141,6 +142,11 @@ export default function AdminDashboard() {
             icon={<Clock className="w-6 h-6" />}
             trend={{ value: summary?.growth?.timeToHire || 0, isPositive: (summary?.growth?.timeToHire || 0) >= 0 }}
           />
+        </div>
+
+        {/* Payments Section */}
+        <div className="mb-8">
+          <AdminPayments />
         </div>
 
         {/* Charts Section */}

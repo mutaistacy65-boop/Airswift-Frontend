@@ -52,6 +52,16 @@ export default async function handler(
     if (status === 'completed') {
       const payment = await db.collection('payments').findOne({ _id: new ObjectId(paymentId) })
 
+      // Create notification for successful payment
+      await db.collection('notifications').insertOne({
+        user_id: payment.user_id,
+        title: 'Payment Successful',
+        message: 'Your payment has been confirmed',
+        type: 'payment',
+        is_read: false,
+        created_at: new Date(),
+      })
+
       if (payment?.applicationId) {
         // Update application status based on service type
         let applicationStatus = 'payment_completed'

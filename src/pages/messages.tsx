@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import axios from 'axios'
 import MainLayout from '@/layouts/MainLayout'
 import { useAuth } from '@/context/AuthContext'
@@ -16,18 +17,39 @@ interface Message {
 
 export default function MessagesPage() {
   const { user } = useAuth()
+  const router = useRouter()
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
 
   useEffect(() => {
-    fetchMessages()
-  }, [])
+    const checkAuth = async () => {
+      try {
+        // Check if user is authenticated
+        if (!user) {
+          router.push('/login')
+          return
+        }
+        fetchMessages()
+      } catch (error) {
+        router.push('/login')
+      }
+    }
+
+    checkAuth()
+  }, [user])
 
   const fetchMessages = async () => {
     try {
-      const response = await axios.get('/api/messages')
-      setMessages(response.data.messages || [])
+      const response = await axios.get(`/api/messages?page=${page}`)
+      const newMessages = response.data.messages || []
+      if (newMessages.length === 0) {
+        setHasMore(false)
+      } else {
+        setMessages(prev => page === 1 ? newMessages : [...prev, ...newMessages])
+      }
     } catch (error) {
       console.error('Error fetching messages:', error)
     } finally {
@@ -116,6 +138,17 @@ export default function MessagesPage() {
                       </div>
                     ))}
                   </div>
+
+                  {hasMore && (
+                    <div className="p-4 border-t">
+                      <button
+                        onClick={() => setPage(prev => prev + 1)}
+                        className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+                      >
+                        Load More Messages
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

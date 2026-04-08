@@ -99,6 +99,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await connectDB()
       const db = mongoose.connection.db
 
+      // Check for payment before allowing application
+      const payment = await db.collection('payments').findOne({
+        user_id: userId,
+        status: 'completed',
+      })
+
+      if (!payment) {
+        return res.status(403).json({
+          message: 'Payment required before applying',
+        })
+      }
+
       const existing = await db.collection('applications').findOne({ userId, jobId })
       if (existing) {
         return res.status(400).json({ message: 'Already applied for this job' })

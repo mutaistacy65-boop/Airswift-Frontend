@@ -37,10 +37,19 @@ export default function AdminAuditPage() {
   const [loading, setLoading] = useState(true)
 
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [actionFilter, setActionFilter] = useState('all')
   const [resourceFilter, setResourceFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(15)
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
 
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null)
@@ -90,7 +99,7 @@ export default function AdminAuditPage() {
     if (isAuthorized) {
       fetchLogs()
     }
-  }, [isAuthorized, currentPage, searchTerm, actionFilter, resourceFilter])
+  }, [isAuthorized, currentPage, debouncedSearchTerm, actionFilter, resourceFilter])
 
   const fetchLogs = async () => {
     try {
@@ -98,7 +107,7 @@ export default function AdminAuditPage() {
       const params = {
         page: currentPage,
         limit: pageSize,
-        search: searchTerm,
+        search: debouncedSearchTerm,
         action: actionFilter !== 'all' ? actionFilter : undefined,
         resource: resourceFilter !== 'all' ? resourceFilter : undefined,
       }
