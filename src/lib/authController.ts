@@ -1,5 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import jwt from 'jsonwebtoken'
+import { logActivity } from '@/lib/auditLogService'
+import { connectDB } from '@/lib/mongodb'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'change_me'
@@ -56,7 +58,119 @@ const proxyToBackend = async (req: NextApiRequest, res: NextApiResponse, endpoin
 }
 
 export const authLogin = async (req: NextApiRequest, res: NextApiResponse) => {
-  return proxyToBackend(req, res, 'login')
+  try {
+    await connectDB()
+    
+    const url = `${API_URL}/api/auth/login`
+    const response = await fetch(url, {
+      method: req.method,
+      headers: {
+        'Content-Type': 'application/json',
+        'user-agent': req.headers['user-agent'],
+      },
+      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined,
+    })
+
+    const data = await response.json()
+
+    // Log login activity (successful or failed)
+    try {
+      if (response.ok && data.user) {
+        // Successful login
+        await logActivity({
+          user_id: data.user._id || data.user.id,
+          action: 'LOGIN',
+          request: req,
+          details: {
+            email: data.user.email,
+            role: data.user.role,
+          },
+        })
+
+        // Emit real-time event for audit log dashboard
+        const io = (res.socket as any)?.server?.io
+        if (io) {
+          try {
+            io.emit('audit_log', {
+              action: 'LOGIN',
+              user: data.user.name || data.user.email,
+              email: data.user.email,
+              timestamp: new Date().toISOString(),
+            })
+          } catch (socketErr) {
+            console.warn('Socket emission failed:', socketErr)
+          }
+        }
+      } else {
+        // Failed login attempt
+        const email = req.body?.email || 'unknown'
+        await logActivity({
+          action: 'FAILED_LOGIN',
+          request: req,
+          details: {
+            reason: data.message || 'Invalid credentials',
+            email,
+          },
+        })
+
+        // Emit event for failed login
+        const io = (res.socket as any)?.server?.io
+        if (io) {
+          try {
+            io.emit('audit_log', {
+              action: 'FAILED_LOGIN',
+              user: email,
+              email: email,
+              timestamp: new Date().toISOString(),
+            })
+          } catch (socketErr) {
+            console.warn('Socket emission failed:', socketErr)
+          }
+        }
+      }
+    } catch (auditError) {
+      console.warn('Failed to log login activity:', auditError)
+      // Continue even if audit log fails
+    }
+
+    return res.status(response.status).json(data)
+  } catch (error: any) {
+    console.error('Login proxy error:', error)
+    
+    // Log the error as failed login
+    try {
+      const email = req.body?.email || 'unknown'
+      await connectDB()
+      await logActivity({
+        action: 'FAILED_LOGIN',
+        request: req,
+        details: {
+          reason: error.message,
+          email,
+        },
+      })
+
+      // Emit event for server error
+      const io = (res.socket as any)?.server?.io
+      if (io) {
+        try {
+          io.emit('audit_log', {
+            action: 'FAILED_LOGIN',
+            user: email,
+            email: email,
+            reason: 'Server error',
+            timestamp: new Date().toISOString(),
+          })
+        } catch (socketErr) {
+          console.warn('Socket emission failed:', socketErr)
+        }
+      }
+    } catch (auditError) {
+      console.warn('Failed to log failed login:', auditError)
+    }
+    
+    return res.status(500).json({ message: 'Internal server error' })
+  }
 }
 
 export const adminLogin = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -64,7 +178,60 @@ export const adminLogin = async (req: NextApiRequest, res: NextApiResponse) => {
 }
 
 export const authRegister = async (req: NextApiRequest, res: NextApiResponse) => {
-  return proxyToBackend(req, res, 'register')
+  try {
+    await connectDB()
+    
+    // Call proxy first to register
+    const url = `${API_URL}/api/auth/register`
+    const response = await fetch(url, {
+      method: req.method,
+      headers: {
+        'Content-Type': 'application/json',
+        'user-agent': req.headers['user-agent'],
+      },
+      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined,
+    })
+
+    const data = await response.json()
+
+    // If registration successful, log the activity
+    if (response.ok && data.user) {
+      try {
+        await logActivity({
+          user_id: data.user._id || data.user.id,
+          action: 'REGISTER',
+          request: req,
+          details: {
+            email: data.user.email,
+            name: data.user.name,
+          },
+        })
+
+        // Emit real-time event for audit log dashboard
+        const io = (res.socket as any)?.server?.io
+        if (io) {
+          try {
+            io.emit('audit_log', {
+              action: 'REGISTER',
+              user: data.user.name || data.user.email,
+              email: data.user.email,
+              timestamp: new Date().toISOString(),
+            })
+          } catch (socketErr) {
+            console.warn('Socket emission failed:', socketErr)
+          }
+        }
+      } catch (auditError) {
+        console.warn('Failed to log registration activity:', auditError)
+        // Continue even if audit log fails
+      }
+    }
+
+    return res.status(response.status).json(data)
+  } catch (error: any) {
+    console.error('Registration error:', error)
+    return res.status(500).json({ message: 'Internal server error' })
+  }
 }
 
 export const authVerify = async (req: NextApiRequest, res: NextApiResponse) => {

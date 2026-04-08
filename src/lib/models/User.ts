@@ -12,6 +12,7 @@ export interface IUser extends Document {
   resetPasswordToken?: string
   resetPasswordExpires?: Date
   refreshToken?: string
+  has_submitted: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -63,6 +64,10 @@ const userSchema = new Schema<IUser>(
     refreshToken: {
       type: String,
       default: null,
+    },
+    has_submitted: {
+      type: Boolean,
+      default: false,
     },
   },
   {

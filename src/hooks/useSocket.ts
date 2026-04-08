@@ -13,6 +13,8 @@ export type SocketEventType =
   | 'jobCreated'
   | 'jobUpdated'
   | 'messageReceived'
+  | 'audit_log'
+  | 'new_message'
   | 'connect'
   | 'disconnect'
   | 'error'

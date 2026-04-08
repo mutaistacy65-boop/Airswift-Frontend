@@ -112,11 +112,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Update auth context state
       setUser(currentUser)
 
-      // Redirect based on role
+      // Redirect based on role and submission status
       if (currentUser.role === 'admin') {
         router.push('/admin/dashboard')
       } else {
-        router.push('/dashboard')
+        // Check if user has submitted an application
+        if (!currentUser.has_submitted) {
+          router.push('/apply')
+        } else {
+          router.push('/dashboard')
+        }
       }
     } catch (error: any) {
       throw new Error(error?.message || 'Login failed')
