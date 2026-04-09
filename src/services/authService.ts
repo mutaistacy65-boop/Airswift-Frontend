@@ -1,5 +1,6 @@
 // Base API URL
 import { apiFetch, storeAuthTokens, clearAuthTokens } from '@/utils/apiFetch'
+import axios from 'axios'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -7,43 +8,37 @@ const AuthService = {
   // Registration with email verification
   register: async (name: string, email: string, password: string, role?: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
-        method: 'POST',
+      const result = await axios.post(`${API_BASE_URL}/api/auth/register`, {
+        name,
+        email,
+        password,
+        role: role || 'user'
+      }, {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password, role: role || 'user' }),
       });
 
-      const result = await res.json();
+      console.log('REGISTER RESPONSE:', result.data);
 
-      console.log('REGISTER RESPONSE:', result);
-
-      if (!res.ok) {
-        throw new Error(result.message || 'Registration failed');
-      }
-
-      return result;
-    } catch (error) {
+      return result.data;
+    } catch (error: any) {
       console.error('Registration error:', error);
-      throw error;
+      throw new Error(error.response?.data?.message || 'Registration failed');
     }
   },
 
   // Login
   login: async (email: string, password: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+      const result = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+        email,
+        password
+      }, {
+        headers: { 'Content-Type': 'application/json' }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
+      const data = result.data;
 
       // Store both tokens and user data
       if (data.accessToken && data.refreshToken) {
@@ -52,31 +47,23 @@ const AuthService = {
       localStorage.setItem('user', JSON.stringify(data.user));
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
-      throw error;
+      throw new Error(error.response?.data?.message || 'Login failed');
     }
   },
 
   // Get Profile (Protected)
   getProfile: async () => {
     try {
-      const response = await apiFetch('/api/auth/profile', {
+      const data = await apiFetch('/api/auth/profile', {
         method: 'GET',
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Token expired or invalid
-        clearAuthTokens();
-        throw new Error(data.message || 'Unauthorized');
-      }
-
       return data.user;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Profile fetch error:', error);
-      throw error;
+      throw new Error(error.response?.data?.message || 'Unauthorized');
     }
   },
 
@@ -118,16 +105,11 @@ const AuthService = {
   // Verify email with token
   verifyEmail: async (token: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/verify?token=${token}`, {
-        method: 'GET',
+      const result = await axios.get(`${API_BASE_URL}/api/auth/verify?token=${token}`, {
         headers: { 'Content-Type': 'application/json' }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Email verification failed');
-      }
+      const data = result.data;
 
       // Store both tokens from verification
       if (data.accessToken && data.refreshToken) {
@@ -138,31 +120,25 @@ const AuthService = {
       }
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Email verification error:', error);
-      throw error;
+      throw new Error(error.response?.data?.message || 'Email verification failed');
     }
   },
 
   // Resend verification email
   resendVerificationEmail: async (email: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/resend-verification`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+      const result = await axios.post(`${API_BASE_URL}/api/auth/resend-verification`, {
+        email
+      }, {
+        headers: { 'Content-Type': 'application/json' }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to resend verification email');
-      }
-
-      return data;
-    } catch (error) {
+      return result.data;
+    } catch (error: any) {
       console.error('Resend verification error:', error);
-      throw error;
+      throw new Error(error.response?.data?.message || 'Failed to resend verification email');
     }
   }
 };

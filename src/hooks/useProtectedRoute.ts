@@ -4,7 +4,8 @@ import { useAuth } from '@/context/AuthContext'
 
 export const useProtectedRoute = (requiredRole?: 'admin' | 'user') => {
   const router = useRouter()
-  const { user, isLoading, isAuthenticated } = useAuth()
+  const { user, isLoading } = useAuth()
+  const isAuthenticated = !!user
 
   useEffect(() => {
     if (!isLoading) {

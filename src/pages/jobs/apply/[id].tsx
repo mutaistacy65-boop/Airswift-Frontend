@@ -13,7 +13,8 @@ import { useNotification } from '@/context/NotificationContext'
 const JobApplicationPage: React.FC = () => {
   const router = useRouter()
   const { id } = router.query
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
+  const isAuthenticated = !!user
   const { addNotification } = useNotification()
 
   const [job, setJob] = useState<Job | null>(null)

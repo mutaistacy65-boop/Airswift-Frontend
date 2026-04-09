@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Head from 'next/head'
+import axios from 'axios'
 
 export default function ResetPassword() {
   const router = useRouter()
@@ -51,33 +52,26 @@ export default function ResetPassword() {
 
     setIsSubmitting(true)
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`, {
-        method: 'POST',
+      const result = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`, {
+        token,
+        password,
+      }, {
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token,
-          password,
-        }),
+        }
       })
 
-      const data = await response.json()
+      const data = result.data
 
-      if (response.ok) {
-        setResetStatus('success')
-        setMessage(data.message || 'Password reset successfully!')
-        setTimeout(() => {
-          router.push('/login')
-        }, 3000)
-      } else {
-        setResetStatus('error')
-        setMessage(data.message || 'Failed to reset password')
-      }
-    } catch (error) {
+      setResetStatus('success')
+      setMessage(data.message || 'Password reset successfully!')
+      setTimeout(() => {
+        router.push('/login')
+      }, 3000)
+    } catch (error: any) {
       console.error('Reset error:', error)
       setResetStatus('error')
-      setMessage('An error occurred during password reset')
+      setMessage(error.response?.data?.message || 'Failed to reset password')
     } finally {
       setIsSubmitting(false)
     }

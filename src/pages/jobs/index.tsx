@@ -11,7 +11,8 @@ import { JOB_TYPES } from '@/utils/constants'
 
 const JobsPage: React.FC = () => {
   const router = useRouter()
-  const { isAuthenticated, isLoading: authLoading, user } = useAuth()
+  const { isLoading: authLoading, user } = useAuth()
+  const isAuthenticated = !!user
   const [jobs, setJobs] = useState<Job[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [location, setLocation] = useState('')

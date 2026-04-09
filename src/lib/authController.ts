@@ -1,6 +1,7 @@
 // @ts-nocheck
 import type { NextApiRequest, NextApiResponse } from 'next'
 import jwt from 'jsonwebtoken'
+import axios from 'axios'
 import { logActivity } from '@/lib/auditLogService'
 import { connectDB } from '@/lib/mongodb'
 
@@ -53,26 +54,26 @@ export const verifyToken = (req: NextApiRequest) => {
 const proxyToBackend = async (req: NextApiRequest, res: NextApiResponse, endpoint: string) => {
   try {
     const url = `${API_URL}/api/auth/${endpoint}`
-    const response = await fetch(url, {
-      method: req.method,
+    const config = {
+      method: req.method as any,
       headers: {
         'Content-Type': 'application/json',
         // Only pass safe headers
         'authorization': req.headers.authorization,
         'user-agent': req.headers['user-agent'],
       },
-      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined,
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      return res.status(response.status).json(data)
+      ...(req.method !== 'GET' && { data: req.body }),
     }
 
-    return res.status(response.status).json(data)
+    const result = await axios(url, config)
+    const data = result.data
+
+    return res.status(result.status).json(data)
   } catch (error: any) {
     console.error(`Proxy error for ${endpoint}:`, error)
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data)
+    }
     return res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -82,20 +83,21 @@ export const authLogin = async (req: NextApiRequest, res: NextApiResponse) => {
     await connectDB()
     
     const url = `${API_URL}/api/auth/login`
-    const response = await fetch(url, {
-      method: req.method,
+    const config = {
+      method: req.method as any,
       headers: {
         'Content-Type': 'application/json',
         'user-agent': req.headers['user-agent'],
       },
-      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined,
-    })
+      ...(req.method !== 'GET' && { data: req.body }),
+    }
 
-    const data = await response.json()
+    const result = await axios(url, config)
+    const data = result.data
 
     // Log login activity (successful or failed)
     try {
-      if (response.ok && data.user) {
+      if (result.status >= 200 && result.status < 300 && data.user) {
         // Successful login
         await logActivity({
           user_id: data.user._id || data.user.id,
@@ -153,7 +155,7 @@ export const authLogin = async (req: NextApiRequest, res: NextApiResponse) => {
       // Continue even if audit log fails
     }
 
-    return res.status(response.status).json(data)
+    return res.status(result.status).json(data)
   } catch (error: any) {
     console.error('Login proxy error:', error)
     
@@ -188,7 +190,10 @@ export const authLogin = async (req: NextApiRequest, res: NextApiResponse) => {
     } catch (auditError) {
       console.warn('Failed to log failed login:', auditError)
     }
-    
+
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data)
+    }
     return res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -203,19 +208,20 @@ export const authRegister = async (req: NextApiRequest, res: NextApiResponse) =>
     
     // Call proxy first to register
     const url = `${API_URL}/api/auth/register`
-    const response = await fetch(url, {
-      method: req.method,
+    const config = {
+      method: req.method as any,
       headers: {
         'Content-Type': 'application/json',
         'user-agent': req.headers['user-agent'],
       },
-      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined,
-    })
+      ...(req.method !== 'GET' && { data: req.body }),
+    }
 
-    const data = await response.json()
+    const result = await axios(url, config)
+    const data = result.data
 
     // If registration successful, log the activity
-    if (response.ok && data.user) {
+    if (result.status >= 200 && result.status < 300 && data.user) {
       try {
         await logActivity({
           user_id: data.user._id || data.user.id,
@@ -247,9 +253,12 @@ export const authRegister = async (req: NextApiRequest, res: NextApiResponse) =>
       }
     }
 
-    return res.status(response.status).json(data)
+    return res.status(result.status).json(data)
   } catch (error: any) {
     console.error('Registration error:', error)
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data)
+    }
     return res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -293,26 +302,26 @@ export const authVerifyRegistrationOtp = async (req: NextApiRequest, res: NextAp
 const proxyToAdminBackend = async (req: NextApiRequest, res: NextApiResponse, endpoint: string) => {
   try {
     const url = `${API_URL}/api/admin/${endpoint}`
-    const response = await fetch(url, {
-      method: req.method,
+    const config = {
+      method: req.method as any,
       headers: {
         'Content-Type': 'application/json',
         // Only pass safe headers
         'authorization': req.headers.authorization,
         'user-agent': req.headers['user-agent'],
       },
-      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined,
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      return res.status(response.status).json(data)
+      ...(req.method !== 'GET' && { data: req.body }),
     }
 
-    return res.status(response.status).json(data)
+    const result = await axios(url, config)
+    const data = result.data
+
+    return res.status(result.status).json(data)
   } catch (error: any) {
     console.error(`Admin proxy error for ${endpoint}:`, error)
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data)
+    }
     return res.status(500).json({ message: 'Internal server error' })
   }
 }

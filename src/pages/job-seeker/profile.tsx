@@ -20,9 +20,9 @@ interface UserProfile {
   location: string
 }
 
-const ProfilePage: React.FC = () => {
+const ProfilePage = () => {
   const { isAuthorized, isLoading } = useProtectedRoute('user')
-  const { user, updateUser } = useAuth()
+  const { user } = useAuth()
   const { addNotification } = useNotification()
 
   const [profile, setProfile] = useState<UserProfile>({
@@ -105,20 +105,10 @@ const ProfilePage: React.FC = () => {
           education: data.profile.education || prev.education,
           experience: data.profile.experience || prev.experience,
         }))
-
-        updateUser({
-          name: data.profile.name || profile.name,
-          skills: data.profile.skills || profile.skills,
-          education: data.profile.education || profile.education,
-          experience: data.profile.experience || profile.experience,
-          location: profile.location,
-          phone: profile.phone,
-        })
       }
-
-      addNotification(data?.message || 'Profile setup complete!', 'success')
-    } catch (error: any) {
-      addNotification(error?.message || 'Failed to setup profile', 'error')
+    } catch (error) {
+      console.error('Profile setup error:', error)
+      addNotification('Failed to setup profile. Please try again.', 'error')
     } finally {
       setSaving(false)
     }

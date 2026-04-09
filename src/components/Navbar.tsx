@@ -7,7 +7,8 @@ import { motion } from 'framer-motion'
 import { AdminOnly } from './RoleGuard'
 
 const Navbar: React.FC = () => {
-  const { user, logout, isAuthenticated } = useAuth()
+  const { user, logout } = useAuth()
+  const isAuthenticated = !!user
   const [menuOpen, setMenuOpen] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>('dark')
   const router = useRouter()

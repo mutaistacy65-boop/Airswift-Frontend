@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import Button from "../components/Button";
-import { useAuth } from "../context/AuthContext";
+import { registerUser } from "../api/auth";
 
 export default function Register() {
+  const router = useRouter()
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
-  const { register, isLoading } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,11 +21,21 @@ export default function Register() {
     }
 
     try {
-      await register(form);
+      setLoading(true)
+      const result = await registerUser(form)
+
+      if (result?.redirect === '/verify-otp' || result?.email) {
+        router.push(`/verify-otp?email=${encodeURIComponent(form.email)}&type=registration`)
+        return
+      }
+
+      router.push('/login')
     } catch (err: any) {
       const errorMessage = err?.message || err?.toString?.() || "Registration failed";
       setError(errorMessage);
       console.error("Registration error:", err);
+    } finally {
+      setLoading(false)
     }
   };
 
@@ -161,12 +173,12 @@ export default function Register() {
 
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={loading}
               fullWidth
               size="lg"
               className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-semibold py-3"
             >
-              {isLoading ? 'Creating Account...' : 'Create Account'}
+              {loading ? 'Creating Account...' : 'Create Account'}
             </Button>
           </form>
 

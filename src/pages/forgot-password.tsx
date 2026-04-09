@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Head from 'next/head'
+import axios from 'axios'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -29,28 +30,23 @@ export default function ForgotPassword() {
     setMessage('')
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`, {
-        method: 'POST',
+      const result = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`, {
+        email
+      }, {
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
+        }
       })
 
-      const data = await response.json()
+      const data = result.data
 
-      if (response.ok) {
-        setResetStatus('success')
-        setMessage(data.message || 'Password reset link sent to your email!')
-        setEmail('')
-      } else {
-        setResetStatus('error')
-        setMessage(data.message || 'Failed to send password reset email')
-      }
-    } catch (error) {
+      setResetStatus('success')
+      setMessage(data.message || 'Password reset link sent to your email!')
+      setEmail('')
+    } catch (error: any) {
       console.error('Forgot password error:', error)
       setResetStatus('error')
-      setMessage('An error occurred. Please try again later.')
+      setMessage(error.response?.data?.message || 'Failed to send password reset email')
     }
   }
 

@@ -3,6 +3,7 @@ import { io, Socket } from 'socket.io-client'
 import Button from '@/components/Button'
 import Modal from '@/components/Modal'
 import Loader from '@/components/Loader'
+import axios from 'axios'
 
 interface VoiceInterviewProps {
   isOpen: boolean
@@ -180,21 +181,18 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({
       formData.append('audio', audioFile)
 
       // Transcribe audio
-      const transcriptionResponse = await fetch('/api/interview/transcribe', {
-        method: 'POST',
-        body: formData
+      const transcriptionResult = await axios.post('/api/interview/transcribe', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
       })
 
-      if (!transcriptionResponse.ok) {
-        throw new Error('Transcription failed')
-      }
-
-      const { text: transcript } = await transcriptionResponse.json()
+      const transcriptionData = transcriptionResult.data
 
       // Send transcript to interview socket
       socket.emit('voice-response', {
         sessionId: interviewState.sessionId,
-        transcript,
+        transcript: transcriptionData.transcript,
         question: interviewState.currentQuestion
       })
 

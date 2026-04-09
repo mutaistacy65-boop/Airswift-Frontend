@@ -4,17 +4,18 @@
  */
 
 import API from '@/services/apiClient'
+import axios from 'axios'
 
 export const testBackendConnection = async () => {
   try {
     console.log('🔄 Testing backend connection...')
     console.log(`📍 Backend URL: ${process.env.NEXT_PUBLIC_API_URL}`)
 
-    // Test 1: Direct fetch to backend
-    console.log('\n📡 Test 1: Direct fetch request')
-    const fetchResponse = await fetch(process.env.NEXT_PUBLIC_API_URL || '')
-    const fetchData = await fetchResponse.json()
-    console.log('✅ Direct fetch response:', fetchData)
+    // Test 1: Direct axios to backend
+    console.log('\n📡 Test 1: Direct axios request')
+    const axiosResult = await axios.get(process.env.NEXT_PUBLIC_API_URL || '')
+    const axiosData = axiosResult.data
+    console.log('✅ Direct axios response:', axiosData)
 
     // Test 2: Using axios API client
     console.log('\n📡 Test 2: Axios API client request')
@@ -34,8 +35,8 @@ export const testBackendConnection = async () => {
     return {
       success: true,
       backendUrl: process.env.NEXT_PUBLIC_API_URL,
-      fetchData,
-      axiosData: axiosResponse.data,
+      axiosData,
+      axiosClientData: axiosResponse.data,
       message: 'Backend is reachable and responding'
     }
   } catch (error) {
@@ -52,8 +53,8 @@ export const testBackendConnection = async () => {
 // Alternative simple test function
 export const simpleBackendTest = async () => {
   try {
-    const res = await fetch(process.env.NEXT_PUBLIC_API_URL || '')
-    const data = await res.json()
+    const result = await axios.get(process.env.NEXT_PUBLIC_API_URL || '')
+    const data = result.data
     console.log('Backend Status:', data)
     return data
   } catch (error) {

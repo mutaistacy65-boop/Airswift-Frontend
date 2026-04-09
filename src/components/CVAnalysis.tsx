@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react'
 import Button from './Button'
 import Loader from './Loader'
+import axios from 'axios'
 
 interface CVAnalysisResult {
   score: number
@@ -89,29 +90,23 @@ Education:
       const cvText = await extractTextFromPDF(selectedFile)
 
       // Send to CV analysis API
-      const response = await fetch('/api/cv/score', {
-        method: 'POST',
+      const result = await axios.post('/api/cv/score', {
+        cvText,
+        jobRole
+      }, {
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cvText,
-          jobRole
-        })
+        }
       })
 
-      if (!response.ok) {
-        throw new Error('Analysis failed')
-      }
-
-      const analysisResult: CVAnalysisResult = await response.json()
+      const analysisResult: CVAnalysisResult = result.data
       setResult(analysisResult)
 
       if (onAnalysisComplete) {
         onAnalysisComplete(analysisResult)
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analysis failed')
+    } catch (error: any) {
+      setError(error.response?.data?.message || error.message || 'Analysis failed')
     } finally {
       setAnalyzing(false)
     }

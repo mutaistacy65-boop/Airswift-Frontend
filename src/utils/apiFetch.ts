@@ -1,11 +1,13 @@
 /**
  * API Interceptor for handling automatic token refresh
- * Provides a fetch wrapper that handles 401 responses and token refresh
+ * Provides an axios wrapper that handles 401 responses and token refresh
  */
+
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
 
-interface FetchOptions extends RequestInit {
+interface FetchOptions extends AxiosRequestConfig {
   headers?: Record<string, string>
 }
 
@@ -23,26 +25,15 @@ async function refreshAccessToken(): Promise<string | null> {
       return null
     }
 
-    const response = await fetch(`${API_URL}/api/auth/refresh`, {
-      method: 'POST',
+    const result = await axios.post(`${API_URL}/api/auth/refresh`, {
+      refreshToken
+    }, {
       headers: {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refreshToken }),
+      }
     })
 
-    if (!response.ok) {
-      // Refresh failed, clear tokens and redirect to login
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('refreshToken')
-        localStorage.removeItem('user')
-        // Could redirect to login page here if needed
-      }
-      return null
-    }
-
-    const data = await response.json()
+    const data = result.data
 
     if (data.accessToken && data.refreshToken) {
       // Store new tokens
@@ -54,7 +45,7 @@ async function refreshAccessToken(): Promise<string | null> {
     }
 
     return null
-  } catch (error) {
+  } catch (error: any) {
     console.error('Token refresh failed:', error)
     // Clear tokens on error
     if (typeof window !== 'undefined') {
@@ -73,54 +64,43 @@ async function refreshAccessToken(): Promise<string | null> {
 export async function apiFetch(
   url: string,
   options: FetchOptions = {}
-): Promise<Response> {
+): Promise<any> {
   let accessToken =
     typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
 
-  // First attempt with current token
-  let response = await fetch(`${API_URL}${url}`, {
+  const config: AxiosRequestConfig = {
     ...options,
     headers: {
       'Content-Type': 'application/json',
       ...options.headers,
       ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
     },
-  })
-
-  // Handle 401 - token expired
-  if (response.status === 401) {
-    // Try to refresh the token
-    const newAccessToken = await refreshAccessToken()
-
-    if (newAccessToken) {
-      // Retry the request with new token
-      response = await fetch(`${API_URL}${url}`, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-          Authorization: `Bearer ${newAccessToken}`,
-        },
-      })
-    } else {
-      // Could not refresh, return the 401 response
-      return response
-    }
   }
 
-  return response
-}
-
-/**
- * Parse JSON response with error handling
- */
-export async function parseJsonResponse(response: Response) {
   try {
-    const data = await response.json()
-    return { data, status: response.status, ok: response.ok }
-  } catch (error) {
-    console.error('Failed to parse response:', error)
-    return { data: null, status: response.status, ok: response.ok }
+    // First attempt with current token
+    const result = await axios(`${API_URL}${url}`, config)
+    return result.data
+  } catch (error: any) {
+    // Handle 401 - token expired
+    if (error.response?.status === 401) {
+      // Try to refresh the token
+      const newAccessToken = await refreshAccessToken()
+
+      if (newAccessToken) {
+        // Retry the request with new token
+        config.headers = {
+          ...config.headers,
+          Authorization: `Bearer ${newAccessToken}`,
+        }
+        const retryResult = await axios(`${API_URL}${url}`, config)
+        return retryResult.data
+      } else {
+        // Could not refresh, throw the error
+        throw error
+      }
+    }
+    throw error
   }
 }
 

@@ -1,4 +1,5 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import axios from 'axios';
 
 export interface RegisterFormData {
   name: string;
@@ -13,38 +14,20 @@ export interface LoginFormData {
 
 export const registerUser = async (formData: RegisterFormData) => {
   try {
-    const res = await fetch(`${API_URL}/api/auth/register`, {
-      method: "POST",
+    const result = await axios.post(`${API_URL}/api/auth/register`, formData, {
       headers: {
         "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
+      }
     });
 
-    const result = await res.json();
+    const data = result.data;
 
-    console.log("REGISTER RESPONSE:", result);
+    console.log("REGISTER RESPONSE:", data);
 
-    if (!res.ok) {
-      // Return the error response with all details
-      // Backend might indicate if email is unverified
-      const error = new Error(result.message || "Registration failed");
-      (error as any).code = result.code;
-      (error as any).status = res.status;
-      (error as any).data = result;
-      console.log("Registration error details:", {
-        status: res.status,
-        message: result.message,
-        code: result.code,
-        fullResponse: result
-      });
-      throw error;
-    }
-
-    return result;
+    return data;
   } catch (error: any) {
     // If backend is not available, simulate successful registration
-    if (error.message?.includes('fetch') || error.message?.includes('network')) {
+    if (error.message?.includes('Network Error') || error.code === 'ECONNREFUSED') {
       console.warn('Backend not available, simulating successful registration');
 
       // Mock successful registration response
@@ -57,57 +40,31 @@ export const registerUser = async (formData: RegisterFormData) => {
         }
       };
     }
-    throw error;
+
+    // Return the error response with all details
+    // Backend might indicate if email is unverified
+    const apiError = new Error(error.response?.data?.message || "Registration failed");
+    (apiError as any).code = error.response?.data?.code;
+    (apiError as any).status = error.response?.status;
+    (apiError as any).data = error.response?.data;
+    console.log("Registration error details:", {
+      status: error.response?.status,
+      message: error.response?.data?.message,
+      code: error.response?.data?.code,
+      fullResponse: error.response?.data
+    });
+    throw apiError;
   }
 };
 
 export const loginUser = async (formData: LoginFormData) => {
   try {
-    const response = await fetch(`${API_URL}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
+    const result = await axios.post(`${API_URL}/api/auth/login`, formData, {
+      headers: { "Content-Type": "application/json" }
     });
 
-    const data = await response.json();
+    const data = result.data;
     console.log('LOGIN RESPONSE:', data);
-
-    if (!response.ok) {
-      // If backend returns auth errors, fall back to mock data for development
-      if (response.status === 400 || response.status === 401 || response.status === 403) {
-        console.warn('Backend authentication failed, using mock login data:', data.message);
-
-        // For admin login, only allow specific credentials
-        if (formData.email === 'admin@talex.com' && formData.password === 'Admin123!') {
-          return {
-            accessToken: 'mock-admin-jwt-token-' + Date.now(),
-            token: 'mock-admin-jwt-token-' + Date.now(),
-            user: {
-              id: 'mock-admin-id',
-              email: 'admin@talex.com',
-              name: 'Admin User',
-              role: 'admin',
-              isVerified: true
-            }
-          };
-        }
-
-        // For regular users, simulate verified account
-        return {
-          accessToken: 'mock-jwt-token-' + Date.now(),
-          token: 'mock-jwt-token-' + Date.now(),
-          user: {
-            id: 'mock-user-id',
-            email: formData.email,
-            name: 'Mock User',
-            role: 'user',
-            isVerified: true
-          }
-        };
-      }
-
-      throw new Error(data.message || data.error || 'Login failed');
-    }
 
     // Check if user is verified before allowing login
     if (!data.user?.isVerified) {
@@ -122,8 +79,41 @@ export const loginUser = async (formData: LoginFormData) => {
 
     return data;
   } catch (error: any) {
+    // If backend returns auth errors, fall back to mock data for development
+    if (error.response?.status === 400 || error.response?.status === 401 || error.response?.status === 403) {
+      console.warn('Backend authentication failed, using mock login data:', error.response?.data?.message);
+
+      // For admin login, only allow specific credentials
+      if (formData.email === 'admin@talex.com' && formData.password === 'Admin123!') {
+        return {
+          accessToken: 'mock-admin-jwt-token-' + Date.now(),
+          token: 'mock-admin-jwt-token-' + Date.now(),
+          user: {
+            id: 'mock-admin-id',
+            email: 'admin@talex.com',
+            name: 'Admin User',
+            role: 'admin',
+            isVerified: true
+          }
+        };
+      }
+
+      // For regular users, simulate verified account
+      return {
+        accessToken: 'mock-jwt-token-' + Date.now(),
+        token: 'mock-jwt-token-' + Date.now(),
+        user: {
+          id: 'mock-user-id',
+          email: formData.email,
+          name: 'Mock User',
+          role: 'user',
+          isVerified: true
+        }
+      };
+    }
+
     // If network error, also fall back to mock data
-    if (error.message?.includes('fetch') || error.message?.includes('network')) {
+    if (error.message?.includes('Network Error') || error.code === 'ECONNREFUSED') {
       console.warn('Backend not available, using mock login data:', error.message);
 
       // For admin login, allow various admin credentials
@@ -157,46 +147,44 @@ export const loginUser = async (formData: LoginFormData) => {
         }
       };
     }
-    throw error;
+
+    throw new Error(error.response?.data?.message || error.response?.data?.error || 'Login failed');
   }
 };
 
 export const verifyOTP = async (email: string, otp: string) => {
   try {
-    const response = await fetch(`${API_URL}/api/auth/verify-otp`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, otp }),
+    const result = await axios.post(`${API_URL}/api/auth/verify-otp`, {
+      email,
+      otp
+    }, {
+      headers: { "Content-Type": "application/json" }
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      // If backend returns auth errors, fall back to mock data for development
-      if (response.status === 400 || response.status === 401 || response.status === 403) {
-        console.warn('Backend OTP verification failed, using mock data:', data.message);
-
-        // Mock successful OTP verification response
-        return {
-          message: 'OTP verified successfully',
-          accessToken: 'mock-jwt-token-' + Date.now(),
-          token: 'mock-jwt-token-' + Date.now(),
-          user: {
-            id: 'mock-user-id',
-            email: email,
-            name: 'Mock User',
-            role: email.includes('admin') ? 'admin' : 'user'
-          }
-        };
-      }
-
-      throw new Error(data.message || 'OTP verification failed');
-    }
+    const data = result.data;
 
     return data;
   } catch (error: any) {
+    // If backend returns auth errors, fall back to mock data for development
+    if (error.response?.status === 400 || error.response?.status === 401 || error.response?.status === 403) {
+      console.warn('Backend OTP verification failed, using mock data:', error.response?.data?.message);
+
+      // Mock successful OTP verification response
+      return {
+        message: 'OTP verified successfully',
+        accessToken: 'mock-jwt-token-' + Date.now(),
+        token: 'mock-jwt-token-' + Date.now(),
+        user: {
+          id: 'mock-user-id',
+          email: email,
+          name: 'Mock User',
+          role: email.includes('admin') ? 'admin' : 'user'
+        }
+      };
+    }
+
     // If network error, also fall back to mock data
-    if (error.message?.includes('fetch') || error.message?.includes('network')) {
+    if (error.message?.includes('Network Error') || error.code === 'ECONNREFUSED') {
       console.warn('Backend not available, simulating successful OTP verification');
 
       // Mock successful OTP verification response
@@ -212,65 +200,47 @@ export const verifyOTP = async (email: string, otp: string) => {
         }
       };
     }
-    throw error;
+
+    throw new Error(error.response?.data?.message || 'OTP verification failed');
   }
 };
 
 export const forgotPassword = async (email: string) => {
   try {
-    const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+    const result = await axios.post(`${API_URL}/api/auth/forgot-password`, {
+      email
+    }, {
+      headers: { "Content-Type": "application/json" }
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Forgot password failed');
-    }
-
-    return data;
-  } catch (error) {
-    throw error;
+    return result.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Forgot password failed');
   }
 };
 
 export const resetPassword = async (token: string, password: string) => {
   try {
-    const response = await fetch(`${API_URL}/api/auth/reset-password/${token}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
+    const result = await axios.post(`${API_URL}/api/auth/reset-password/${token}`, {
+      password
+    }, {
+      headers: { "Content-Type": "application/json" }
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Reset password failed');
-    }
-
-    return data;
-  } catch (error) {
-    throw error;
+    return result.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Reset password failed');
   }
 };
 
 export const refreshToken = async () => {
   try {
-    const response = await fetch(`${API_URL}/api/auth/refresh`, {
-      method: 'POST',
-      credentials: 'include',
+    const result = await axios.post(`${API_URL}/api/auth/refresh`, {}, {
+      withCredentials: true,
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Token refresh failed');
-    }
-
-    return data;
-  } catch (error) {
-    throw error;
+    return result.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Token refresh failed');
   }
 };

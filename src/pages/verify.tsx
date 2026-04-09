@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Head from 'next/head'
+import axios from 'axios'
 
 export default function VerifyEmail() {
   const router = useRouter()
@@ -18,30 +19,25 @@ export default function VerifyEmail() {
 
     const verifyEmail = async () => {
       try {
-        const response = await fetch(`/api/auth/verify?token=${token}`)
-        const data = await response.json()
+        const result = await axios.get(`/api/auth/verify?token=${token}`)
+        const data = result.data
 
-        if (response.ok) {
-          // Auto-login: Store both tokens and user data
-          localStorage.setItem('accessToken', data.accessToken)
-          localStorage.setItem('refreshToken', data.refreshToken)
-          localStorage.setItem('user', JSON.stringify(data.user))
+        // Auto-login: Store both tokens and user data
+        localStorage.setItem('accessToken', data.accessToken)
+        localStorage.setItem('refreshToken', data.refreshToken)
+        localStorage.setItem('user', JSON.stringify(data.user))
 
-          setVerificationStatus('success')
-          setMessage(data.message || 'Email verified successfully!')
-          
-          // Redirect to dashboard after 2 seconds
-          setTimeout(() => {
-            router.push('/dashboard')
-          }, 2000)
-        } else {
-          setVerificationStatus('error')
-          setMessage(data.message || 'Failed to verify email')
-        }
-      } catch (error) {
+        setVerificationStatus('success')
+        setMessage(data.message || 'Email verified successfully!')
+        
+        // Redirect to dashboard after 2 seconds
+        setTimeout(() => {
+          router.push('/dashboard')
+        }, 2000)
+      } catch (error: any) {
         console.error('Verification error:', error)
         setVerificationStatus('error')
-        setMessage('An error occurred during verification')
+        setMessage(error.response?.data?.message || 'Failed to verify email')
       }
     }
 
@@ -56,23 +52,19 @@ export default function VerifyEmail() {
 
     setIsResending(true)
     try {
-      const response = await fetch('/api/auth/resend-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+      const result = await axios.post('/api/auth/resend-verification', {
+        email
+      }, {
+        headers: { 'Content-Type': 'application/json' }
       })
 
-      const data = await response.json()
+      const data = result.data
 
-      if (response.ok) {
-        alert(data.message || 'Verification email sent! Check your inbox.')
-        setEmail('')
-      } else {
-        alert(data.message || 'Failed to resend verification email')
-      }
-    } catch (error) {
+      alert(data.message || 'Verification email sent! Check your inbox.')
+      setEmail('')
+    } catch (error: any) {
       console.error('Resend error:', error)
-      alert('An error occurred. Please try again.')
+      alert(error.response?.data?.message || 'Failed to resend verification email')
     } finally {
       setIsResending(false)
     }

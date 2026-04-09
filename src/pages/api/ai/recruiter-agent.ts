@@ -4,6 +4,7 @@ import { ObjectId } from 'mongodb';
 import { openai } from '../../../lib/openai';
 import { connectDB } from '@/lib/mongodb';
 import mongoose from 'mongoose';
+import axios from 'axios';
 
 const safeParseJSON = (text: string) => {
   try {
@@ -90,18 +91,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (newStatus === 'rejected' && app.email) {
             try {
               // Send rejection email
-              await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/emails/send`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  templateId: 'application_rejected',
-                  recipientEmail: app.email,
-                  variables: {
-                    applicantName: app.fullName || 'Candidate',
-                    jobTitle: app.jobId?.title || 'Position',
-                    companyName: 'Talex'
-                  }
-                })
+              await axios.post(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/emails/send`, {
+                templateId: 'application_rejected',
+                recipientEmail: app.email,
+                variables: {
+                  applicantName: app.fullName || 'Candidate',
+                  jobTitle: app.jobId?.title || 'Position',
+                  companyName: 'Talex'
+                }
               });
             } catch (emailError) {
               console.error('Error sending rejection email:', emailError);
@@ -109,18 +106,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           } else if (newStatus === 'reviewed' && app.email) {
             try {
               // Send shortlist email
-              await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/emails/send`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  templateId: 'application_reviewed',
-                  recipientEmail: app.email,
-                  variables: {
-                    applicantName: app.fullName || 'Candidate',
-                    jobTitle: app.jobId?.title || 'Position',
-                    companyName: 'Talex'
-                  }
-                })
+              await axios.post(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/emails/send`, {
+                templateId: 'application_reviewed',
+                recipientEmail: app.email,
+                variables: {
+                  applicantName: app.fullName || 'Candidate',
+                  jobTitle: app.jobId?.title || 'Position',
+                  companyName: 'Talex'
+                }
               });
             } catch (emailError) {
               console.error('Error sending shortlist email:', emailError);

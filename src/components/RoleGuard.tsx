@@ -12,7 +12,8 @@ interface RoleGuardProps {
  * Only renders children if user has one of the specified roles
  */
 export const RoleGuard: React.FC<RoleGuardProps> = ({ children, roles, fallback = null }) => {
-  const { user, isAuthenticated } = useAuth()
+  const { user } = useAuth()
+  const isAuthenticated = !!user
 
   if (!isAuthenticated || !user) {
     return <>{fallback}</>
