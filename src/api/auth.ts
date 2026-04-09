@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { api } from '@/utils/api';
 
 export interface RegisterFormData {
@@ -13,7 +14,9 @@ export interface LoginFormData {
 
 export const registerUser = async (formData: RegisterFormData) => {
   try {
-    const result = await api.post('/auth/register', formData);
+    const result = await axios.post('/api/auth/register', formData, {
+      withCredentials: true,
+    });
 
     const data = result.data;
 
@@ -54,7 +57,9 @@ export const registerUser = async (formData: RegisterFormData) => {
 
 export const loginUser = async (formData: LoginFormData) => {
   try {
-    const result = await api.post('/auth/login', formData);
+    const result = await axios.post('/api/auth/login', formData, {
+      withCredentials: true,
+    });
 
     const data = result.data;
     console.log('LOGIN RESPONSE:', data);
