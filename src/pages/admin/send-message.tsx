@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic"
-
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useRouter } from 'next/router'
@@ -540,4 +538,43 @@ export default function SendMessagePage() {
       </div>
     </DashboardLayout>
   )
+}
+
+export async function getServerSideProps(context: any) {
+  const { req } = context;
+  const token = req.cookies.token || req.cookies.accessToken;
+
+  if (!token) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    };
+  }
+
+  // Optional: Verify token on server side
+  try {
+    // You can add JWT verification here if needed
+    // const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // if (decoded.role !== 'admin') {
+    //   return {
+    //     redirect: {
+    //       destination: '/',
+    //       permanent: false,
+    //     },
+    //   };
+    // }
+  } catch (error) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {},
+  };
 }

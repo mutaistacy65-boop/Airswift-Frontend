@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -370,4 +368,22 @@ export default function AdminDashboard() {
       </div>
     </DashboardLayout>
   );
+}
+
+export async function getServerSideProps(context: any) {
+  const { req } = context;
+  const token = req.cookies.token || req.cookies.accessToken;
+
+  if (!token) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {},
+  };
 }

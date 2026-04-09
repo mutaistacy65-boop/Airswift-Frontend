@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic"
-
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '@/context/AuthContext'
@@ -27,4 +25,22 @@ export default function AdminIndex() {
       </div>
     </div>
   )
+}
+
+export async function getServerSideProps(context: any) {
+  const { req } = context;
+  const token = req.cookies.token || req.cookies.accessToken;
+
+  if (!token) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {},
+  };
 }
