@@ -75,11 +75,6 @@ const Home: React.FC = () => {
                       Find Your Job <ArrowRight className="h-5 w-5" />
                     </Button>
                   </Link>
-                  <Link href="/jobs">
-                    <Button variant="outline" size="lg" className="w-full sm:w-auto border-white text-white hover:bg-white/10">
-                      Browse Opportunities
-                    </Button>
-                  </Link>
                 </div>
 
                 <div className="grid grid-cols-3 gap-6 pt-8 border-t border-white/15">
