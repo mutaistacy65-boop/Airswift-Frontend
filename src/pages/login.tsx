@@ -48,11 +48,19 @@ export default function Login() {
     try {
       setIsLoading(true)
       const response = await loginUser(form)
-      const { token, accessToken, user } = response
+      console.log('LOGIN RESPONSE:', response)
+
+      if (response?.redirect === '/verify-otp') {
+        const email = response.email || form.email
+        router.push(`/verify-otp?email=${encodeURIComponent(email)}&type=login`)
+        return
+      }
+
+      const { token, accessToken, user, message } = response as any
       const jwt = token || accessToken
 
       if (!jwt || !user) {
-        throw new Error('Login failed')
+        throw new Error(message || 'Login failed')
       }
 
       localStorage.setItem('token', jwt)

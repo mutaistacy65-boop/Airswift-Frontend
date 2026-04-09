@@ -1,5 +1,12 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com/api';
 import axios from 'axios';
+
+export const api = axios.create({
+  baseURL: API_URL,
+  withCredentials: true,
+});
+
+export default api;
 
 export const apiFetch = async (url, options = {}) => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
