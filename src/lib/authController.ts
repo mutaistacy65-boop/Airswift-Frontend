@@ -4,6 +4,25 @@ import jwt from 'jsonwebtoken'
 import { logActivity } from '@/lib/auditLogService'
 import { connectDB } from '@/lib/mongodb'
 
+/**
+ * 🍪 CRITICAL BACKEND REQUIREMENT 🍪
+ * 
+ * The backend MUST set cookies with these exact settings:
+ * 
+ * res.cookie('accessToken', token, {
+ *   httpOnly: true,        // ✅ Prevents XSS attacks
+ *   secure: true,          // ✅ REQUIRED on HTTPS (Vercel/Render/Production)
+ *   sameSite: "none",      // ✅ REQUIRED for cross-origin requests
+ * });
+ * 
+ * If these settings are missing:
+ * - Cookies won't be sent with requests (sameSite issue)
+ * - Cookies might be accessible to XSS (missing httpOnly)
+ * - Insecure transmission (missing secure)
+ * 
+ * See COOKIE_CONFIGURATION.md for full details
+ */
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'change_me'
 

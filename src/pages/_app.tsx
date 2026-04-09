@@ -6,7 +6,23 @@ import { NotificationProvider } from '@/context/NotificationContext'
 // @ts-ignore
 import '@/styles/globals.css'
 
-// ✅ CRITICAL: Enable credentials for all axios requests (cookies, headers, etc)
+/**
+ * 🍪 CRITICAL GLOBAL CONFIGURATION 🍪
+ * 
+ * This enables ALL axios requests to send cookies automatically.
+ * 
+ * BACKEND REQUIREMENT (MANDATORY):
+ * Backend must set cookies with:
+ * 
+ * res.cookie('accessToken', token, {
+ *   httpOnly: true,        ✅ no JS access (XSS protection)
+ *   secure: true,          ✅ HTTPS only (production)
+ *   sameSite: "none",      ✅ cross-origin (CRITICAL)
+ * });
+ * 
+ * Without sameSite: "none" on backend, cookies will NOT be sent
+ * with cross-origin requests even with withCredentials: true
+ */
 axios.defaults.withCredentials = true;
 
 export default function App({ Component, pageProps }: AppProps) {

@@ -5,6 +5,25 @@ import Button from '../components/Button'
 import API from '@/lib/api'
 import ContinueDraftModal from '@/components/ContinueDraftModal'
 
+/**
+ * 🍪 IMPORTANT: Backend Cookie Requirements
+ * 
+ * After successful login, the backend MUST set an httpOnly cookie:
+ * 
+ * res.cookie('accessToken', token, {
+ *   httpOnly: true,
+ *   secure: true,      // on HTTPS
+ *   sameSite: "none",  // for cross-origin
+ * });
+ * 
+ * The frontend will:
+ * 1. Store token in localStorage (Client-side)
+ * 2. Browser automatically sends httpOnly cookie (Server-side)
+ * 3. API calls include both for maximum security
+ * 
+ * See COOKIE_CONFIGURATION.md
+ */
+
 export default function Login() {
   const router = useRouter()
   const [form, setForm] = useState({ email: '', password: '' })
