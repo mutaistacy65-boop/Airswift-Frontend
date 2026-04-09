@@ -197,46 +197,6 @@ export const authLogin = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 }
 
-    
-    // Log the error as failed login
-    try {
-      const email = req.body?.email || 'unknown'
-      await connectDB()
-      await logActivity({
-        action: 'FAILED_LOGIN',
-        request: req,
-        details: {
-          reason: error.message,
-          email,
-        },
-      })
-
-      // Emit event for server error
-      const io = (res.socket as any)?.server?.io
-      if (io) {
-        try {
-          io.emit('audit_log', {
-            action: 'FAILED_LOGIN',
-            user: email,
-            email: email,
-            reason: 'Server error',
-            timestamp: new Date().toISOString(),
-          })
-        } catch (socketErr) {
-          console.warn('Socket emission failed:', socketErr)
-        }
-      }
-    } catch (auditError) {
-      console.warn('Failed to log failed login:', auditError)
-    }
-
-    if (error.response) {
-      return res.status(error.response.status).json(error.response.data)
-    }
-    return res.status(500).json({ message: 'Internal server error' })
-  }
-}
-
 export const adminLogin = async (req: NextApiRequest, res: NextApiResponse) => {
   return proxyToBackend(req, res, 'admin/login')
 }
