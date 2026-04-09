@@ -38,8 +38,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (storedUser && storedToken) {
           const parsed = JSON.parse(storedUser)
-          // Validate that it has required fields
-          if (parsed && typeof parsed === 'object' && (parsed.id || parsed._id)) {
+          // Basic validation - just check if it's a valid object
+          if (parsed && typeof parsed === 'object') {
             return parsed
           } else {
             // Invalid user data, clean up
@@ -62,41 +62,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [])
 
   useEffect(() => {
-    const fetchUser = async () => {
-      // If user is already initialized from localStorage, don't fetch
-      if (user) {
-        setIsLoading(false)
-        return
-      }
-
-      // Check if we have a token
-      const token = typeof window !== 'undefined' ? 
-        localStorage.getItem('accessToken') || localStorage.getItem('token') : null
-
-      if (!token) {
-        setIsLoading(false)
-        return
-      }
-
-      try {
-        const res = await API.get('/api/auth/me')
-
-        if (res.data.user) {
-          setUser(res.data.user)
-        } else {
-          setUser(null)
-        }
-      } catch (err: any) {
-        setUser(null)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
+    // Don't fetch user data on mount - rely on localStorage initialization
+    // The user data is stored in localStorage during login
     if (mounted) {
-      fetchUser()
+      setIsLoading(false)
     }
-  }, [mounted]) // Removed user from dependencies
+  }, [mounted])
 
   const login = (data: any) => {
     setUser(data.user)

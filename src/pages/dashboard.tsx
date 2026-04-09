@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '@/context/AuthContext'
-import AuthService from '@/services/authService'
 import Loader from '@/components/Loader'
 
 export default function Dashboard() {
@@ -9,13 +8,6 @@ export default function Dashboard() {
   const router = useRouter()
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (!AuthService.isAuthenticated()) {
-        router.push('/login')
-        return
-      }
-    }
-
     if (!isLoading) {
       if (!user) {
         router.push('/login')
