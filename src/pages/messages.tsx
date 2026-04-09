@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import axios from 'axios'
+import { api } from '@/utils/api'
 import MainLayout from '@/layouts/MainLayout'
 import { useAuth } from '@/context/AuthContext'
 
@@ -43,7 +43,7 @@ export default function MessagesPage() {
 
   const fetchMessages = async () => {
     try {
-      const response = await axios.get(`/api/messages?page=${page}`)
+      const response = await api.get(`/messages?page=${page}`)
       const newMessages = response.data.messages || []
       if (newMessages.length === 0) {
         setHasMore(false)
@@ -59,7 +59,7 @@ export default function MessagesPage() {
 
   const markAsRead = async (messageId: string) => {
     try {
-      await axios.put(`/api/messages/${messageId}`, { is_read: true })
+      await api.put(`/messages/${messageId}`, { is_read: true })
       setMessages(messages.map(m => (m._id === messageId ? { ...m, is_read: true } : m)))
       if (selectedMessage?._id === messageId) {
         setSelectedMessage({ ...selectedMessage, is_read: true })

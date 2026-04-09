@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import { api } from '@/utils/api'
 
 export default function AdminPayments() {
   const [payments, setPayments] = useState<any[]>([])
@@ -12,7 +12,7 @@ export default function AdminPayments() {
 
   const fetchPayments = async () => {
     try {
-      const res = await axios.get('/api/admin/payments', {
+      const res = await api.get('/admin/payments', {
         params: { status: statusFilter || undefined },
       })
       setPayments(res.data.payments)
@@ -25,7 +25,7 @@ export default function AdminPayments() {
 
   const reconcile = async (id: string, status: string) => {
     try {
-      await axios.put(`/api/admin/payments/${id}/reconcile`, { status })
+      await api.put(`/admin/payments/${id}/reconcile`, { status })
       fetchPayments()
     } catch (err) {
       console.error(err)

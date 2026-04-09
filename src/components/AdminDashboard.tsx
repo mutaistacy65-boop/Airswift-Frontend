@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import { api } from '@/utils/api'
 
 export default function AdminDashboard() {
   const [applications, setApplications] = useState<any[]>([])
@@ -15,7 +15,7 @@ export default function AdminDashboard() {
   const fetchApplications = async () => {
     if (applications.length > 0) return // simple cache
     try {
-      const res = await axios.get('/api/admin/applications')
+      const res = await api.get('/admin/applications')
       setApplications(res.data.applications || [])
     } catch (err) {
       console.error(err)
@@ -26,7 +26,7 @@ export default function AdminDashboard() {
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      await axios.put(`/api/admin/applications/${id}`, { status })
+      await api.put(`/admin/applications/${id}`, { status })
       fetchApplications()
     } catch (err) {
       console.error(err)
@@ -40,7 +40,7 @@ export default function AdminDashboard() {
 
   const sendInterview = async () => {
     try {
-      await axios.post('/api/admin/messages/send', {
+      await api.post('/admin/messages/send', {
         user_id: selectedUser,
         subject: form.subject,
         message: form.message,

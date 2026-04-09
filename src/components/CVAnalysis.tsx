@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react'
 import Button from './Button'
 import Loader from './Loader'
-import axios from 'axios'
+import { api } from '@/utils/api'
 
 interface CVAnalysisResult {
   score: number
@@ -90,13 +90,9 @@ Education:
       const cvText = await extractTextFromPDF(selectedFile)
 
       // Send to CV analysis API
-      const result = await axios.post('/api/cv/score', {
+      const result = await api.post('/cv/score', {
         cvText,
         jobRole
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
       })
 
       const analysisResult: CVAnalysisResult = result.data

@@ -7,7 +7,7 @@ import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import MetricCard from '@/components/MetricCard';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, FunnelChart, Funnel, LabelList } from "recharts";
 import { TrendingUp, Users, Briefcase, Calendar, AlertTriangle, CheckCircle, Clock, DollarSign, Activity, Bell, Settings, Download, FileText, User } from 'lucide-react';
-import axios from 'axios'
+import { api } from '@/utils/api'
 import AdminPayments from '@/components/AdminPayments'
 
 export default function AdminDashboard() {
@@ -26,10 +26,10 @@ export default function AdminDashboard() {
     const fetchDashboardData = async () => {
       try {
         const [summaryRes, funnelRes, activitiesRes, healthRes] = await Promise.all([
-          axios.get('/api/admin/dashboard/summary'),
-          axios.get('/api/admin/dashboard/funnel'),
-          axios.get('/api/admin/dashboard/activities'),
-          axios.get('/api/admin/system/health')
+          api.get('/admin/dashboard/summary'),
+          api.get('/admin/dashboard/funnel'),
+          api.get('/admin/dashboard/activities'),
+          api.get('/admin/system/health')
         ])
 
         setSummary(summaryRes.data)
@@ -52,7 +52,7 @@ export default function AdminDashboard() {
 
   const fetchTrends = async (range: string) => {
     try {
-      const response = await axios.get(`/api/admin/dashboard/trends?range=${range}`)
+      const response = await api.get(`/admin/dashboard/trends?range=${range}`)
       setTrends(response.data)
     } catch (error) {
       console.error('Error fetching trends:', error)

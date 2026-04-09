@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import { api } from '@/utils/api'
 import { useRouter } from 'next/router'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
@@ -85,9 +85,7 @@ export default function AuditLogsPage() {
         ...(filters.suspicious && { suspicious: 'true' }),
       })
 
-      const response = await axios.get(`/api/audit-logs?${params}`, {
-        withCredentials: true
-      })
+      const response = await api.get(`/audit-logs?${params}`)
       
       if (response.data.success) {
         setLogs(response.data.logs)
@@ -124,8 +122,8 @@ export default function AuditLogsPage() {
 
   const handleExport = async (format: 'json' | 'csv') => {
     try {
-      const response = await axios.post(
-        '/api/audit-logs',
+      const response = await api.post(
+        '/audit-logs',
         {
           action: filters.action !== 'ALL' ? filters.action : undefined,
           startDate: filters.startDate,

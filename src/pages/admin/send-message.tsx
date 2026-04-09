@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import { api } from '@/utils/api'
 import { useRouter } from 'next/router'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
@@ -78,7 +78,7 @@ export default function SendMessagePage() {
   const fetchApplications = async () => {
     try {
       setLoading(true)
-      const response = await axios.get('/api/applications')
+      const response = await api.get('/applications')
       // Get only shortlisted applications
       const shortlisted = response.data.applications?.filter(
         (app: any) => app.status === 'shortlisted'
@@ -199,7 +199,7 @@ export default function SendMessagePage() {
         data.append('attachment', formData.attachment)
       }
 
-      const response = await axios.post('/api/messages', data, {
+      const response = await api.post('/messages', data, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
 
@@ -207,7 +207,7 @@ export default function SendMessagePage() {
         // Update application status to shortlisted (if not already)
         if (selectedApp && selectedApp.status !== 'shortlisted') {
           try {
-            await axios.put(`/api/applications/${selectedApp._id}`, { status: 'shortlisted' })
+            await api.put(`/applications/${selectedApp._id}`, { status: 'shortlisted' })
           } catch (err) {
             console.warn('Could not update application status:', err)
           }

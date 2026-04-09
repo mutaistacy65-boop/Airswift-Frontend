@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import { api } from '@/utils/api'
 import Link from 'next/link'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
@@ -40,7 +40,7 @@ export default function AdminApplicationsPage() {
 
   const fetchApplications = async () => {
     try {
-      const response = await axios.get('/api/applications')
+      const response = await api.get('/applications')
       setApplications(response.data.applications || [])
     } catch (error) {
       console.error('Error fetching applications:', error)
@@ -52,7 +52,7 @@ export default function AdminApplicationsPage() {
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
-      await axios.put(`/api/applications/${id}`, { status: newStatus })
+      await api.put(`/applications/${id}`, { status: newStatus })
       setApplications(
         applications.map(app =>
           app._id === id ? { ...app, status: newStatus as any } : app

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import { api } from '@/utils/api'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
 
@@ -43,9 +43,7 @@ export default function EmailTemplatesPage() {
 
   const fetchTemplates = async () => {
     try {
-      const response = await axios.get('/api/email-templates', {
-        withCredentials: true
-      })
+      const response = await api.get('/email-templates')
       setTemplates(response.data.templates || [])
     } catch (error) {
       console.error('Error fetching templates:', error)
@@ -69,9 +67,7 @@ export default function EmailTemplatesPage() {
     if (!confirm('Are you sure you want to delete this template?')) return
 
     try {
-      await axios.delete(`/api/email-templates/${id}`, {
-        withCredentials: true
-      })
+      await api.delete(`/email-templates/${id}`)
       setTemplates(templates.filter(t => t._id !== id))
       alert('Template deleted successfully!')
     } catch (error: any) {
@@ -104,18 +100,14 @@ export default function EmailTemplatesPage() {
 
       if (selectedTemplate) {
         // Update
-        const response = await axios.put(`/api/email-templates/${selectedTemplate._id}`, data, {
-          withCredentials: true
-        })
+        const response = await api.put(`/email-templates/${selectedTemplate._id}`, data)
         setTemplates(
           templates.map(t => (t._id === selectedTemplate._id ? response.data.template : t))
         )
         alert('Template updated successfully!')
       } else {
         // Create
-        const response = await axios.post('/api/email-templates', data, {
-          withCredentials: true
-        })
+        const response = await api.post('/email-templates', data)
         setTemplates([...templates, response.data.template])
         alert('Template created successfully!')
       }
