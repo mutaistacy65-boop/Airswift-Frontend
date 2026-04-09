@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export interface RegisterFormData {
   name: string;
@@ -126,19 +126,22 @@ export const loginUser = async (formData: LoginFormData) => {
     if (error.message?.includes('fetch') || error.message?.includes('network')) {
       console.warn('Backend not available, using mock login data:', error.message);
 
-      // For admin login, only allow specific credentials
-      if (formData.email === 'admin@talex.com' && formData.password === 'Admin123!') {
-        return {
-          accessToken: 'mock-admin-jwt-token-' + Date.now(),
-          token: 'mock-admin-jwt-token-' + Date.now(),
-          user: {
-            id: 'mock-admin-id',
-            email: 'admin@talex.com',
-            name: 'Admin User',
-            role: 'admin',
-            isVerified: true
-          }
-        };
+      // For admin login, allow various admin credentials
+      if (formData.email.toLowerCase().includes('admin') || formData.email === 'admin@talex.com') {
+        // Accept common admin passwords or the specific one
+        if (formData.password === 'Admin123!' || formData.password === 'admin123' || formData.password === 'Admin123!' || formData.password === 'admin') {
+          return {
+            accessToken: 'mock-admin-jwt-token-' + Date.now(),
+            token: 'mock-admin-jwt-token-' + Date.now(),
+            user: {
+              id: 'mock-admin-id',
+              email: formData.email,
+              name: 'Admin User',
+              role: 'admin',
+              isVerified: true
+            }
+          };
+        }
       }
 
       // For regular users, simulate verified account
