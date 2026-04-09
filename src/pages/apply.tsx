@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import MainLayout from '@/layouts/MainLayout'
 import ApplicationForm from '@/components/ApplicationForm'
-import API from '@/lib/api'
+import { api } from '@/utils/api'
 import { useAuth } from '@/context/AuthContext'
 
 export default function ApplicationPage() {
@@ -14,7 +14,7 @@ export default function ApplicationPage() {
 
     const check = async () => {
       try {
-        const res = await API.get('/api/user/status')
+        const res = await api.get('/user/status')
 
         if (res.data.hasApplied) {
           router.push('/dashboard')

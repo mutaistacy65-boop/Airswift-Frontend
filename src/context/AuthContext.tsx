@@ -1,7 +1,6 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import API from '@/lib/api'
 import { useRouter } from 'next/router'
 
 interface User {

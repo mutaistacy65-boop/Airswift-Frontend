@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Button from '../components/Button'
 import { loginUser } from '@/api/auth'
+import { api } from '@/utils/api'
 import ContinueDraftModal from '@/components/ContinueDraftModal'
 import { useAuth } from '@/context/AuthContext'
 
@@ -64,7 +65,7 @@ export default function Login() {
       // Update AuthContext immediately
       login({ user })
 
-      const draftRes = await API.get('/api/drafts/check')
+      const draftRes = await api.get('/drafts/check')
       if (draftRes.data.hasDraft && !user.has_submitted) {
         setDraftInfo(draftRes.data)
         setShowModal(true)
@@ -227,7 +228,7 @@ export default function Login() {
           router.push('/apply')
         }}
         onStartFresh={async () => {
-          await API.delete('/api/drafts')
+          await api.delete('/drafts')
           localStorage.removeItem('draft')
           setShowModal(false)
           router.push('/apply')

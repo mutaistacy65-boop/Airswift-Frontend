@@ -62,17 +62,17 @@ export interface JobApplication {
 
 export const jobService = {
   getAllJobs: async (page = 1, limit = 10) => {
-    const response = await API.get('/api/jobs', { params: { page, limit } })
+    const response = await API.get('/jobs', { params: { page, limit } })
     return response.data
   },
 
   getJobById: async (id: string) => {
-    const response = await API.get(`/api/jobs/${id}`)
+    const response = await API.get(`/jobs/${id}`)
     return response.data
   },
 
   searchJobs: async (keyword: string, filters?: any) => {
-    const response = await API.get('/api/jobs/search', { params: { keyword, ...filters } })
+    const response = await API.get('/jobs/search', { params: { keyword, ...filters } })
     return response.data
   },
 
@@ -115,7 +115,7 @@ export const jobService = {
   },
 
   getJobs: async () => {
-    const response = await API.get('/api/jobs')
+    const response = await API.get('/jobs')
     return response.data
   },
 
