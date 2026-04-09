@@ -24,7 +24,7 @@ import { connectDB } from '@/lib/mongodb'
  * See COOKIE_CONFIGURATION.md for full details
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com'
 const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'change_me'
 
 export const verifyToken = (req: NextApiRequest) => {
@@ -80,8 +80,7 @@ const proxyToBackend = async (req: NextApiRequest, res: NextApiResponse, endpoin
 
 export const authLogin = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
-    await connectDB()
-    
+    // Skip connectDB for login - just proxy to backend
     const url = `${API_URL}/api/auth/login`
     const config = {
       method: req.method as any,
@@ -157,7 +156,47 @@ export const authLogin = async (req: NextApiRequest, res: NextApiResponse) => {
 
     return res.status(result.status).json(data)
   } catch (error: any) {
-    console.error('Login proxy error:', error)
+    console.error('Login proxy error:', error?.message || error)
+    console.error('Full error:', error)
+    
+    // Log the error as failed login
+    try {
+      const email = req.body?.email || 'unknown'
+      await logActivity({
+        action: 'FAILED_LOGIN',
+        request: req,
+        details: {
+          reason: error.message || 'Server error',
+          email,
+        },
+      })
+
+      // Emit event for server error
+      const io = (res.socket as any)?.server?.io
+      if (io) {
+        try {
+          io.emit('audit_log', {
+            action: 'FAILED_LOGIN',
+            user: email,
+            email: email,
+            reason: 'Server error',
+            timestamp: new Date().toISOString(),
+          })
+        } catch (socketErr) {
+          console.warn('Socket emission failed:', socketErr)
+        }
+      }
+    } catch (auditError) {
+      console.warn('Failed to log failed login:', auditError)
+    }
+
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data)
+    }
+    return res.status(500).json({ message: 'Internal server error: ' + (error.message || error) })
+  }
+}
+
     
     // Log the error as failed login
     try {
