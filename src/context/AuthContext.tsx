@@ -68,7 +68,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
               },
-              credentials: 'include'
+              credentials: 'include',
+              method: 'GET'
             })
 
             if (response.ok) {
