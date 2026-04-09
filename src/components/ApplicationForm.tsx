@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import API from '@/lib/api'
 import { useRouter } from 'next/router'
 import DocumentUpload from './DocumentUpload'
 import ContinueDraftModal from './ContinueDraftModal'
@@ -31,7 +31,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
   useEffect(() => {
     const checkDraft = async () => {
       try {
-        const response = await axios.get('/api/drafts/check')
+        const response = await API.get('/api/drafts/check')
         setDraftInfo(response.data)
         if (response.data.hasDraft) {
           setShowDraftModal(true)
@@ -46,7 +46,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     const loadDraft = async () => {
       try {
         // Try backend first
-        const response = await axios.get('/api/drafts')
+        const response = await API.get('/api/drafts')
         if (response.data.draft?.form_data) {
           setFormData(prev => ({
             ...prev,
@@ -96,7 +96,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
       // Save to backend
       try {
-        await axios.post('/api/drafts/save', { formData: dataToSave })
+        await API.post('/api/drafts/save', { formData: dataToSave })
       } catch (error) {
         console.log('Backend save failed, localStorage saved')
       }
@@ -113,7 +113,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
   const fetchJobs = async () => {
     try {
-      const response = await axios.get('/api/jobs')
+      const response = await API.get('/api/jobs')
       setJobs(response.data.jobs || [])
     } catch (error) {
       console.error('Error fetching jobs:', error)
@@ -124,7 +124,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     setShowDraftModal(false)
     // Load the draft
     try {
-      const response = await axios.get('/api/drafts')
+      const response = await API.get('/api/drafts')
       if (response.data.draft?.form_data) {
         setFormData(prev => ({
           ...prev,
@@ -157,7 +157,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     // Clear any existing drafts
     localStorage.removeItem(STORAGE_KEY)
     try {
-      axios.delete('/api/drafts')
+      API.delete('/api/drafts')
     } catch (error) {
       console.log('Error clearing backend draft')
     }
@@ -222,7 +222,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       if (formData.passport) data.append('passport', formData.passport)
       if (formData.cv) data.append('cv', formData.cv)
 
-      const response = await axios.post('/api/applications', data, {
+const response = await API.post('/api/applications', data, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
 
@@ -231,7 +231,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
         // Clear drafts after successful submission
         localStorage.removeItem(STORAGE_KEY)
         try {
-          await axios.delete('/api/drafts')
+          await API.delete('/api/drafts')
         } catch (error) {
           console.log('Backend draft cleanup failed')
         }

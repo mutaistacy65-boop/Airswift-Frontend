@@ -1,13 +1,17 @@
 import React, { useState } from 'react'
+import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Button from '../components/Button'
-import Input from '../components/Input'
-import { useAuth } from '../context/AuthContext'
+import API from '@/lib/api'
+import ContinueDraftModal from '@/components/ContinueDraftModal'
 
 export default function Login() {
+  const router = useRouter()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
-  const { login, isLoading } = useAuth()
+  const [isLoading, setIsLoading] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const [draftInfo, setDraftInfo] = useState<any>(null)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,11 +24,42 @@ export default function Login() {
     }
 
     try {
-      await login(form.email, form.password)
+      setIsLoading(true)
+      const response = await API.post('/api/auth/login', form)
+      const { token, accessToken, user } = response.data
+      const jwt = token || accessToken
+
+      if (!jwt || !user) {
+        throw new Error('Login failed')
+      }
+
+      localStorage.setItem('token', jwt)
+      localStorage.setItem('accessToken', jwt)
+      localStorage.setItem('user', JSON.stringify(user))
+      if (user.role) {
+        localStorage.setItem('role', user.role)
+      }
+
+      const draftRes = await API.get('/api/drafts/check')
+      if (draftRes.data.hasDraft && !user.has_submitted) {
+        setDraftInfo(draftRes.data)
+        setShowModal(true)
+        return
+      }
+
+      if (user.role === 'admin') {
+        router.push('/admin/dashboard')
+      } else if (!user.has_submitted) {
+        router.push('/apply')
+      } else {
+        router.push('/dashboard')
+      }
     } catch (err: any) {
       const errorMessage = err?.message || err?.toString?.() || 'Login failed'
       setError(errorMessage)
       console.error('Login error:', err)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -160,6 +195,21 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      <ContinueDraftModal
+        open={showModal}
+        onContinue={() => {
+          setShowModal(false)
+          router.push('/apply')
+        }}
+        onStartFresh={async () => {
+          await API.delete('/api/drafts')
+          localStorage.removeItem('draft')
+          setShowModal(false)
+          router.push('/apply')
+        }}
+        lastSaved={draftInfo?.updated_at}
+      />
     </div>
   )
 }
