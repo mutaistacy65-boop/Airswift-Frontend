@@ -8,7 +8,7 @@ import { DEFAULT_EMAIL_TEMPLATES } from '@/data/emailTemplates'
 
 const getAuthUser = async (req: NextApiRequest) => {
   try {
-    const token = req.cookies.token || req.headers.authorization?.replace('Bearer ', '')
+    const token = req.cookies.accessToken || req.headers.authorization?.replace('Bearer ', '')
     if (!token) return null
 
     const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'secret')

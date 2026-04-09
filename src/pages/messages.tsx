@@ -16,7 +16,7 @@ interface Message {
 }
 
 export default function MessagesPage() {
-  const { user } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
   const router = useRouter()
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
@@ -25,21 +25,21 @@ export default function MessagesPage() {
   const [hasMore, setHasMore] = useState(true)
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Check if user is authenticated
-        if (!user) {
-          router.push('/login')
-          return
-        }
-        fetchMessages()
-      } catch (error) {
-        router.push('/login')
-      }
+    if (authLoading) return
+
+    if (!user) {
+      router.push('/login')
+      return
     }
 
-    checkAuth()
-  }, [user])
+    fetchMessages()
+  }, [user, authLoading, router])
+
+  if (authLoading) return null
+  if (!user) {
+    router.push('/login')
+    return null
+  }
 
   const fetchMessages = async () => {
     try {

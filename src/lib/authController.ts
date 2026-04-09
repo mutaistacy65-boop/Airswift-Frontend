@@ -28,7 +28,7 @@ const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRE
 
 export const verifyToken = (req: NextApiRequest) => {
   return new Promise((resolve, reject) => {
-    const token = req.cookies.token || req.headers.authorization?.replace('Bearer ', '')
+    const token = req.cookies.accessToken || req.headers.authorization?.replace('Bearer ', '')
 
     if (!token) {
       reject(new Error('No token provided'))

@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     // Get token from Authorization header or cookies
-    const token = req.cookies.token || req.headers.authorization?.replace('Bearer ', '')
+    const token = req.cookies.accessToken || req.headers.authorization?.replace('Bearer ', '')
 
     if (!token) {
       return res.status(401).json({ message: 'No token provided' })

@@ -3,11 +3,15 @@ import { useRouter } from 'next/router'
 import MainLayout from '@/layouts/MainLayout'
 import ApplicationForm from '@/components/ApplicationForm'
 import API from '@/lib/api'
+import { useAuth } from '@/context/AuthContext'
 
 export default function ApplicationPage() {
   const router = useRouter()
+  const { user, isLoading: authLoading } = useAuth()
 
   useEffect(() => {
+    if (authLoading || !user) return
+
     const check = async () => {
       try {
         const res = await API.get('/api/user/status')
@@ -21,7 +25,13 @@ export default function ApplicationPage() {
     }
 
     check()
-  }, [])
+  }, [authLoading, user, router])
+
+  if (authLoading) return null
+  if (!user) {
+    router.push('/login')
+    return null
+  }
 
   const handleApplicationSuccess = () => {
     router.push('/dashboard')

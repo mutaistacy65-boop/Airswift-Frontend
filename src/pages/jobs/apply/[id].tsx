@@ -13,7 +13,7 @@ import { useNotification } from '@/context/NotificationContext'
 const JobApplicationPage: React.FC = () => {
   const router = useRouter()
   const { id } = router.query
-  const { user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth()
   const { addNotification } = useNotification()
 
   const [job, setJob] = useState<Job | null>(null)
@@ -41,12 +41,23 @@ const JobApplicationPage: React.FC = () => {
   ].map(category => ({ value: category.toLowerCase(), label: category }))
 
   useEffect(() => {
-    if (id && isAuthenticated) {
-      fetchJob()
-    } else if (!isAuthenticated) {
+    if (authLoading) return
+
+    if (!isAuthenticated) {
       router.push('/login')
+      return
     }
-  }, [id, isAuthenticated])
+
+    if (id) {
+      fetchJob()
+    }
+  }, [id, isAuthenticated, authLoading, router])
+
+  if (authLoading) return null
+  if (!isAuthenticated) {
+    router.push('/login')
+    return null
+  }
 
   const fetchJob = async () => {
     try {

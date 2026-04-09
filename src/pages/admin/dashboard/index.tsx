@@ -372,7 +372,7 @@ export default function AdminDashboard() {
 
 export async function getServerSideProps(context: any) {
   const { req } = context;
-  const token = req.cookies.token || req.cookies.accessToken;
+  const token = req.cookies.accessToken;
 
   if (!token) {
     return {
