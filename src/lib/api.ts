@@ -7,9 +7,13 @@ const API = axios.create({
 API.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
-    if (token) {
-      config.headers = config.headers || {}
-      config.headers.Authorization = `Bearer ${token}`
+    if (token && config.headers) {
+      const headers = config.headers as any;
+      if (typeof headers.set === 'function') {
+        headers.set('Authorization', `Bearer ${token}`);
+      } else {
+        headers.Authorization = `Bearer ${token}`;
+      }
     }
   }
 
