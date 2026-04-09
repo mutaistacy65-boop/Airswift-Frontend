@@ -43,9 +43,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkAuthStatus = async () => {
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
+        const storedUser = localStorage.getItem('user')
 
-        if (token) {
+        if (token && storedUser) {
           try {
+            // If this is a mock token (starts with 'mock-'), skip /me endpoint
+            // and just use the stored user data
+            if (token.startsWith('mock-')) {
+              try {
+                const user = JSON.parse(storedUser)
+                setUser(user)
+                setIsLoading(false)
+                return
+              } catch (parseError) {
+                console.error('Failed to parse stored user data:', parseError)
+              }
+            }
+
             // ✅ FIXED: Properly handle /me endpoint
             // If backend returns null user → frontend clears auth state
             // If backend returns user → frontend updates state
@@ -82,7 +96,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } catch (error) {
             console.error('Auth check failed:', error)
             // On network error, keep existing user state but mark as potentially stale
-            const storedUser = localStorage.getItem('user')
             if (storedUser) {
               try {
                 setUser(JSON.parse(storedUser))
