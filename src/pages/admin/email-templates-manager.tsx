@@ -4,6 +4,10 @@ import axios from 'axios'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
 
+// Force server-side rendering for admin pages
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface EmailTemplate {
   _id: string
   name: string
@@ -28,12 +32,15 @@ export default function EmailTemplatesPage() {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
+    if (!user || user?.role !== 'admin') return
     fetchTemplates()
-  }, [])
+  }, [user])
 
   const fetchTemplates = async () => {
     try {
-      const response = await axios.get('/api/email-templates')
+      const response = await axios.get('/api/email-templates', {
+        withCredentials: true
+      })
       setTemplates(response.data.templates || [])
     } catch (error) {
       console.error('Error fetching templates:', error)
@@ -57,7 +64,9 @@ export default function EmailTemplatesPage() {
     if (!confirm('Are you sure you want to delete this template?')) return
 
     try {
-      await axios.delete(`/api/email-templates/${id}`)
+      await axios.delete(`/api/email-templates/${id}`, {
+        withCredentials: true
+      })
       setTemplates(templates.filter(t => t._id !== id))
       alert('Template deleted successfully!')
     } catch (error: any) {
@@ -90,14 +99,18 @@ export default function EmailTemplatesPage() {
 
       if (selectedTemplate) {
         // Update
-        const response = await axios.put(`/api/email-templates/${selectedTemplate._id}`, data)
+        const response = await axios.put(`/api/email-templates/${selectedTemplate._id}`, data, {
+          withCredentials: true
+        })
         setTemplates(
           templates.map(t => (t._id === selectedTemplate._id ? response.data.template : t))
         )
         alert('Template updated successfully!')
       } else {
         // Create
-        const response = await axios.post('/api/email-templates', data)
+        const response = await axios.post('/api/email-templates', data, {
+          withCredentials: true
+        })
         setTemplates([...templates, response.data.template])
         alert('Template created successfully!')
       }

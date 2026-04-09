@@ -6,6 +6,10 @@ import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
 import { useSocket } from '@/hooks/useSocket'
 
+// Force server-side rendering for admin pages
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface AuditLog {
   _id: string
   action: 'REGISTER' | 'LOGIN' | 'LOGOUT' | 'FAILED_LOGIN' | 'ACTION'
@@ -49,7 +53,7 @@ export default function AuditLogsPage() {
   })
 
   useEffect(() => {
-    if (user?.role !== 'admin') return
+    if (!user || user?.role !== 'admin') return
     
     fetchAuditLogs()
     
@@ -76,7 +80,9 @@ export default function AuditLogsPage() {
         ...(filters.suspicious && { suspicious: 'true' }),
       })
 
-      const response = await axios.get(`/api/audit-logs?${params}`)
+      const response = await axios.get(`/api/audit-logs?${params}`, {
+        withCredentials: true
+      })
       
       if (response.data.success) {
         setLogs(response.data.logs)
