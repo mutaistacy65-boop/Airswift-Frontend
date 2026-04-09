@@ -6,11 +6,13 @@ export default function AdminIndex() {
   const router = useRouter()
   const { user, isLoading } = useAuth()
 
+  // FIXED: Only redirect when user state is definitively known
+  // Prevents redirect loops by checking user existence and role properly
   useEffect(() => {
     if (!isLoading) {
       if (!user) {
         router.push('/login')
-      } else if (user.role === 'admin' && user.email === 'admin@talex.com') {
+      } else if (user.role === 'admin') {
         router.push('/admin/dashboard')
       } else {
         router.push('/unauthorized')

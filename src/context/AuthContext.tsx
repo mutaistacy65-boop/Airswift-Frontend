@@ -28,6 +28,7 @@ interface AuthContextType {
   register: (userData: any) => Promise<void>
   logout: () => void
   updateUser: (userData: Partial<User>) => void
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -39,33 +40,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Load user from token on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('accessToken')
-      const storedUser = localStorage.getItem('user')
-      const role = localStorage.getItem('role')
+    const checkAuthStatus = async () => {
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
 
-      // Only restore user if both token AND user data exist
-      if (token && storedUser) {
-        try {
-          const parsedUser = JSON.parse(storedUser)
-          setUser(parsedUser)
-        } catch (e) {
-          // Invalid stored user, clear everything
+        if (token) {
+          try {
+            // ✅ FIXED: Properly handle /me endpoint
+            // If backend returns null user → frontend clears auth state
+            // If backend returns user → frontend updates state
+            const response = await fetch('/api/auth/me', {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              credentials: 'include'
+            })
+
+            if (response.ok) {
+              const data = await response.json()
+              if (data.user) {
+                setUser(data.user)
+                localStorage.setItem('user', JSON.stringify(data.user))
+                localStorage.setItem('role', data.user.role)
+              } else {
+                // Backend returned null user, clear local state
+                localStorage.removeItem('accessToken')
+                localStorage.removeItem('token')
+                localStorage.removeItem('user')
+                localStorage.removeItem('role')
+                setUser(null)
+              }
+            } else {
+              // Token invalid or expired, clear local state
+              localStorage.removeItem('accessToken')
+              localStorage.removeItem('token')
+              localStorage.removeItem('user')
+              localStorage.removeItem('role')
+              setUser(null)
+            }
+          } catch (error) {
+            console.error('Auth check failed:', error)
+            // On network error, keep existing user state but mark as potentially stale
+            const storedUser = localStorage.getItem('user')
+            if (storedUser) {
+              try {
+                setUser(JSON.parse(storedUser))
+              } catch {
+                localStorage.removeItem('user')
+                setUser(null)
+              }
+            }
+          }
+        } else {
+          // No token, ensure clean state
           localStorage.removeItem('accessToken')
+          localStorage.removeItem('token')
           localStorage.removeItem('user')
           localStorage.removeItem('role')
           setUser(null)
         }
-      } else {
-        // No valid token+user combo, ensure clean state
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('user')
-        localStorage.removeItem('role')
-        setUser(null)
       }
+
+      setIsLoading(false)
     }
 
-    setIsLoading(false)
+    checkAuthStatus()
   }, [])
 
   const login = async (email: string, password: string) => {
@@ -258,8 +298,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(prev => prev ? { ...prev, ...userData } : null)
   }
 
+  const refreshUser = async () => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
+
+      if (token) {
+        try {
+          const response = await fetch('/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+          })
+
+          if (response.ok) {
+            const data = await response.json()
+            if (data.user) {
+              setUser(data.user)
+              localStorage.setItem('user', JSON.stringify(data.user))
+              localStorage.setItem('role', data.user.role)
+            } else {
+              // Backend returned null, user is logged out
+              logout()
+            }
+          } else {
+            // Token invalid, logout user
+            logout()
+          }
+        } catch (error) {
+          console.error('Failed to refresh user:', error)
+          // Don't logout on network errors, just log
+        }
+      }
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, register, logout, updateUser, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

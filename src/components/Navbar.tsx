@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/router'
 import { Menu, X, Plane, LogOut, LayoutDashboard, Moon, Sun } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { AdminOnly } from './RoleGuard'
 
 const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth()
@@ -60,6 +61,16 @@ const Navbar: React.FC = () => {
                 <LayoutDashboard size={18} />
                 Dashboard
               </Link>
+              {/* Admin-only navigation */}
+              <AdminOnly>
+                <Link
+                  href="/admin"
+                  className="text-orange-600 hover:text-orange-700 transition font-medium flex items-center gap-2"
+                >
+                  <span className="text-sm">⚙️</span>
+                  Admin Panel
+                </Link>
+              </AdminOnly>
             </>
           ) : (
             <>
@@ -156,6 +167,18 @@ const Navbar: React.FC = () => {
                   <LayoutDashboard size={18} />
                   Dashboard
                 </Link>
+
+                {/* Admin-only mobile navigation */}
+                <AdminOnly>
+                  <Link
+                    href="/admin"
+                    className="block px-3 py-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg transition flex items-center gap-2"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <span className="text-sm">⚙️</span>
+                    Admin Panel
+                  </Link>
+                </AdminOnly>
 
                 <button
                   onClick={handleLogout}

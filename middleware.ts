@@ -6,6 +6,9 @@ export function middleware(req: NextRequest) {
 
   const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
 
+  // UI PROTECTION ONLY - redirects users away from /admin routes
+  // This is NOT security - users can still call backend APIs directly
+  // Always implement backend API protection too
   if (isAdminRoute && !token) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
