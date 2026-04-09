@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Button from '../components/Button'
-import API from '@/lib/api'
+import { loginUser } from '@/api/auth'
 import ContinueDraftModal from '@/components/ContinueDraftModal'
 import { useAuth } from '@/context/AuthContext'
 
@@ -46,8 +46,8 @@ export default function Login() {
 
     try {
       setIsLoading(true)
-      const response = await API.post('/api/auth/login', form)
-      const { token, accessToken, user } = response.data
+      const response = await loginUser(form)
+      const { token, accessToken, user } = response
       const jwt = token || accessToken
 
       if (!jwt || !user) {
