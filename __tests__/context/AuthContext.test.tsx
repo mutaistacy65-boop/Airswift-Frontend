@@ -19,174 +19,68 @@ describe('AuthContext Integration Tests', () => {
     jest.clearAllMocks();
     mockPush.mockClear();
     localStorage.clear();
-    (global.fetch as jest.Mock).mockClear();
   });
 
-  test('initial state is not authenticated', () => {
+  test('initial state has no user and is loading', async () => {
     const wrapper = ({ children }: any) => <AuthProvider>{children}</AuthProvider>;
     const { result } = renderHook(() => useAuth(), { wrapper });
 
-    expect(result.current.isAuthenticated).toBe(false);
+    // Wait for initial loading to complete
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
     expect(result.current.user).toBeNull();
   });
 
-  test('login stores token and user data', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        token: 'mock_jwt_token',
-        user: {
-          id: '123',
-          email: 'testuser@example.com',
-          name: 'Test User',
-          role: 'user',
-        },
-      }),
-    });
-
-    const wrapper = ({ children }: any) => <AuthProvider>{children}</AuthProvider>;
-    const { result } = renderHook(() => useAuth(), { wrapper });
-
-    await act(async () => {
-      await result.current.login('testuser@example.com', 'password');
-    });
-
-    await waitFor(() => {
-      expect(result.current.isAuthenticated).toBe(true);
-    });
-
-    expect(result.current.user?.email).toBe('testuser@example.com');
-    expect(localStorage.setItem).toHaveBeenCalledWith('token', 'mock_jwt_token');
-  });
-
-  test('login redirects to dashboard', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        token: 'mock_jwt_token',
-        user: {
-          id: '123',
-          email: 'testuser@example.com',
-          name: 'Test User',
-          role: 'user',
-        },
-      }),
-    });
-
-    const wrapper = ({ children }: any) => <AuthProvider>{children}</AuthProvider>;
-    const { result } = renderHook(() => useAuth(), { wrapper });
-
-    await act(async () => {
-      await result.current.login('testuser@example.com', 'password');
-    });
-
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/job-seeker/dashboard');
-    });
-  });
-
-  test('login redirects admin to admin dashboard', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        token: 'mock_jwt_token',
-        user: {
-          id: '123',
-          email: 'admin@example.com',
-          name: 'Admin User',
-          role: 'admin',
-        },
-      }),
-    });
-
-    const wrapper = ({ children }: any) => <AuthProvider>{children}</AuthProvider>;
-    const { result } = renderHook(() => useAuth(), { wrapper });
-
-    await act(async () => {
-      await result.current.login('admin@example.com', 'password');
-    });
-
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/admin/dashboard');
-    });
-  });
-
-  test('logout clears user data', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        token: 'mock_jwt_token',
-        user: {
-          id: '123',
-          email: 'testuser@example.com',
-          name: 'Test User',
-          role: 'user',
-        },
-      }),
-    });
-
-    const wrapper = ({ children }: any) => <AuthProvider>{children}</AuthProvider>;
-    const { result } = renderHook(() => useAuth(), { wrapper });
-
-    // Login
-    await act(async () => {
-      await result.current.login('testuser@example.com', 'password');
-    });
-
-    expect(result.current.isAuthenticated).toBe(true);
-
-    // Logout
-    act(() => {
-      result.current.logout();
-    });
-
-    expect(result.current.isAuthenticated).toBe(false);
-    expect(result.current.user).toBeNull();
-    expect(localStorage.removeItem).toHaveBeenCalledWith('token');
-  });
-
-  test('register calls registerUser API', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        message: 'OTP sent',
-      }),
-    });
-
+  test('login sets user data', () => {
     const wrapper = ({ children }: any) => <AuthProvider>{children}</AuthProvider>;
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     const userData = {
-      name: 'Test User',
-      email: 'testuser@example.com',
-      password: 'TestPassword123!',
+      user: {
+        id: '123',
+        email: 'testuser@example.com',
+        name: 'Test User',
+        role: 'user',
+      }
     };
 
-    await act(async () => {
-      await result.current.register(userData);
+    act(() => {
+      result.current.login(userData);
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/auth/register'),
-      expect.any(Object)
-    );
+    expect(result.current.user?.email).toBe('testuser@example.com');
+    expect(result.current.user?.role).toBe('user');
   });
 
-  test('login handles error response', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({
-        message: 'Invalid credentials',
-      }),
-    });
-
+  test('logout clears user data and redirects', () => {
     const wrapper = ({ children }: any) => <AuthProvider>{children}</AuthProvider>;
     const { result } = renderHook(() => useAuth(), { wrapper });
 
-    await expect(
-      act(async () => {
-        await result.current.login('testuser@example.com', 'wrongpassword');
-      })
-    ).rejects.toThrow('Invalid credentials');
+    // First login
+    const userData = {
+      user: {
+        id: '123',
+        email: 'testuser@example.com',
+        name: 'Test User',
+        role: 'user',
+      }
+    };
+
+    act(() => {
+      result.current.login(userData);
+    });
+
+    expect(result.current.user).not.toBeNull();
+
+    // Then logout
+    act(() => {
+      result.current.logout();
+    });
+
+    expect(result.current.user).toBeNull();
+    expect(mockPush).toHaveBeenCalledWith('/login');
   });
+
 });

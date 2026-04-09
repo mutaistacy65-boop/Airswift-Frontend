@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Button from '../components/Button'
 import API from '@/lib/api'
 import ContinueDraftModal from '@/components/ContinueDraftModal'
+import { useAuth } from '@/context/AuthContext'
 
 /**
  * 🍪 IMPORTANT: Backend Cookie Requirements
@@ -26,6 +27,7 @@ import ContinueDraftModal from '@/components/ContinueDraftModal'
 
 export default function Login() {
   const router = useRouter()
+  const { login } = useAuth()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -58,6 +60,9 @@ export default function Login() {
       if (user.role) {
         localStorage.setItem('role', user.role)
       }
+
+      // Update AuthContext immediately
+      login({ user })
 
       const draftRes = await API.get('/api/drafts/check')
       if (draftRes.data.hasDraft && !user.has_submitted) {
