@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
+import { api } from '@/utils/api'
 import Button from '../components/Button'
 import { loginUser } from '@/api/auth'
-import { api } from '@/utils/api'
 import ContinueDraftModal from '@/components/ContinueDraftModal'
 import { useAuth } from '@/context/AuthContext'
 
@@ -73,11 +73,17 @@ export default function Login() {
       // Update AuthContext immediately
       login({ user })
 
-      const draftRes = await api.get('/drafts/check')
-      if (draftRes.data.hasDraft && !user.has_submitted) {
-        setDraftInfo(draftRes.data)
-        setShowModal(true)
-        return
+      // Check for drafts
+      try {
+        const draftRes = await api.get('/drafts/check')
+        if (draftRes.data.hasDraft && !user.has_submitted) {
+          setDraftInfo(draftRes.data)
+          setShowModal(true)
+          return
+        }
+      } catch (draftError) {
+        // Drafts endpoint not available or error, continue with login
+        console.log('Draft check skipped:', (draftError as any).message)
       }
 
       if (user.role === 'admin') {
@@ -236,7 +242,11 @@ export default function Login() {
           router.push('/apply')
         }}
         onStartFresh={async () => {
-          await api.delete('/drafts')
+          try {
+            await api.delete('/drafts')
+          } catch (error) {
+            console.log('Draft deletion skipped:', error)
+          }
           localStorage.removeItem('draft')
           setShowModal(false)
           router.push('/apply')
