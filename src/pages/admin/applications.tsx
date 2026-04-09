@@ -16,6 +16,10 @@ import { useSocket } from '@/hooks/useSocket'
 import { formatDate } from '@/utils/helpers'
 import { Eye, Mail, Send, FileText, BarChart3, Trash2 } from 'lucide-react'
 
+// Force server-side rendering for admin pages
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface Application {
   _id: string
   id?: string

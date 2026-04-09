@@ -13,6 +13,10 @@ import { adminService } from '@/services/adminService'
 import { formatDate } from '@/utils/helpers'
 import { Edit2, Trash2, Plus, Search, Eye, Lock, Unlock, Shield } from 'lucide-react'
 
+// Force server-side rendering for admin pages
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface User {
   _id: string
   id?: string

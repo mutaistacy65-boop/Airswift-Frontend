@@ -16,6 +16,10 @@ import { jobService } from '@/services/jobService'
 import { formatDate } from '@/utils/helpers'
 import { Edit2, Trash2, Plus, Search, Eye } from 'lucide-react'
 
+// Force server-side rendering for admin pages
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface Job {
   _id: string
   title: string
