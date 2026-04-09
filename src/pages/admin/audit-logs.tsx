@@ -39,6 +39,7 @@ export default function AuditLogsPage() {
   const [logs, setLogs] = useState<AuditLog[]>([])
   const [loading, setLoading] = useState(true)
   const [pagination, setPagination] = useState<PaginationInfo | null>(null)
+  const [mounted, setMounted] = useState(false)
 
   // Filters
   const [filters, setFilters] = useState({
@@ -53,7 +54,11 @@ export default function AuditLogsPage() {
   })
 
   useEffect(() => {
-    if (!user || user?.role !== 'admin') return
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted || !user || user?.role !== 'admin') return
     
     fetchAuditLogs()
     
@@ -63,7 +68,7 @@ export default function AuditLogsPage() {
       // Refresh logs when new activity occurs
       fetchAuditLogs()
     })
-  }, [user])
+  }, [user, mounted])
 
   const fetchAuditLogs = async () => {
     try {
@@ -182,6 +187,8 @@ export default function AuditLogsPage() {
         return '🖥️'
     }
   }
+
+  if (!mounted) return null
 
   if (user?.role !== 'admin') {
     return (

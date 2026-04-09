@@ -30,11 +30,16 @@ export default function EmailTemplatesPage() {
     variables: '',
   })
   const [submitting, setSubmitting] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    if (!user || user?.role !== 'admin') return
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted || !user || user?.role !== 'admin') return
     fetchTemplates()
-  }, [user])
+  }, [user, mounted])
 
   const fetchTemplates = async () => {
     try {
@@ -133,6 +138,8 @@ export default function EmailTemplatesPage() {
       variables: '',
     })
   }
+
+  if (!mounted) return null
 
   if (user?.role !== 'admin') {
     return (
