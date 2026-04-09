@@ -4,13 +4,13 @@ import { useAuth } from '@/context/AuthContext'
 
 export default function AdminIndex() {
   const router = useRouter()
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, isAuthenticated } = useAuth()
 
   // FIXED: Only redirect when user state is definitively known
   // Prevents redirect loops by checking user existence and role properly
   useEffect(() => {
     if (!isLoading) {
-      if (!user) {
+      if (!isAuthenticated) {
         router.push('/login')
       } else if (user.role === 'admin') {
         router.push('/admin/dashboard')
@@ -18,7 +18,7 @@ export default function AdminIndex() {
         router.push('/unauthorized')
       }
     }
-  }, [user, isLoading, router])
+  }, [isAuthenticated, user, isLoading, router])
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">

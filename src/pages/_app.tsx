@@ -30,11 +30,18 @@ export default function App({ Component, pageProps }: AppProps) {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
 
-    if (token) {
+    if (token && !localStorage.getItem("accessToken")) {
       localStorage.setItem("accessToken", token);
 
-      // remove token from URL
-      window.history.replaceState({}, document.title, "/dashboard");
+      // Only redirect to dashboard if we're not already on a specific page
+      const currentPath = window.location.pathname;
+      if (currentPath === "/" || currentPath === "/login" || currentPath === "/register") {
+        window.history.replaceState({}, document.title, "/dashboard");
+      } else {
+        // Remove token from URL without redirecting
+        const newUrl = window.location.pathname + window.location.search.replace(/[?&]token=[^&]*/, '');
+        window.history.replaceState({}, document.title, newUrl);
+      }
     }
   }, [])
 

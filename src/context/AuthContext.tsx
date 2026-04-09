@@ -22,6 +22,7 @@ interface User {
 interface AuthContextType {
   user: User | null
   isLoading: boolean
+  isAuthenticated: boolean
   login: (data: any) => void
   logout: () => void
 }
@@ -38,12 +39,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (storedUser && storedToken) {
           const parsed = JSON.parse(storedUser)
-          // Basic validation - just check if it's a valid object
-          if (parsed && typeof parsed === 'object') {
+          // Validate that it has required fields for authentication
+          if (parsed && typeof parsed === 'object' && parsed.email && parsed.role && (parsed.id || parsed._id)) {
             return parsed
           } else {
             // Invalid user data, clean up
             localStorage.removeItem('user')
+            localStorage.removeItem('token')
+            localStorage.removeItem('accessToken')
+            localStorage.removeItem('role')
           }
         }
       } catch (e) {
@@ -88,8 +92,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   if (!mounted) return null
 
   // ✅ IMPORTANT: Always return JSX
+  // Calculate authenticated state based on valid user data
+  const isAuthenticated = !!user && !!user.email && !!user.role && !isLoading
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

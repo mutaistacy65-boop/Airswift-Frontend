@@ -4,12 +4,12 @@ import { useAuth } from '@/context/AuthContext'
 import Loader from '@/components/Loader'
 
 export default function Dashboard() {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, isAuthenticated } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
     if (!isLoading) {
-      if (!user) {
+      if (!isAuthenticated) {
         router.push('/login')
       } else if (user.role === 'admin') {
         router.push('/admin/dashboard')
@@ -17,7 +17,7 @@ export default function Dashboard() {
         router.push('/job-seeker/dashboard')
       }
     }
-  }, [user, isLoading, router])
+  }, [isAuthenticated, user, isLoading, router])
 
   return <Loader fullScreen />
 }
