@@ -1,5 +1,6 @@
 'use client'
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import axios from 'axios'
 import { useRouter } from 'next/router'
 import { loginUser, registerUser } from '@/api/auth'
 
@@ -63,18 +64,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // ✅ FIXED: Properly handle /me endpoint
             // If backend returns null user → frontend clears auth state
             // If backend returns user → frontend updates state
-            const response = await fetch('/api/auth/me', {
+            const response = await axios.get('/api/auth/me', {
+              withCredentials: true,
               headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
-              },
-              credentials: 'include',
-              method: 'GET'
+              }
             })
 
-            if (response.ok) {
-              const data = await response.json()
-              if (data.user) {
+            const data = response.data
+            if (data.user) {
                 setUser(data.user)
                 localStorage.setItem('user', JSON.stringify(data.user))
                 localStorage.setItem('role', data.user.role)
@@ -318,26 +317,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (token) {
         try {
-          const response = await fetch('/api/auth/me', {
+          const response = await axios.get('/api/auth/me', {
+            withCredentials: true,
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
-            },
-            credentials: 'include'
+            }
           })
 
-          if (response.ok) {
-            const data = await response.json()
-            if (data.user) {
-              setUser(data.user)
-              localStorage.setItem('user', JSON.stringify(data.user))
-              localStorage.setItem('role', data.user.role)
-            } else {
-              // Backend returned null, user is logged out
-              logout()
-            }
+          const data = response.data
+          if (data.user) {
+            setUser(data.user)
+            localStorage.setItem('user', JSON.stringify(data.user))
+            localStorage.setItem('role', data.user.role)
           } else {
-            // Token invalid, logout user
+            // Backend returned null, user is logged out
             logout()
           }
         } catch (error) {
