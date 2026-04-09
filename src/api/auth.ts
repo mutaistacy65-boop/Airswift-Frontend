@@ -1,5 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-import axios from 'axios';
+import { api } from '@/utils/api';
 
 export interface RegisterFormData {
   name: string;
@@ -14,11 +13,7 @@ export interface LoginFormData {
 
 export const registerUser = async (formData: RegisterFormData) => {
   try {
-    const result = await axios.post(`${API_URL}/api/auth/register`, formData, {
-      headers: {
-        "Content-Type": "application/json",
-      }
-    });
+    const result = await api.post('/auth/register', formData);
 
     const data = result.data;
 
@@ -59,9 +54,7 @@ export const registerUser = async (formData: RegisterFormData) => {
 
 export const loginUser = async (formData: LoginFormData) => {
   try {
-    const result = await axios.post(`${API_URL}/api/auth/login`, formData, {
-      headers: { "Content-Type": "application/json" }
-    });
+    const result = await api.post('/auth/login', formData);
 
     const data = result.data;
     console.log('LOGIN RESPONSE:', data);
@@ -154,11 +147,9 @@ export const loginUser = async (formData: LoginFormData) => {
 
 export const verifyOTP = async (email: string, otp: string) => {
   try {
-    const result = await axios.post(`${API_URL}/api/auth/verify-otp`, {
+    const result = await api.post('/auth/verify-otp', {
       email,
       otp
-    }, {
-      headers: { "Content-Type": "application/json" }
     });
 
     const data = result.data;
@@ -207,10 +198,8 @@ export const verifyOTP = async (email: string, otp: string) => {
 
 export const forgotPassword = async (email: string) => {
   try {
-    const result = await axios.post(`${API_URL}/api/auth/forgot-password`, {
+    const result = await api.post('/auth/forgot-password', {
       email
-    }, {
-      headers: { "Content-Type": "application/json" }
     });
 
     return result.data;
@@ -221,10 +210,8 @@ export const forgotPassword = async (email: string) => {
 
 export const resetPassword = async (token: string, password: string) => {
   try {
-    const result = await axios.post(`${API_URL}/api/auth/reset-password/${token}`, {
+    const result = await api.post(`/auth/reset-password/${token}`, {
       password
-    }, {
-      headers: { "Content-Type": "application/json" }
     });
 
     return result.data;
@@ -235,9 +222,7 @@ export const resetPassword = async (token: string, password: string) => {
 
 export const refreshToken = async () => {
   try {
-    const result = await axios.post(`${API_URL}/api/auth/refresh`, {}, {
-      withCredentials: true,
-    });
+    const result = await api.post('/auth/refresh');
 
     return result.data;
   } catch (error: any) {

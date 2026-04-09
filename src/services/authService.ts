@@ -1,23 +1,16 @@
 // Base API URL
-import { apiFetch, storeAuthTokens, clearAuthTokens } from '@/utils/apiFetch'
-import axios from 'axios'
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+import { api } from '@/utils/api'
 
 const AuthService = {
   // Registration with email verification
   register: async (name: string, email: string, password: string, role?: string) => {
     try {
-      const result = await axios.post(`${API_BASE_URL}/api/auth/register`, {
+      const result = await api.post('/auth/register', {
         name,
         email,
         password,
         role: role || 'user'
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      })
 
       console.log('REGISTER RESPONSE:', result.data);
 
@@ -31,20 +24,22 @@ const AuthService = {
   // Login
   login: async (email: string, password: string) => {
     try {
-      const result = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+      const result = await api.post('/auth/login', {
         email,
         password
-      }, {
-        headers: { 'Content-Type': 'application/json' }
       });
 
       const data = result.data;
 
-      // Store both tokens and user data
-      if (data.accessToken && data.refreshToken) {
-        storeAuthTokens(data.accessToken, data.refreshToken)
+      // Store tokens and user data
+      if (data.token || data.accessToken) {
+        const token = data.token || data.accessToken;
+        localStorage.setItem('token', token);
+        localStorage.setItem('accessToken', token);
       }
-      localStorage.setItem('user', JSON.stringify(data.user));
+      if (data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
 
       return data;
     } catch (error: any) {
@@ -56,11 +51,8 @@ const AuthService = {
   // Get Profile (Protected)
   getProfile: async () => {
     try {
-      const data = await apiFetch('/api/auth/profile', {
-        method: 'GET',
-      });
-
-      return data.user;
+      const result = await api.get('/auth/profile');
+      return result.data.user;
     } catch (error: any) {
       console.error('Profile fetch error:', error);
       throw new Error(error.response?.data?.message || 'Unauthorized');
@@ -70,15 +62,16 @@ const AuthService = {
   // Logout
   logout: async () => {
     try {
-      await apiFetch('/api/auth/logout', {
-        method: 'POST',
-      });
+      await api.post('/auth/logout');
     } catch (error) {
       console.error('Logout error:', error);
     }
 
     // Clear local storage
-    clearAuthTokens();
+    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('role');
   },
 
   // Get stored user
@@ -105,15 +98,15 @@ const AuthService = {
   // Verify email with token
   verifyEmail: async (token: string) => {
     try {
-      const result = await axios.get(`${API_BASE_URL}/api/auth/verify?token=${token}`, {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const result = await api.get(`/auth/verify?token=${token}`);
 
       const data = result.data;
 
-      // Store both tokens from verification
-      if (data.accessToken && data.refreshToken) {
-        storeAuthTokens(data.accessToken, data.refreshToken)
+      // Store tokens from verification
+      if (data.token || data.accessToken) {
+        const token = data.token || data.accessToken;
+        localStorage.setItem('token', token);
+        localStorage.setItem('accessToken', token);
       }
       if (data.user) {
         localStorage.setItem('user', JSON.stringify(data.user));
@@ -129,10 +122,8 @@ const AuthService = {
   // Resend verification email
   resendVerificationEmail: async (email: string) => {
     try {
-      const result = await axios.post(`${API_BASE_URL}/api/auth/resend-verification`, {
+      const result = await api.post('/auth/resend-verification', {
         email
-      }, {
-        headers: { 'Content-Type': 'application/json' }
       });
 
       return result.data;

@@ -53,9 +53,9 @@ export const useSocket = (options: UseSocketOptions = {}) => {
   useEffect(() => {
     if (!autoConnect || socketRef.current?.connected) return
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-
-    socketRef.current = io(apiUrl, {
+    socketRef.current = io("https://airswift-backend-fjt3.onrender.com", {
+      withCredentials: true,
+      transports: ["websocket"],
       reconnection,
       reconnectionDelay,
       reconnectionDelayMax,

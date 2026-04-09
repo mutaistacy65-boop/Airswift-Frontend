@@ -3,7 +3,7 @@ import { io, Socket } from 'socket.io-client'
 import Button from '@/components/Button'
 import Modal from '@/components/Modal'
 import Loader from '@/components/Loader'
-import axios from 'axios'
+import { api } from '@/utils/api'
 
 interface VoiceInterviewProps {
   isOpen: boolean
@@ -59,10 +59,9 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({
   }, [isOpen])
 
   const initializeSocket = () => {
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || '/api/socket'
-    const newSocket = io(socketUrl, {
-      path: '/api/socket',
-      transports: ['websocket', 'polling']
+    const newSocket = io("https://airswift-backend-fjt3.onrender.com", {
+      withCredentials: true,
+      transports: ["websocket"],
     })
 
     newSocket.on('connect', () => {
@@ -181,7 +180,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({
       formData.append('audio', audioFile)
 
       // Transcribe audio
-      const transcriptionResult = await axios.post('/api/interview/transcribe', formData, {
+      const transcriptionResult = await api.post('/interview/transcribe', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         }
