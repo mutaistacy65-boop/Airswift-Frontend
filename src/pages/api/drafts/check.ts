@@ -4,8 +4,8 @@ import { connectDB } from '@/lib/mongodb'
 import { verifyToken } from '@/lib/authController'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!['GET', 'DELETE'].includes(req.method || '')) {
-    res.setHeader('Allow', ['GET', 'DELETE'])
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', ['GET'])
     return res.status(405).json({ message: 'Method Not Allowed' })
   }
 
@@ -18,20 +18,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await connectDB()
     const db = require('mongoose').connection.db
 
-    if (req.method === 'GET') {
-      const draft = await db.collection('drafts').findOne({ user_id: user.userId })
+    const draft = await db.collection('drafts').findOne({ user_id: user.userId })
 
-      return res.json({
-        draft: draft || null
-      })
+    if (!draft) {
+      return res.json({ hasDraft: false })
     }
 
-    if (req.method === 'DELETE') {
-      await db.collection('drafts').deleteOne({ user_id: user.userId })
-      return res.json({ message: 'Draft deleted' })
-    }
+    res.json({
+      hasDraft: true,
+      updated_at: draft.updated_at,
+    })
   } catch (error: any) {
-    console.error('Error with draft:', error)
+    console.error('Error checking draft:', error)
     return res.status(500).json({ message: 'Internal server error' })
   }
 }

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import React, { useState, useEffect } from 'react'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'

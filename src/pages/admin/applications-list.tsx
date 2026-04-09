@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import Link from 'next/link'

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Button from './Button'
 
 interface DocumentUploadProps {
@@ -19,6 +19,17 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
   error
 }) => {
   const [dragOver, setDragOver] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (selectedFile && selectedFile.type === 'application/pdf') {
+      const url = URL.createObjectURL(selectedFile)
+      setPreviewUrl(url)
+      return () => URL.revokeObjectURL(url)
+    } else {
+      setPreviewUrl(null)
+    }
+  }, [selectedFile])
 
   const handleFileSelect = (file: File | null) => {
     if (file && file.size > 5 * 1024 * 1024) { // 5MB limit
@@ -71,6 +82,13 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
             <p className="text-gray-500 text-sm">
               {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
             </p>
+            {previewUrl && (
+              <iframe
+                src={previewUrl}
+                className="w-full h-64 mt-2 border rounded"
+                title="PDF Preview"
+              />
+            )}
             <Button
               onClick={() => handleFileSelect(null)}
               variant="outline"

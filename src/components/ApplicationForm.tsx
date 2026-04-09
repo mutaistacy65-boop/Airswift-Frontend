@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useRouter } from 'next/router'
+import DocumentUpload from './DocumentUpload'
+import ContinueDraftModal from './ContinueDraftModal'
 
 interface ApplicationFormProps {
   onSuccess?: () => void
@@ -22,9 +24,25 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     cv: null as File | null,
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [showDraftModal, setShowDraftModal] = useState(false)
+  const [draftInfo, setDraftInfo] = useState<{ hasDraft: boolean; updated_at?: string } | null>(null)
 
-  // Load draft on mount (try backend first, fallback to localStorage)
+  // Check for draft on mount
   useEffect(() => {
+    const checkDraft = async () => {
+      try {
+        const response = await axios.get('/api/drafts/check')
+        setDraftInfo(response.data)
+        if (response.data.hasDraft) {
+          setShowDraftModal(true)
+        }
+      } catch (error) {
+        console.log('Error checking draft, proceeding without')
+        // If check fails, try to load draft directly
+        loadDraft()
+      }
+    }
+
     const loadDraft = async () => {
       try {
         // Try backend first
@@ -60,7 +78,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       }
     }
 
-    loadDraft()
+    checkDraft()
   }, [])
 
   // Auto-save on change (to both localStorage and backend)
@@ -99,6 +117,49 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       setJobs(response.data.jobs || [])
     } catch (error) {
       console.error('Error fetching jobs:', error)
+    }
+  }
+
+  const handleContinueDraft = async () => {
+    setShowDraftModal(false)
+    // Load the draft
+    try {
+      const response = await axios.get('/api/drafts')
+      if (response.data.draft?.form_data) {
+        setFormData(prev => ({
+          ...prev,
+          ...response.data.draft.form_data,
+          passport: null,
+          cv: null,
+        }))
+      }
+    } catch (error) {
+      console.log('Error loading draft, trying localStorage')
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        try {
+          const parsedData = JSON.parse(saved)
+          setFormData(prev => ({
+            ...prev,
+            ...parsedData,
+            passport: null,
+            cv: null,
+          }))
+        } catch (error) {
+          console.error('Error loading local draft:', error)
+        }
+      }
+    }
+  }
+
+  const handleStartFresh = () => {
+    setShowDraftModal(false)
+    // Clear any existing drafts
+    localStorage.removeItem(STORAGE_KEY)
+    try {
+      axios.delete('/api/drafts')
+    } catch (error) {
+      console.log('Error clearing backend draft')
     }
   }
 
@@ -218,47 +279,58 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       </div>
 
       {/* STEP CONTENT */}
-      {step === 1 && (
-        <Step1
-          formData={formData}
-          errors={errors}
-          jobs={jobs}
-          onChange={handleChange}
-          onNext={nextStep}
-        />
-      )}
-      {step === 2 && (
-        <Step2
-          formData={formData}
-          errors={errors}
-          onFileChange={handleFileChange}
-          onNext={nextStep}
-          onPrev={prevStep}
-        />
-      )}
-      {step === 3 && (
-        <Step3
-          formData={formData}
-          jobs={jobs}
-          loading={loading}
-          onSubmit={handleSubmit}
-          onPrev={prevStep}
-        />
-      )}
+      <form onSubmit={handleSubmit}>
+        {step === 1 && (
+          <Step1
+            formData={formData}
+            errors={errors}
+            jobs={jobs}
+            onChange={handleChange}
+            onNext={nextStep}
+          />
+        )}
+        {step === 2 && (
+          <Step2
+            formData={formData}
+            errors={errors}
+            onNext={nextStep}
+            onPrev={prevStep}
+            setFormData={setFormData}
+          />
+        )}
+        {step === 3 && (
+          <Step3
+            formData={formData}
+            jobs={jobs}
+            loading={loading}
+            onPrev={prevStep}
+          />
+        )}
+      </form>
+
+      <ContinueDraftModal
+        open={showDraftModal}
+        onContinue={handleContinueDraft}
+        onStartFresh={handleStartFresh}
+        lastSaved={draftInfo?.updated_at}
+      />
     </div>
   )
 }
 
+function Step1({ formData, errors, jobs, onChange, onNext }: any) {
+  return (
+    <>
       <div>
         <label className="block text-sm font-medium mb-2">Select Job *</label>
         <select
           name="jobId"
           value={formData.jobId}
-          onChange={handleChange}
+          onChange={onChange}
           className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Choose a job</option>
-          {jobs.map(job => (
+          {jobs.map((job: any) => (
             <option key={job._id} value={job._id}>
               {job.title}
             </option>
@@ -273,7 +345,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
           type="text"
           name="nationalId"
           value={formData.nationalId}
-          onChange={handleChange}
+          onChange={onChange}
           placeholder="Enter your national ID"
           className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -286,44 +358,100 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
           type="tel"
           name="phone"
           value={formData.phone}
-          onChange={handleChange}
+          onChange={onChange}
           placeholder="Enter your phone number"
           className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
       </div>
 
+      <div className="flex justify-end">
+        <button
+          onClick={onNext}
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+        >
+          Next
+        </button>
+      </div>
+    </>
+  )
+}
+
+function Step2({ formData, errors, onNext, onPrev, setFormData }: any) {
+  return (
+    <>
       <div>
-        <label className="block text-sm font-medium mb-2">Passport (PDF) *</label>
-        <input
-          type="file"
-          name="passport"
-          onChange={handleFileChange}
+        <DocumentUpload
+          label="Passport (PDF)"
           accept=".pdf"
-          className="w-full px-4 py-2 border rounded-lg"
+          selectedFile={formData.passport}
+          onFileSelect={(file) => setFormData((prev: any) => ({ ...prev, passport: file }))}
+          required
+          error={errors.passport}
         />
-        {errors.passport && <p className="text-red-500 text-sm mt-1">{errors.passport}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">CV (PDF) *</label>
-        <input
-          type="file"
-          name="cv"
-          onChange={handleFileChange}
+        <DocumentUpload
+          label="CV (PDF)"
           accept=".pdf"
-          className="w-full px-4 py-2 border rounded-lg"
+          selectedFile={formData.cv}
+          onFileSelect={(file) => setFormData((prev: any) => ({ ...prev, cv: file }))}
+          required
+          error={errors.cv}
         />
-        {errors.cv && <p className="text-red-500 text-sm mt-1">{errors.cv}</p>}
       </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50"
-      >
-        {loading ? 'Submitting...' : 'Submit Application'}
-      </button>
-    </form>
+      <div className="flex justify-between">
+        <button
+          onClick={onPrev}
+          className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
+        >
+          Back
+        </button>
+        <button
+          onClick={onNext}
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+        >
+          Next
+        </button>
+      </div>
+    </>
+  )
+}
+
+function Step3({ formData, jobs, loading, onPrev }: any) {
+  const selectedJob = jobs.find((job: any) => job._id === formData.jobId)
+
+  return (
+    <>
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Review Your Application</h3>
+        
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <p><strong>Job:</strong> {selectedJob?.title || 'N/A'}</p>
+          <p><strong>National ID:</strong> {formData.nationalId}</p>
+          <p><strong>Phone:</strong> {formData.phone}</p>
+          <p><strong>Passport:</strong> {formData.passport?.name || 'Not uploaded'}</p>
+          <p><strong>CV:</strong> {formData.cv?.name || 'Not uploaded'}</p>
+        </div>
+      </div>
+
+      <div className="flex justify-between">
+        <button
+          onClick={onPrev}
+          className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
+        >
+          Back
+        </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
+        >
+          {loading ? 'Submitting...' : 'Submit Application'}
+        </button>
+      </div>
+    </>
   )
 }
