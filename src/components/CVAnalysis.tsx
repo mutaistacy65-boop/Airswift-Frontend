@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react'
 import Button from './Button'
 import Loader from './Loader'
-import { api } from '@/utils/api'
+import API from '@/services/apiClient'
 
 interface CVAnalysisResult {
   score: number
@@ -90,7 +90,7 @@ Education:
       const cvText = await extractTextFromPDF(selectedFile)
 
       // Send to CV analysis API
-      const result = await api.post('/cv/score', {
+      const result = await API.post('/cv/score', {
         cvText,
         jobRole
       })

@@ -6,14 +6,19 @@
 import API from '@/services/apiClient'
 import axios from 'axios'
 
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com'
+export const API_URL =
+  BACKEND_BASE_URL.replace(/\/+$/, '') +
+  (BACKEND_BASE_URL.endsWith('/api') ? '' : '/api')
+
 export const testBackendConnection = async () => {
   try {
     console.log('🔄 Testing backend connection...')
     console.log(`📍 Backend URL: ${process.env.NEXT_PUBLIC_API_URL}`)
 
-    // Test 1: Direct axios to backend
+    // Test 1: Direct axios to backend API
     console.log('\n📡 Test 1: Direct axios request')
-    const axiosResult = await axios.get(process.env.NEXT_PUBLIC_API_URL || '')
+    const axiosResult = await axios.get(API_URL)
     const axiosData = axiosResult.data
     console.log('✅ Direct axios response:', axiosData)
 
@@ -53,7 +58,7 @@ export const testBackendConnection = async () => {
 // Alternative simple test function
 export const simpleBackendTest = async () => {
   try {
-    const result = await axios.get(process.env.NEXT_PUBLIC_API_URL || '')
+    const result = await axios.get(API_URL)
     const data = result.data
     console.log('Backend Status:', data)
     return data

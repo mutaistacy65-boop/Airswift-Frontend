@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { api } from '@/utils/api';
+import API from '@/services/apiClient';
 
 export interface RegisterFormData {
   name: string;
@@ -14,9 +13,7 @@ export interface LoginFormData {
 
 export const registerUser = async (formData: RegisterFormData) => {
   try {
-    const result = await axios.post('/api/auth/register', formData, {
-      withCredentials: true,
-    });
+    const result = await API.post('/auth/register', formData);
 
     const data = result.data;
 
@@ -57,9 +54,7 @@ export const registerUser = async (formData: RegisterFormData) => {
 
 export const loginUser = async (formData: LoginFormData) => {
   try {
-    const result = await axios.post('/api/auth/login', formData, {
-      withCredentials: true,
-    });
+    const result = await API.post('/auth/login', formData);
 
     const data = result.data;
     console.log('LOGIN RESPONSE:', data);
@@ -152,7 +147,7 @@ export const loginUser = async (formData: LoginFormData) => {
 
 export const verifyOTP = async (email: string, otp: string) => {
   try {
-    const result = await api.post('/auth/verify-otp', {
+    const result = await API.post('/auth/verify-otp', {
       email,
       otp
     });
@@ -203,7 +198,7 @@ export const verifyOTP = async (email: string, otp: string) => {
 
 export const forgotPassword = async (email: string) => {
   try {
-    const result = await api.post('/auth/forgot-password', {
+    const result = await API.post('/auth/forgot-password', {
       email
     });
 
@@ -215,7 +210,7 @@ export const forgotPassword = async (email: string) => {
 
 export const resetPassword = async (token: string, password: string) => {
   try {
-    const result = await api.post(`/auth/reset-password/${token}`, {
+    const result = await API.post(`/auth/reset-password/${token}`, {
       password
     });
 
@@ -227,7 +222,7 @@ export const resetPassword = async (token: string, password: string) => {
 
 export const refreshToken = async () => {
   try {
-    const result = await api.post('/auth/refresh');
+    const result = await API.post('/auth/refresh');
 
     return result.data;
   } catch (error: any) {

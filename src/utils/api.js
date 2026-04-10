@@ -1,15 +1,40 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com';
 import axios from 'axios';
+
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com';
+
+export const API_URL =
+  BACKEND_BASE_URL.replace(/\/+$/, '') +
+  (BACKEND_BASE_URL.endsWith('/api') ? '' : '/api');
 
 export const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
 });
 
+api.interceptors.request.use(
+  (config) => {
+    if (typeof window !== 'undefined') {
+      const token =
+        localStorage.getItem('accessToken') ||
+        localStorage.getItem('token');
+
+      if (token) {
+        config.headers = config.headers || {};
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 export default api;
 
 export const apiFetch = async (url, options = {}) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  const token =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('accessToken') || localStorage.getItem('token')
+      : null;
 
   const config = {
     ...options,
@@ -27,7 +52,7 @@ export const apiFetch = async (url, options = {}) => {
   } catch (error) {
     if (error.response?.status === 401) {
       try {
-        const refreshResult = await axios.post(`${API_URL}/api/auth/refresh`, {}, {
+        const refreshResult = await axios.post(`${API_URL}/auth/refresh`, {}, {
           withCredentials: true,
         });
 

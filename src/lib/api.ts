@@ -1,3 +1,3 @@
-import { api } from '@/utils/api';
+import API from '@/services/apiClient';
 
 export default api;

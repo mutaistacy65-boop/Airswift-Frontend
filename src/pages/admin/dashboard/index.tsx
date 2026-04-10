@@ -7,7 +7,7 @@ import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import MetricCard from '@/components/MetricCard';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, FunnelChart, Funnel, LabelList } from "recharts";
 import { TrendingUp, Users, Briefcase, Calendar, AlertTriangle, CheckCircle, Clock, DollarSign, Activity, Bell, Settings, Download, FileText, User } from 'lucide-react';
-import { api } from '@/utils/api'
+import API from '@/services/apiClient'
 import AdminPayments from '@/components/AdminPayments'
 
 export default function AdminDashboard() {

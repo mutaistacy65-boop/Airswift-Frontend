@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { api } from '@/utils/api'
+import API from '@/services/apiClient'
 import Link from 'next/link'
 import { useSocket } from '@/hooks/useSocket'
 
@@ -45,7 +45,7 @@ export default function NotificationBell() {
   const markAsRead = async (id: string, type: 'notification' | 'message') => {
     try {
       const url = type === 'notification' ? `/notifications/${id}` : `/messages/${id}`
-      await api.put(url, { is_read: true })
+      await API.put(url, { is_read: true })
       
       if (type === 'notification') {
         setNotifications(notifications.map(n => (n._id === id ? { ...n, is_read: true } : n)))

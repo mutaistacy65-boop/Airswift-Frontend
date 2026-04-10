@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Head from 'next/head'
-import { api } from '@/utils/api'
+import API from '@/services/apiClient'
 
 export default function VerifyEmail() {
   const router = useRouter()
@@ -19,7 +19,7 @@ export default function VerifyEmail() {
 
     const verifyEmail = async () => {
       try {
-        const result = await api.get(`/auth/verify?token=${token}`)
+        const result = await API.get(`/auth/verify?token=${token}`)
         const data = result.data
 
         // Auto-login: Store both tokens and user data
@@ -52,7 +52,7 @@ export default function VerifyEmail() {
 
     setIsResending(true)
     try {
-      const result = await api.post('/auth/resend-verification', {
+      const result = await API.post('/auth/resend-verification', {
         email
       })
 

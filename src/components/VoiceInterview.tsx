@@ -3,7 +3,7 @@ import { io, Socket } from 'socket.io-client'
 import Button from '@/components/Button'
 import Modal from '@/components/Modal'
 import Loader from '@/components/Loader'
-import { api } from '@/utils/api'
+import API from '@/services/apiClient'
 
 interface VoiceInterviewProps {
   isOpen: boolean
@@ -180,7 +180,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({
       formData.append('audio', audioFile)
 
       // Transcribe audio
-      const transcriptionResult = await api.post('/interview/transcribe', formData, {
+      const transcriptionResult = await API.post('/interview/transcribe', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         }

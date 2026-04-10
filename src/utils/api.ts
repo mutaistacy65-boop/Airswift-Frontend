@@ -16,8 +16,14 @@ import axios from "axios";
  * Backend MUST set secure: true (on HTTPS) ✅
  */
 
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com';
+
+export const API_URL =
+  BACKEND_BASE_URL.replace(/\/+$/, '') +
+  (BACKEND_BASE_URL.endsWith('/api') ? '' : '/api');
+
 export const api = axios.create({
-  baseURL: "https://airswift-backend-fjt3.onrender.com",
+  baseURL: API_URL,
   withCredentials: true,  // 🍪 CRITICAL for cookie-based auth
 });
 
@@ -29,7 +35,8 @@ api.interceptors.request.use(
         localStorage.getItem("accessToken") ||
         localStorage.getItem("token");
 
-      if (token && config.headers) {
+      if (token) {
+        config.headers = config.headers || {};
         const headers = config.headers as any;
 
         if (typeof headers.set === "function") {

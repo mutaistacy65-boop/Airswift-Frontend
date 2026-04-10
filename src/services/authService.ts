@@ -1,11 +1,11 @@
 // Base API URL
-import { api } from '@/utils/api'
+import API from '@/services/apiClient'
 
 const AuthService = {
   // Registration with email verification
   register: async (name: string, email: string, password: string, role?: string) => {
     try {
-      const result = await api.post('/auth/register', {
+      const result = await API.post('/auth/register', {
         name,
         email,
         password,
@@ -24,7 +24,7 @@ const AuthService = {
   // Login
   login: async (email: string, password: string) => {
     try {
-      const result = await api.post('/auth/login', {
+      const result = await API.post('/auth/login', {
         email,
         password
       });
@@ -51,7 +51,7 @@ const AuthService = {
   // Get Profile (Protected)
   getProfile: async () => {
     try {
-      const result = await api.get('/auth/profile');
+      const result = await API.get('/auth/profile');
       return result.data.user;
     } catch (error: any) {
       console.error('Profile fetch error:', error);
@@ -62,7 +62,7 @@ const AuthService = {
   // Logout
   logout: async () => {
     try {
-      await api.post('/auth/logout');
+      await API.post('/auth/logout');
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -98,7 +98,7 @@ const AuthService = {
   // Verify email with token
   verifyEmail: async (token: string) => {
     try {
-      const result = await api.get(`/auth/verify?token=${token}`);
+      const result = await API.get(`/auth/verify?token=${token}`);
 
       const data = result.data;
 
@@ -122,7 +122,7 @@ const AuthService = {
   // Resend verification email
   resendVerificationEmail: async (email: string) => {
     try {
-      const result = await api.post('/auth/resend-verification', {
+      const result = await API.post('/auth/resend-verification', {
         email
       });
 

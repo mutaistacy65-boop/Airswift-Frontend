@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { api } from '@/utils/api'
+import API from '@/services/apiClient'
 import { useRouter } from 'next/router'
 import DocumentUpload from './DocumentUpload'
 import ContinueDraftModal from './ContinueDraftModal'
@@ -141,7 +141,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
   const fetchJobs = async () => {
     try {
-      const response = await api.get('/jobs')
+      const response = await API.get('/jobs')
       setJobs(response.data.jobs || [])
     } catch (error) {
       console.error('Error fetching jobs:', error)
@@ -267,7 +267,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       if (formData.passport) data.append('passport', formData.passport)
       if (formData.cv) data.append('cv', formData.cv)
 
-      const response = await api.post('/applications', data, {
+      const response = await API.post('/applications', data, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
 

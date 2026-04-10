@@ -3,9 +3,13 @@
  * Provides an axios wrapper that handles 401 responses and token refresh
  */
 
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios'
+import axios, { AxiosRequestConfig } from 'axios'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+
+export const API_URL =
+  BACKEND_BASE_URL.replace(/\/+$/, '') +
+  (BACKEND_BASE_URL.endsWith('/api') ? '' : '/api')
 
 interface FetchOptions extends AxiosRequestConfig {
   headers?: Record<string, string>
@@ -25,12 +29,13 @@ async function refreshAccessToken(): Promise<string | null> {
       return null
     }
 
-    const result = await axios.post(`${API_URL}/api/auth/refresh`, {
+    const result = await axios.post(`${API_URL}/auth/refresh`, {
       refreshToken
     }, {
       headers: {
         'Content-Type': 'application/json',
-      }
+      },
+      withCredentials: true,
     })
 
     const data = result.data
@@ -65,7 +70,7 @@ export async function apiFetch(
   url: string,
   options: FetchOptions = {}
 ): Promise<any> {
-  let accessToken =
+  const accessToken =
     typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
 
   const config: AxiosRequestConfig = {
