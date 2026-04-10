@@ -79,21 +79,21 @@ export default function Login() {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${jwt}`,
           },
           credentials: 'include',
         })
+
         if (draftRes.ok) {
           const draftData = await draftRes.json()
-          if (draftData.hasDraft && !user.has_submitted) {
+          if (draftData.hasDraft) {
             setDraftInfo(draftData)
             setShowModal(true)
             return
           }
         }
       } catch (draftError) {
-        // Drafts endpoint not available or error, continue with login
-        console.warn('Draft check failed, skipping...')
+        console.warn('Draft check failed — ignoring')
       }
 
       if (user.role === 'admin') {
