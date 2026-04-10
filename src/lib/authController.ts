@@ -193,7 +193,13 @@ export const authLogin = async (req: NextApiRequest, res: NextApiResponse) => {
     if (error.response) {
       return res.status(error.response.status).json(error.response.data)
     }
-    return res.status(500).json({ message: 'Internal server error: ' + (error.message || error) })
+
+    // Handle DB/network failures gracefully
+    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND' || error.code === 'ETIMEDOUT') {
+      return res.status(503).json({ message: 'Database temporarily unavailable' })
+    }
+
+    return res.status(500).json({ message: 'Internal server error' })
   }
 }
 
