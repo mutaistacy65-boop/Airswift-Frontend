@@ -93,7 +93,7 @@ export default function Login() {
         }
       } catch (draftError) {
         // Drafts endpoint not available or error, continue with login
-        console.log('Draft check skipped:', (draftError as any).message)
+        console.warn('Draft check failed, skipping...')
       }
 
       if (user.role === 'admin') {
