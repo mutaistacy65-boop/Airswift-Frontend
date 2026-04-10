@@ -20,7 +20,8 @@ export default function ApplicationPage() {
           router.push('/dashboard')
         }
       } catch (err) {
-        router.push('/login')
+        // API failed, assume user hasn't applied and show the form
+        console.warn('Failed to check application status:', err)
       }
     }
 
