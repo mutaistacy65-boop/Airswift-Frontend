@@ -17,7 +17,7 @@ import axios from "axios";
  */
 
 export const api = axios.create({
-  baseURL: "https://airswift-backend-fjt3.onrender.com/api",
+  baseURL: "https://airswift-backend-fjt3.onrender.com",
   withCredentials: true,  // 🍪 CRITICAL for cookie-based auth
 });
 

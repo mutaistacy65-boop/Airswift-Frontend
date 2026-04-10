@@ -1,5 +1,6 @@
 // @ts-nocheck
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { serialize } from 'cookie'
 import jwt from 'jsonwebtoken'
 import axios from 'axios'
 import { logActivity } from '@/lib/auditLogService'
@@ -93,6 +94,18 @@ export const authLogin = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const result = await axios(url, config)
     const data = result.data
+
+    // Set access token cookie for browser sessions
+    const authToken = data.accessToken || data.token || data?.user?.accessToken || data?.user?.token
+    if (authToken && result.status >= 200 && result.status < 300) {
+      const cookieValue = serialize('accessToken', authToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        path: '/',
+      })
+      res.setHeader('Set-Cookie', cookieValue)
+    }
 
     // Log login activity (successful or failed)
     try {
