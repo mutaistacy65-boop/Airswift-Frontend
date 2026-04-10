@@ -75,24 +75,13 @@ export default function Login() {
 
       // Check for drafts
       try {
-        const draftRes = await fetch('/api/drafts/check', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${jwt}`,
-          },
-          credentials: 'include',
-        })
-
-        if (draftRes.ok) {
-          const draftData = await draftRes.json()
-          if (draftData.hasDraft) {
-            setDraftInfo(draftData)
-            setShowModal(true)
-            return
-          }
+        const draftRes = await api.get('/drafts/check')
+        if (draftRes.data.hasDraft) {
+          setDraftInfo(draftRes.data)
+          setShowModal(true)
+          return
         }
-      } catch (draftError) {
+      } catch (err) {
         console.warn('Draft check failed — ignoring')
       }
 
