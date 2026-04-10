@@ -75,11 +75,21 @@ export default function Login() {
 
       // Check for drafts
       try {
-        const draftRes = await api.get('/drafts/check')
-        if (draftRes.data.hasDraft && !user.has_submitted) {
-          setDraftInfo(draftRes.data)
-          setShowModal(true)
-          return
+        const draftRes = await fetch('/api/drafts/check', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          credentials: 'include',
+        })
+        if (draftRes.ok) {
+          const draftData = await draftRes.json()
+          if (draftData.hasDraft && !user.has_submitted) {
+            setDraftInfo(draftData)
+            setShowModal(true)
+            return
+          }
         }
       } catch (draftError) {
         // Drafts endpoint not available or error, continue with login

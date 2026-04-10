@@ -31,10 +31,20 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
   useEffect(() => {
     const checkDraft = async () => {
       try {
-        const response = await api.get('/drafts/check')
-        setDraftInfo(response.data)
-        if (response.data.hasDraft) {
-          setShowDraftModal(true)
+        const response = await fetch('/api/drafts/check', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
+          },
+          credentials: 'include',
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setDraftInfo(data)
+          if (data.hasDraft) {
+            setShowDraftModal(true)
+          }
         }
       } catch (error) {
         console.log('Error checking draft, proceeding without')
@@ -45,20 +55,30 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
     const loadDraft = async () => {
       try {
-        // Try backend first
-        const response = await api.get('/drafts')
-        if (response.data.draft?.form_data) {
-          setFormData(prev => ({
-            ...prev,
-            ...response.data.draft.form_data,
-            // Files cannot be restored
-            passport: null,
-            cv: null,
-          }))
-          return
+        // Try local API first
+        const response = await fetch('/api/drafts', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
+          },
+          credentials: 'include',
+        })
+        if (response.ok) {
+          const data = await response.json()
+          if (data.draft?.form_data) {
+            setFormData(prev => ({
+              ...prev,
+              ...data.draft.form_data,
+              // Files cannot be restored
+              passport: null,
+              cv: null,
+            }))
+            return
+          }
         }
       } catch (error) {
-        console.log('Backend draft not available, trying localStorage')
+        console.log('Local draft not available, trying localStorage')
       }
 
       // Fallback to localStorage
@@ -94,11 +114,19 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       // Save to localStorage
       localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave))
 
-      // Save to backend
+      // Save to local API
       try {
-        await api.post('/drafts/save', { formData: dataToSave })
+        await fetch('/api/drafts/save', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
+          },
+          credentials: 'include',
+          body: JSON.stringify({ formData: dataToSave }),
+        })
       } catch (error) {
-        console.log('Backend save failed, localStorage saved')
+        console.log('Local API save failed, localStorage saved')
       }
 
       setSaved(true)
@@ -124,14 +152,24 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     setShowDraftModal(false)
     // Load the draft
     try {
-      const response = await api.get('/drafts')
-      if (response.data.draft?.form_data) {
-        setFormData(prev => ({
-          ...prev,
-          ...response.data.draft.form_data,
-          passport: null,
-          cv: null,
-        }))
+      const response = await fetch('/api/drafts', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
+        },
+        credentials: 'include',
+      })
+      if (response.ok) {
+        const data = await response.json()
+        if (data.draft?.form_data) {
+          setFormData(prev => ({
+            ...prev,
+            ...data.draft.form_data,
+            passport: null,
+            cv: null,
+          }))
+        }
       }
     } catch (error) {
       console.log('Error loading draft, trying localStorage')
@@ -157,9 +195,16 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     // Clear any existing drafts
     localStorage.removeItem(STORAGE_KEY)
     try {
-      api.delete('/drafts')
+      fetch('/api/drafts', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
+        },
+        credentials: 'include',
+      })
     } catch (error) {
-      console.log('Error clearing backend draft')
+      console.log('Error clearing local draft')
     }
   }
 
@@ -231,7 +276,14 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
         // Clear drafts after successful submission
         localStorage.removeItem(STORAGE_KEY)
         try {
-          await api.delete('/drafts')
+          await fetch('/api/drafts', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
+            },
+            credentials: 'include',
+          })
         } catch (error) {
           console.log('Backend draft cleanup failed')
         }
