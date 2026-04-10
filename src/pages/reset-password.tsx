@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Head from 'next/head'
-import axios from 'axios'
+import { api } from '@/utils/api'
 
 export default function ResetPassword() {
   const router = useRouter()
@@ -52,13 +52,9 @@ export default function ResetPassword() {
 
     setIsSubmitting(true)
     try {
-      const result = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`, {
+      const result = await api.post('/auth/reset-password', {
         token,
         password,
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
       })
 
       const data = result.data

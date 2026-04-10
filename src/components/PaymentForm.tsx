@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import API from '@/services/apiClient'
+import { api } from '@/utils/api'
 
 export default function PaymentForm() {
   const [phone, setPhone] = useState('')
@@ -10,7 +10,7 @@ export default function PaymentForm() {
     setLoading(true)
 
     try {
-      const res = await API.post('/payments/mpesa/initiate', {
+      const res = await api.post('/payments/mpesa/initiate', {
         phone,
         amount,
       })

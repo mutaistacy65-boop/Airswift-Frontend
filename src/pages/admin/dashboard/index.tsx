@@ -52,7 +52,7 @@ export default function AdminDashboard() {
 
   const fetchTrends = async (range: string) => {
     try {
-      const response = await api.get(`/admin/dashboard/trends?range=${range}`)
+      const response = await API.get(`/admin/dashboard/trends?range=${range}`)
       setTrends(response.data)
     } catch (error) {
       console.error('Error fetching trends:', error)

@@ -85,7 +85,7 @@ export default function AuditLogsPage() {
         ...(filters.suspicious && { suspicious: 'true' }),
       })
 
-      const response = await api.get(`/audit-logs?${params}`)
+      const response = await API.get(`/audit-logs?${params}`)
       
       if (response.data.success) {
         setLogs(response.data.logs)
@@ -122,7 +122,7 @@ export default function AuditLogsPage() {
 
   const handleExport = async (format: 'json' | 'csv') => {
     try {
-      const response = await api.post(
+      const response = await API.post(
         '/audit-logs',
         {
           action: filters.action !== 'ALL' ? filters.action : undefined,

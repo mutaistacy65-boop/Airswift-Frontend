@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Head from 'next/head'
-import axios from 'axios'
+import { api } from '@/utils/api'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -30,12 +30,8 @@ export default function ForgotPassword() {
     setMessage('')
 
     try {
-      const result = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`, {
+      const result = await api.post('/auth/forgot-password', {
         email
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
       })
 
       const data = result.data

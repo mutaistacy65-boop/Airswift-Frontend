@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import API from '@/services/apiClient'
+import { api } from '@/utils/api'
 
 export default function AdminDashboard() {
   const [applications, setApplications] = useState<any[]>([])
