@@ -69,6 +69,20 @@ const proxyToBackend = async (req: NextApiRequest, res: NextApiResponse, endpoin
     const result = await axios(url, config)
     const data = result.data
 
+    // Set access token cookie for browser sessions (for login endpoints)
+    if (endpoint.includes('login') && result.status >= 200 && result.status < 300) {
+      const authToken = data.accessToken || data.token || data?.user?.accessToken || data?.user?.token
+      if (authToken) {
+        const cookieValue = serialize('accessToken', authToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'none',
+          path: '/',
+        })
+        res.setHeader('Set-Cookie', cookieValue)
+      }
+    }
+
     return res.status(result.status).json(data)
   } catch (error: any) {
     console.error(`Proxy error for ${endpoint}:`, error)
