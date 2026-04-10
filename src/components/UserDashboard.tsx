@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import API from '@/services/apiClient'
+import { api } from '@/utils/api'
 import Link from 'next/link'
 
 export default function UserDashboard() {

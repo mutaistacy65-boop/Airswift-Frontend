@@ -23,7 +23,7 @@ export default function VerifyEmail() {
         const data = result.data
 
         // Auto-login: Store both tokens and user data
-        localStorage.setItem('accessToken', data.accessToken)
+        localStorage.setItem('token', data.accessToken)
         localStorage.setItem('refreshToken', data.refreshToken)
         localStorage.setItem('user', JSON.stringify(data.user))
 

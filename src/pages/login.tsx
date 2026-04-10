@@ -64,7 +64,7 @@ export default function Login() {
       }
 
       localStorage.setItem('token', jwt)
-      localStorage.setItem('accessToken', jwt)
+      localStorage.setItem('token', jwt)
       localStorage.setItem('user', JSON.stringify(user))
       if (user.role) {
         localStorage.setItem('role', user.role)

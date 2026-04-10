@@ -28,28 +28,14 @@ export const api = axios.create({
 });
 
 // Request interceptor
-api.interceptors.request.use(
-  (config) => {
-    if (typeof window !== "undefined") {
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("token");
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
 
-      if (token) {
-        config.headers = config.headers || {};
-        const headers = config.headers as any;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
 
-        if (typeof headers.set === "function") {
-          headers.set("Authorization", `Bearer ${token}`);
-        } else {
-          headers.Authorization = `Bearer ${token}`;
-        }
-      }
-    }
-
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+  return config;
+});
 
 export default api;

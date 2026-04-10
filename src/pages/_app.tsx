@@ -30,8 +30,8 @@ export default function App({ Component, pageProps }: AppProps) {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
 
-    if (token && !localStorage.getItem("accessToken")) {
-      localStorage.setItem("accessToken", token);
+    if (token && !localStorage.getItem("token")) {
+      localStorage.setItem("token", token);
 
       // Only redirect to dashboard if we're not already on a specific page
       const currentPath = window.location.pathname;

@@ -34,7 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (typeof window !== 'undefined') {
       try {
         const storedUser = localStorage.getItem('user')
-        const storedToken = localStorage.getItem('accessToken') || localStorage.getItem('token')
+        const storedToken = localStorage.getItem('token')
         
         if (storedUser && storedToken) {
           const parsed = JSON.parse(storedUser)
@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Invalid user data, clean up
             localStorage.removeItem('user')
             localStorage.removeItem('token')
-            localStorage.removeItem('accessToken')
+            localStorage.removeItem('token')
             localStorage.removeItem('role')
           }
         }
@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null)
     // Clear localStorage
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('accessToken')
+      localStorage.removeItem('token')
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       localStorage.removeItem('role')
