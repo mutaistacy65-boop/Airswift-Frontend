@@ -7,7 +7,7 @@ import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import MetricCard from '@/components/MetricCard';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, FunnelChart, Funnel, LabelList } from "recharts";
 import { TrendingUp, Users, Briefcase, Calendar, AlertTriangle, CheckCircle, Clock, DollarSign, Activity, Bell, Settings, Download, FileText, User } from 'lucide-react';
-import API from '@/services/apiClient'
+import api from '@/services/apiClient'
 import AdminPayments from '@/components/AdminPayments'
 
 export default function AdminDashboard() {
@@ -52,7 +52,7 @@ export default function AdminDashboard() {
 
   const fetchTrends = async (range: string) => {
     try {
-      const response = await API.get(`/admin/dashboard/trends?range=${range}`)
+      const response = await api.get(`/admin/dashboard/trends?range=${range}`)
       setTrends(response.data)
     } catch (error) {
       console.error('Error fetching trends:', error)
