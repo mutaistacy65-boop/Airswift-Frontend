@@ -4,6 +4,7 @@ import API from '@/services/apiClient'
 import { useRouter } from 'next/router'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
+import { useNotification } from '@/context/NotificationContext'
 import { useSocket } from '@/hooks/useSocket'
 
 // Force server-side rendering for admin pages
@@ -34,9 +35,11 @@ interface PaginationInfo {
 export default function AuditLogsPage() {
   const router = useRouter()
   const { user } = useAuth()
+  const { addNotification } = useNotification()
   const { subscribe } = useSocket()
 
   const [logs, setLogs] = useState<AuditLog[]>([])
+  const [alerts, setAlerts] = useState<{ message: string; timestamp: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [pagination, setPagination] = useState<PaginationInfo | null>(null)
   const [mounted, setMounted] = useState(false)
@@ -61,33 +64,42 @@ export default function AuditLogsPage() {
     if (!mounted || !user || user?.role !== 'admin') return
     
     fetchAuditLogs()
-    
-    // Subscribe to real-time audit log events
-    subscribe('audit_log', (data) => {
+
+    const unsubscribeAudit = subscribe('audit_log', (data) => {
       console.log('New audit log:', data)
-      // Add new log to the top of the list immediately
       const newLog: AuditLog = {
-        _id: `temp-${Date.now()}`, // Temporary ID
+        _id: data._id || `temp-${Date.now()}`,
         action: data.action,
-        user_name: data.user,
-        user_email: data.email,
-        ip_address: 'Real-time', // Placeholder
-        browser: 'Unknown',
-        device_type: 'Unknown',
-        os: 'Unknown',
-        is_suspicious: false,
-        created_at: data.timestamp,
-        details: {},
+        user_name: data.user || data.user_name || data.user_email || 'Unknown',
+        user_email: data.email || data.user_email || 'N/A',
+        ip_address: data.ip_address || 'Real-time',
+        browser: data.browser || 'Unknown',
+        device_type: data.device_type || 'Unknown',
+        os: data.os || 'Unknown',
+        is_suspicious: data.is_suspicious || false,
+        created_at: data.timestamp || new Date().toISOString(),
+        details: data.details || {},
       }
       setLogs(prevLogs => [newLog, ...prevLogs])
-      
-      // Refresh logs after 2 seconds to get complete data
       setTimeout(() => {
         fetchAuditLogs()
       }, 2000)
     })
 
-    // Refresh logs when page becomes visible (user returns to tab)
+    const unsubscribeSecurity = subscribe('security:alert', (alert) => {
+      const message = alert?.message || 'Security alert received'
+      const timestamp = alert?.timestamp || new Date().toISOString()
+      setAlerts(prev => [{ message, timestamp }, ...prev].slice(0, 5))
+      addNotification(message, 'error')
+    })
+
+    const unsubscribeAdminAlert = subscribe('admin:alert', (alert) => {
+      const message = alert?.message || 'Admin alert received'
+      const timestamp = alert?.timestamp || new Date().toISOString()
+      setAlerts(prev => [{ message, timestamp }, ...prev].slice(0, 5))
+      addNotification(message, 'warning')
+    })
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         fetchAuditLogs()
@@ -98,8 +110,11 @@ export default function AuditLogsPage() {
     
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
+      unsubscribeAudit()
+      unsubscribeSecurity()
+      unsubscribeAdminAlert()
     }
-  }, [user, mounted])
+  }, [user, mounted, subscribe, addNotification])
 
   const fetchAuditLogs = async () => {
     try {
@@ -377,6 +392,25 @@ export default function AuditLogsPage() {
             </div>
           </div>
         </div>
+
+        {/* Alerts */}
+        {alerts.length > 0 && (
+          <div className="mb-6 space-y-3">
+            {alerts.map((alert, index) => (
+              <div
+                key={`${alert.timestamp}-${index}`}
+                className="rounded-lg bg-red-600 px-4 py-3 text-white shadow-sm"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <p className="font-semibold">🚨 {alert.message}</p>
+                  <span className="text-xs text-red-100">
+                    {new Date(alert.timestamp).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Logs Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">

@@ -14,6 +14,8 @@ export type SocketEventType =
   | 'jobUpdated'
   | 'messageReceived'
   | 'audit_log'
+  | 'audit:new'
+  | 'security:alert'
   | 'new_message'
   | 'new_notification'
   | 'connect'
@@ -58,7 +60,11 @@ export const useSocket = (options: UseSocketOptions = {}) => {
   useEffect(() => {
     if (!autoConnect || socketRef.current?.connected) return
 
-    socketRef.current = io("https://airswift-backend-fjt3.onrender.com", {
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'https://airswift-backend-fjt3.onrender.com'
+    const socketPath = process.env.NEXT_PUBLIC_SOCKET_PATH || '/api/socket'
+
+    socketRef.current = io(socketUrl, {
+      path: socketPath,
       withCredentials: true,
       transports: ["websocket"],
       reconnection,

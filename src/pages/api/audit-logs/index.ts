@@ -58,6 +58,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         filters.user_id = userId
       }
 
+      // Filter by entity
+      if (req.query.entity) {
+        filters.entity = req.query.entity
+      }
+
+      // Filter by entity ID
+      if (req.query.entityId) {
+        filters.entity_id = req.query.entityId
+      }
+
       // Filter by IP address
       if (ipAddress) {
         filters.ip_address = { $regex: ipAddress, $options: 'i' }
@@ -122,6 +132,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           $project: {
             _id: 1,
             action: 1,
+            entity: 1,
+            entity_id: 1,
             ip_address: 1,
             browser: 1,
             device_type: 1,
@@ -152,12 +164,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } else if (req.method === 'POST') {
     // Export logs
     try {
-      const { action, startDate, endDate, format = 'json' } = req.body
+      const { action, entity, entityId, startDate, endDate, format = 'json' } = req.body
 
       const filters: Record<string, any> = {}
 
       if (action) {
         filters.action = action
+      }
+
+      if (entity) {
+        filters.entity = entity
+      }
+
+      if (entityId) {
+        filters.entity_id = entityId
       }
 
       const dateFilters: Record<string, any> = {}
@@ -216,12 +236,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
  * Generate CSV from audit logs
  */
 function generateCSV(logs: any[]): string {
-  const headers = ['Date', 'User', 'Email', 'Action', 'IP Address', 'Browser', 'Device', 'OS', 'Suspicious']
+  const headers = ['Date', 'User', 'Email', 'Action', 'Entity', 'Entity ID', 'IP Address', 'Browser', 'Device', 'OS', 'Suspicious']
   const rows = logs.map(log => [
     new Date(log.created_at).toISOString(),
     log.user_details?.name || 'Unknown',
     log.user_details?.email || 'N/A',
     log.action,
+    log.entity || 'N/A',
+    log.entity_id || 'N/A',
     log.ip_address,
     log.browser,
     log.device_type,
