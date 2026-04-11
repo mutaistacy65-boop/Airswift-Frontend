@@ -262,6 +262,13 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
     if (!validateStep(3)) return
 
+    // Check if using mock token
+    const token = localStorage.getItem('token')
+    if (token && token.startsWith('mock-')) {
+      alert('You are using a demo account. Please login with real credentials to submit applications.')
+      return
+    }
+
     setLoading(true)
 
     try {

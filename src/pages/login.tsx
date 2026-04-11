@@ -59,9 +59,10 @@ export default function Login() {
       console.log("LOGIN RESPONSE:", res);
 
       // Validate response data
-      const { token, user, message } = res
+      const { token, accessToken, user, message } = res
 
-      if (!token || !user) {
+      const authToken = token || accessToken
+      if (!authToken || !user) {
         throw new Error(message || 'Login failed: Invalid response from server')
       }
 
@@ -75,10 +76,18 @@ export default function Login() {
         return
       }
 
-      localStorage.setItem('token', token)
+      localStorage.setItem('token', authToken)
+      if (accessToken) {
+        localStorage.setItem('accessToken', accessToken)
+      }
       localStorage.setItem('user', JSON.stringify(user))
       if (user.role) {
         localStorage.setItem('role', user.role)
+      }
+
+      // Check if this is mock data
+      if (authToken.startsWith('mock-')) {
+        alert('Demo login successful. Note: Some features may not work with demo accounts.')
       }
 
       console.log("TOKEN:", localStorage.getItem("token"));

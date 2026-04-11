@@ -33,6 +33,9 @@ api.interceptors.request.use((config) => {
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url} with token: ${token.substring(0, 20)}...`);
+  } else {
+    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url} (no token)`);
   }
 
   return config;
