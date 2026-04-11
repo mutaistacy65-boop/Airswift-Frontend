@@ -80,7 +80,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .sort({ created_at: -1 })
       }
 
-      return res.status(200).json({ success: true, applications })
+      // Transform applications to include document URLs
+      const transformedApplications = applications.map(app => ({
+        ...app.toObject(),
+        cvUrl: app.cv_path ? `${process.env.NEXT_PUBLIC_API_URL || ''}${app.cv_path}` : null,
+        passportUrl: app.passport_path ? `${process.env.NEXT_PUBLIC_API_URL || ''}${app.passport_path}` : null,
+      }))
+
+      return res.status(200).json({ success: true, applications: transformedApplications })
     } catch (error) {
       console.error('Error fetching applications:', error)
       return res.status(500).json({ message: 'Internal server error' })
@@ -165,13 +172,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const cvFile = files.cv as formidable.File | formidable.File[] | undefined
 
         try {
-          var passportPath = Array.isArray(passportFile)
+          let passportPath = Array.isArray(passportFile)
             ? await saveFile(passportFile[0], uploadDir)
             : passportFile
             ? await saveFile(passportFile, uploadDir)
             : null
 
-          var cvPath = Array.isArray(cvFile)
+          let cvPath = Array.isArray(cvFile)
             ? await saveFile(cvFile[0], uploadDir)
             : cvFile
             ? await saveFile(cvFile, uploadDir)

@@ -7,16 +7,25 @@ export default function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ subject: '', message: '', date: '', time: '' })
+  const [notes, setNotes] = useState<{ [key: string]: string }>({})
 
   useEffect(() => {
     fetchApplications()
   }, [])
 
   const fetchApplications = async () => {
-    if (applications.length > 0) return // simple cache
     try {
       const res = await api.get('/admin/applications')
-      setApplications(res.data.applications || [])
+      const apps = res.data.applications || []
+      setApplications(apps)
+      // Load notes into local state
+      const notesMap: { [key: string]: string } = {}
+      apps.forEach((app: any) => {
+        if (app.notes) {
+          notesMap[app._id] = app.notes
+        }
+      })
+      setNotes(notesMap)
     } catch (err) {
       console.error(err)
     } finally {
@@ -26,8 +35,34 @@ export default function AdminDashboard() {
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      await api.put(`/admin/applications/${id}`, { status })
-      fetchApplications()
+      await fetch(`/api/admin/application/${id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem('token')}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({ status }),
+      });
+      fetchApplications(); // refresh list
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const updateNotes = async (id: string, noteText: string) => {
+    try {
+      await fetch(`/api/admin/application/${id}/notes`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem('token')}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({ notes: noteText }),
+      });
+      // Update local state
+      setNotes(prev => ({ ...prev, [id]: noteText }))
     } catch (err) {
       console.error(err)
     }
@@ -60,6 +95,8 @@ export default function AdminDashboard() {
       case 'pending':
         return 'bg-yellow-100 text-yellow-800'
       case 'shortlisted':
+        return 'bg-blue-100 text-blue-800'
+      case 'accepted':
         return 'bg-green-100 text-green-800'
       case 'rejected':
         return 'bg-red-100 text-red-800'
@@ -81,7 +118,9 @@ export default function AdminDashboard() {
             <tr>
               <th className="p-4 text-left">Applicant</th>
               <th className="p-4 text-left">Job</th>
+              <th className="p-4 text-left">Documents</th>
               <th className="p-4 text-left">Status</th>
+              <th className="p-4 text-left">Notes</th>
               <th className="p-4 text-left">Date</th>
               <th className="p-4 text-left">Actions</th>
             </tr>
@@ -97,6 +136,50 @@ export default function AdminDashboard() {
 
                 <td className="p-4">{app.job_id?.title}</td>
 
+                <td className="p-4 space-y-2">
+                  {app.cvUrl && (
+                    <div className="space-x-2">
+                      <a
+                        href={app.cvUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline text-sm"
+                      >
+                        View CV
+                      </a>
+                      <a
+                        href={app.cvUrl}
+                        download
+                        className="text-green-600 hover:text-green-800 underline text-sm"
+                      >
+                        Download CV
+                      </a>
+                    </div>
+                  )}
+                  {app.passportUrl && (
+                    <div className="space-x-2">
+                      <a
+                        href={app.passportUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline text-sm"
+                      >
+                        View Passport
+                      </a>
+                      <a
+                        href={app.passportUrl}
+                        download
+                        className="text-green-600 hover:text-green-800 underline text-sm"
+                      >
+                        Download Passport
+                      </a>
+                    </div>
+                  )}
+                  {!app.cvUrl && !app.passportUrl && (
+                    <span className="text-gray-400 text-sm">No documents</span>
+                  )}
+                </td>
+
                 <td className="p-4">
                   <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(app.status)}`}>
                     {app.status}
@@ -104,22 +187,43 @@ export default function AdminDashboard() {
                 </td>
 
                 <td className="p-4">
+                  <textarea
+                    value={notes[app._id] || ""}
+                    onChange={(e) => {
+                      const newNotes = { ...notes, [app._id]: e.target.value }
+                      setNotes(newNotes)
+                    }}
+                    onBlur={(e) => updateNotes(app._id, e.target.value)}
+                    placeholder="Add notes..."
+                    className="w-full border rounded px-2 py-1 text-sm resize-none"
+                    rows={2}
+                  />
+                </td>
+
+                <td className="p-4">
                   {new Date(app.created_at).toLocaleDateString()}
                 </td>
 
-                <td className="p-4 space-x-3">
+                <td className="p-4 space-x-2">
                   {app.status === 'pending' && (
                     <>
                       <button
                         onClick={() => updateStatus(app._id, 'shortlisted')}
-                        className="bg-green-500 text-white px-3 py-1 rounded"
+                        className="bg-blue-500 text-white px-2 py-1 rounded text-sm"
                       >
                         Shortlist
                       </button>
 
                       <button
+                        onClick={() => updateStatus(app._id, 'accepted')}
+                        className="bg-green-500 text-white px-2 py-1 rounded text-sm"
+                      >
+                        Accept
+                      </button>
+
+                      <button
                         onClick={() => updateStatus(app._id, 'rejected')}
-                        className="bg-red-500 text-white px-3 py-1 rounded"
+                        className="bg-red-500 text-white px-2 py-1 rounded text-sm"
                       >
                         Reject
                       </button>
@@ -128,7 +232,7 @@ export default function AdminDashboard() {
 
                   <button
                     onClick={() => openModal(app.user_id?._id)}
-                    className="bg-purple-500 text-white px-3 py-1 rounded"
+                    className="bg-purple-500 text-white px-2 py-1 rounded text-sm"
                   >
                     Interview
                   </button>

@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext'
 import Loader from '@/components/Loader'
 import { jobService } from '@/services/jobService'
 import { useNotification } from '@/context/NotificationContext'
+import { useSocket } from '@/hooks/useSocket'
 
 const JobSeekerDashboard: React.FC = () => {
   const { isAuthorized, isLoading } = useProtectedRoute('user')
@@ -21,11 +22,26 @@ const JobSeekerDashboard: React.FC = () => {
   const [notifications, setNotifications] = useState<any[]>([])
   const [profileCompletion, setProfileCompletion] = useState(75)
 
+  const { subscribe } = useSocket()
+
   useEffect(() => {
     if (isAuthorized) {
       fetchDashboardData()
     }
   }, [isAuthorized])
+
+  // Real-time listener for application updates
+  useEffect(() => {
+    const unsubscribe = subscribe('applicationUpdated', (data) => {
+      console.log('Application updated:', data)
+      // Refresh dashboard data when application status changes
+      fetchDashboardData()
+      // Show notification to user
+      addNotification(`Your application status has been updated to ${data.status}`, 'success')
+    })
+
+    return unsubscribe
+  }, [subscribe, addNotification])
 
   const fetchDashboardData = async () => {
     try {

@@ -5,6 +5,7 @@ export type SocketEventType =
   | 'applicationUpdate'
   | 'applicationCreated'
   | 'applicationStatusChanged'
+  | 'applicationUpdated'
   | 'newApplication'
   | 'statusUpdate'
   | 'interviewUpdate'

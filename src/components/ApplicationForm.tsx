@@ -279,9 +279,23 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       if (formData.passport) data.append('passport', formData.passport)
       if (formData.cv) data.append('cv', formData.cv)
 
-      const response = await API.post('/applications', data)
+      // Use fetch instead of axios for FormData to ensure proper multipart/form-data handling
+      const response = await fetch('/api/applications', {
+        method: 'POST',
+        body: data,
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
+        },
+        credentials: 'include',
+      })
 
-      if (response.data.success) {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+
+      if (result.success) {
         alert('Application submitted successfully!')
         // Clear drafts after successful submission
         localStorage.removeItem(STORAGE_KEY)

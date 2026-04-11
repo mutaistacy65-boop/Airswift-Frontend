@@ -180,13 +180,20 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({
       formData.append('audio', audioFile)
 
       // Transcribe audio
-      const transcriptionResult = await API.post('/interview/transcribe', formData, {
+      const transcriptionResult = await fetch('/api/interview/transcribe', {
+        method: 'POST',
+        body: formData,
         headers: {
-          'Content-Type': 'multipart/form-data',
-        }
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        credentials: 'include',
       })
 
-      const transcriptionData = transcriptionResult.data
+      if (!transcriptionResult.ok) {
+        throw new Error(`HTTP error! status: ${transcriptionResult.status}`)
+      }
+
+      const transcriptionData = await transcriptionResult.json()
 
       // Send transcript to interview socket
       socket.emit('voice-response', {
