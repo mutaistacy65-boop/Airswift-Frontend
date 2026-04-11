@@ -15,9 +15,10 @@ export default function AdminPayments() {
       const res = await API.get('/admin/payments', {
         params: { status: statusFilter || undefined },
       })
-      setPayments(res.data.payments)
+      setPayments(res.data.payments || [])
     } catch (err) {
       console.error(err)
+      setPayments([])
     } finally {
       setLoading(false)
     }

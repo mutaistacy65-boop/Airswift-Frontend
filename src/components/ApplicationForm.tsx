@@ -214,8 +214,8 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
     if (currentStep === 1) {
       if (!formData.jobId) {
-        newErrors.jobId = 'Job is required'
-        alert("Please select a job")
+        newErrors.jobId = 'Job title is required'
+        alert("Please enter a job title")
         return false
       }
       if (!formData.nationalId) newErrors.nationalId = 'National ID is required'
@@ -379,20 +379,15 @@ function Step1({ formData, errors, jobs, onChange, onNext }: any) {
   return (
     <>
       <div>
-        <label className="block text-sm font-medium mb-2">Select Job *</label>
-        <select
+        <label className="block text-sm font-medium mb-2">Job Title *</label>
+        <input
+          type="text"
           name="jobId"
           value={formData.jobId}
           onChange={onChange}
+          placeholder="Enter the job title you want to apply for"
           className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">Choose a job</option>
-          {jobs.map((job: any) => (
-            <option key={job._id} value={job._id}>
-              {job.title}
-            </option>
-          ))}
-        </select>
+        />
         {errors.jobId && <p className="text-red-500 text-sm mt-1">{errors.jobId}</p>}
       </div>
 
@@ -478,15 +473,13 @@ function Step2({ formData, errors, onNext, onPrev, setFormData }: any) {
 }
 
 function Step3({ formData, jobs, loading, onPrev }: any) {
-  const selectedJob = jobs.find((job: any) => job._id === formData.jobId)
-
   return (
     <>
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Review Your Application</h3>
         
         <div className="bg-gray-50 p-4 rounded-lg">
-          <p><strong>Job:</strong> {selectedJob?.title || 'N/A'}</p>
+          <p><strong>Job:</strong> {formData.jobId || 'N/A'}</p>
           <p><strong>National ID:</strong> {formData.nationalId}</p>
           <p><strong>Phone:</strong> {formData.phone}</p>
           <p><strong>Passport:</strong> {formData.passport?.name || 'Not uploaded'}</p>

@@ -38,6 +38,11 @@ export default function AdminDashboard() {
         setHealth(healthRes.data)
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
+        // Set safe defaults to prevent crashes
+        setSummary({})
+        setFunnel([])
+        setActivities([])
+        setHealth(null)
       } finally {
         setStatsLoading(false)
       }
@@ -56,6 +61,7 @@ export default function AdminDashboard() {
       setTrends(response.data)
     } catch (error) {
       console.error('Error fetching trends:', error)
+      setTrends([])
     }
   }
 
