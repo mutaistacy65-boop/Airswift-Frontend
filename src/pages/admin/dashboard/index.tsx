@@ -58,7 +58,7 @@ export default function AdminDashboard() {
   const fetchTrends = async (range: string) => {
     try {
       const response = await api.get(`/admin/dashboard/trends?range=${range}`)
-      setTrends(response.data)
+      setTrends(Array.isArray(response.data) ? response.data : [])
     } catch (error) {
       console.error('Error fetching trends:', error)
       setTrends([])
@@ -92,11 +92,17 @@ export default function AdminDashboard() {
     { label: '⚙️ Settings', href: '/admin/settings' },
   ]
 
+  const safeTrends = Array.isArray(trends) ? trends : []
+  const safeFunnel = Array.isArray(funnel) ? funnel : []
+  const safeActivities = Array.isArray(activities) ? activities : []
+  const safeAlerts = Array.isArray(alerts) ? alerts : []
+  const safeHealth = typeof health === 'object' && health !== null ? health : {}
+
   return (
     <DashboardLayout sidebarItems={sidebarItems}>
       <div className="space-y-8">
         {/* Alerts Section */}
-        {alerts.length > 0 && (
+        {safeAlerts.length > 0 && (
           <div className="mb-8">
             <div className="bg-white rounded-lg shadow-sm border p-4">
               <div className="flex items-center gap-2 mb-3">
@@ -104,7 +110,7 @@ export default function AdminDashboard() {
                 <h3 className="font-semibold text-gray-900">System Alerts</h3>
               </div>
               <div className="space-y-2">
-                {alerts.map(alert => (
+                {safeAlerts.map(alert => (
                   <div key={alert.id} className={`p-3 rounded-lg text-sm ${
                     alert.type === 'warning' ? 'bg-yellow-50 text-yellow-800 border border-yellow-200' :
                     alert.type === 'error' ? 'bg-red-50 text-red-800 border border-red-200' :
@@ -171,7 +177,7 @@ export default function AdminDashboard() {
               </select>
             </div>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={trends}>
+              <LineChart data={safeTrends}>
                 <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip />
@@ -188,7 +194,7 @@ export default function AdminDashboard() {
                 <Tooltip />
                 <Funnel
                   dataKey="count"
-                  data={funnel}
+                  data={safeFunnel}
                   isAnimationActive
                 >
                   <LabelList position="center" fill="#fff" stroke="none" />
@@ -196,7 +202,7 @@ export default function AdminDashboard() {
               </FunnelChart>
             </ResponsiveContainer>
             <div className="mt-4 space-y-2">
-              {funnel.map((stage: any, index: number) => (
+              {safeFunnel.map((stage: any, index: number) => (
                 <div key={index} className="flex justify-between text-sm">
                   <span>{stage.stage}</span>
                   <span className="font-medium">{stage.count}</span>
@@ -215,8 +221,8 @@ export default function AdminDashboard() {
               <button className="text-sm text-blue-600 hover:text-blue-800">View all</button>
             </div>
             <div className="space-y-4 max-h-96 overflow-y-auto">
-              {activities.length > 0 ? (
-                activities.map((activity: any, index: number) => (
+              {safeActivities.length > 0 ? (
+                safeActivities.map((activity: any, index: number) => (
                   <div key={index} className="flex items-start gap-3">
                     <div className={`p-2 rounded-lg ${
                       activity.type === 'application' ? 'bg-blue-100' :
@@ -273,17 +279,17 @@ export default function AdminDashboard() {
                   <span className="text-sm text-gray-600">Server</span>
                   <div className="flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${
-                      health?.server?.status === 'online' ? 'bg-green-500' :
-                      health?.server?.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
+                      safeHealth?.server?.status === 'online' ? 'bg-green-500' :
+                      safeHealth?.server?.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
                     }`}></div>
                     <span className={`text-sm capitalize ${
-                      health?.server?.status === 'online' ? 'text-green-600' :
-                      health?.server?.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'
+                      safeHealth?.server?.status === 'online' ? 'text-green-600' :
+                      safeHealth?.server?.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'
                     }`}>
-                      {health?.server?.status || 'unknown'}
+                      {safeHealth?.server?.status || 'unknown'}
                     </span>
-                    {health?.server?.cpuUsage && (
-                      <span className="text-xs text-gray-500">({health.server.cpuUsage} CPU)</span>
+                    {safeHealth?.server?.cpuUsage && (
+                      <span className="text-xs text-gray-500">({safeHealth.server.cpuUsage} CPU)</span>
                     )}
                   </div>
                 </div>
@@ -291,17 +297,17 @@ export default function AdminDashboard() {
                   <span className="text-sm text-gray-600">Database</span>
                   <div className="flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${
-                      health?.database?.status === 'online' ? 'bg-green-500' :
-                      health?.database?.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
+                      safeHealth?.database?.status === 'online' ? 'bg-green-500' :
+                      safeHealth?.database?.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
                     }`}></div>
                     <span className={`text-sm capitalize ${
-                      health?.database?.status === 'online' ? 'text-green-600' :
-                      health?.database?.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'
+                      safeHealth?.database?.status === 'online' ? 'text-green-600' :
+                      safeHealth?.database?.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'
                     }`}>
-                      {health?.database?.status || 'unknown'}
+                      {safeHealth?.database?.status || 'unknown'}
                     </span>
-                    {health?.database?.queryLatency && (
-                      <span className="text-xs text-gray-500">({health.database.queryLatency} latency)</span>
+                    {safeHealth?.database?.queryLatency && (
+                      <span className="text-xs text-gray-500">({safeHealth.database.queryLatency} latency)</span>
                     )}
                   </div>
                 </div>
@@ -309,17 +315,17 @@ export default function AdminDashboard() {
                   <span className="text-sm text-gray-600">AI Service</span>
                   <div className="flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${
-                      health?.aiService?.status === 'online' ? 'bg-green-500' :
-                      health?.aiService?.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
+                      safeHealth?.aiService?.status === 'online' ? 'bg-green-500' :
+                      safeHealth?.aiService?.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
                     }`}></div>
                     <span className={`text-sm capitalize ${
-                      health?.aiService?.status === 'online' ? 'text-green-600' :
-                      health?.aiService?.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'
+                      safeHealth?.aiService?.status === 'online' ? 'text-green-600' :
+                      safeHealth?.aiService?.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'
                     }`}>
-                      {health?.aiService?.status || 'unknown'}
+                      {safeHealth?.aiService?.status || 'unknown'}
                     </span>
-                    {health?.aiService?.responseLatency && (
-                      <span className="text-xs text-gray-500">({health.aiService.responseLatency} latency)</span>
+                    {safeHealth?.aiService?.responseLatency && (
+                      <span className="text-xs text-gray-500">({safeHealth.aiService.responseLatency} latency)</span>
                     )}
                   </div>
                 </div>
@@ -327,17 +333,17 @@ export default function AdminDashboard() {
                   <span className="text-sm text-gray-600">Email Service</span>
                   <div className="flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${
-                      health?.emailService?.status === 'online' ? 'bg-green-500' :
-                      health?.emailService?.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
+                      safeHealth?.emailService?.status === 'online' ? 'bg-green-500' :
+                      safeHealth?.emailService?.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
                     }`}></div>
                     <span className={`text-sm capitalize ${
-                      health?.emailService?.status === 'online' ? 'text-green-600' :
-                      health?.emailService?.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'
+                      safeHealth?.emailService?.status === 'online' ? 'text-green-600' :
+                      safeHealth?.emailService?.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'
                     }`}>
-                      {health?.emailService?.status || 'unknown'}
+                      {safeHealth?.emailService?.status || 'unknown'}
                     </span>
-                    {health?.emailService?.deliverySuccessRate && (
-                      <span className="text-xs text-gray-500">({health.emailService.deliverySuccessRate} success)</span>
+                    {safeHealth?.emailService?.deliverySuccessRate && (
+                      <span className="text-xs text-gray-500">({safeHealth.emailService.deliverySuccessRate} success)</span>
                     )}
                   </div>
                 </div>
