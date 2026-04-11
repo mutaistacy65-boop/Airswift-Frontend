@@ -303,7 +303,6 @@ export default function AdminUsersPage() {
                               : 'bg-purple-100 text-purple-800'
                           }`}
                         >
-                          <option value="admin">Admin</option>
                           <option value="recruiter">Recruiter</option>
                           <option value="user">User</option>
                           <option value="job_seeker">Job Seeker</option>
@@ -497,7 +496,6 @@ export default function AdminUsersPage() {
                 }
                 className="w-full border border-gray-300 rounded-lg px-3 py-2"
               >
-                <option value="admin">Admin</option>
                 <option value="recruiter">Recruiter</option>
                 <option value="user">User</option>
                 <option value="job_seeker">Job Seeker</option>

@@ -13,7 +13,13 @@ export interface LoginFormData {
 
 export const registerUser = async (formData: RegisterFormData) => {
   try {
-    const result = await API.post('/auth/register', formData);
+    // Force role to be 'user' for all registrations - no admin accounts allowed
+    const registrationData = {
+      ...formData,
+      role: 'user'
+    };
+    
+    const result = await API.post('/auth/register', registrationData);
 
     const data = result.data;
 
@@ -21,6 +27,37 @@ export const registerUser = async (formData: RegisterFormData) => {
 
     return data;
   } catch (error: any) {
+    // Check if user already exists - send verification code instead
+    if (error.response?.status === 409 || 
+        error.response?.data?.message?.toLowerCase().includes('already exists') ||
+        error.response?.data?.message?.toLowerCase().includes('user already')) {
+      
+      console.log('User already exists, sending verification code...');
+      
+      try {
+        // Try to resend verification code
+        const resendResult = await API.post('/auth/resend-verification', { email: formData.email });
+        console.log('Resend verification response:', resendResult.data);
+        
+        // Return success response that redirects to verify-otp
+        return {
+          redirect: '/verify-otp',
+          email: formData.email,
+          message: 'Account already exists. Verification code sent to your email.',
+          user: { email: formData.email }
+        };
+      } catch (resendError: any) {
+        console.warn('Failed to resend verification code:', resendError);
+        // Still return the redirect even if resend fails
+        return {
+          redirect: '/verify-otp',
+          email: formData.email,
+          message: 'Account already exists. Please check your email for verification code.',
+          user: { email: formData.email }
+        };
+      }
+    }
+
     // If backend is not available, simulate successful registration
     if (error.message?.includes('Network Error') || error.code === 'ECONNREFUSED') {
       console.warn('Backend not available, simulating successful registration');
@@ -72,76 +109,7 @@ export const loginUser = async (formData: LoginFormData) => {
 
     return data;
   } catch (error: any) {
-    // If backend returns auth errors, fall back to mock data for development
-    if (error.response?.status === 400 || error.response?.status === 401 || error.response?.status === 403) {
-      console.warn('Backend authentication failed, using mock login data:', error.response?.data?.message);
-
-      // For admin login, only allow specific credentials
-      if (formData.email === 'admin@talex.com' && formData.password === 'Admin123!') {
-        return {
-          accessToken: 'mock-admin-jwt-token-' + Date.now(),
-          token: 'mock-admin-jwt-token-' + Date.now(),
-          user: {
-            id: 'mock-admin-id',
-            email: 'admin@talex.com',
-            name: 'Admin User',
-            role: 'admin',
-            isVerified: true
-          }
-        };
-      }
-
-      // For regular users, simulate verified account
-      return {
-        accessToken: 'mock-jwt-token-' + Date.now(),
-        token: 'mock-jwt-token-' + Date.now(),
-        user: {
-          id: 'mock-user-id',
-          email: formData.email,
-          name: 'Mock User',
-          role: 'user',
-          isVerified: true
-        }
-      };
-    }
-
-    // If network error, also fall back to mock data
-    if (error.message?.includes('Network Error') || error.code === 'ECONNREFUSED') {
-      console.warn('Backend not available, using mock login data:', error.message);
-
-      // For admin login, allow various admin credentials
-      if (formData.email.toLowerCase().includes('admin') || formData.email === 'admin@talex.com') {
-        // Accept common admin passwords or the specific one
-        if (formData.password === 'Admin123!' || formData.password === 'admin123' || formData.password === 'Admin123!' || formData.password === 'admin') {
-          return {
-            accessToken: 'mock-admin-jwt-token-' + Date.now(),
-            token: 'mock-admin-jwt-token-' + Date.now(),
-            user: {
-              id: 'mock-admin-id',
-              email: formData.email,
-              name: 'Admin User',
-              role: 'admin',
-              isVerified: true
-            }
-          };
-        }
-      }
-
-      // For regular users, simulate verified account
-      return {
-        accessToken: 'mock-jwt-token-' + Date.now(),
-        token: 'mock-jwt-token-' + Date.now(),
-        user: {
-          id: 'mock-user-id',
-          email: formData.email,
-          name: 'Mock User',
-          role: 'user',
-          isVerified: true
-        }
-      };
-    }
-
-    throw new Error(error.response?.data?.message || error.response?.data?.error || 'Login failed');
+    throw error;
   }
 };
 

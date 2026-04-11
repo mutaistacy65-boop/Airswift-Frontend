@@ -44,7 +44,8 @@ const saveFile = async (file: formidable.File, uploadDir: string) => {
 
 const getAuthUser = async (req: NextApiRequest) => {
   try {
-    const token = req.cookies.accessToken || req.headers.authorization?.replace('Bearer ', '')
+    // Prefer Authorization header over cookie to avoid stale admin cookie takeover.
+    const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies.accessToken
     if (!token) return null
 
     const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'secret')

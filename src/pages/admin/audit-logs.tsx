@@ -65,9 +65,40 @@ export default function AuditLogsPage() {
     // Subscribe to real-time audit log events
     subscribe('audit_log', (data) => {
       console.log('New audit log:', data)
-      // Refresh logs when new activity occurs
-      fetchAuditLogs()
+      // Add new log to the top of the list immediately
+      const newLog: AuditLog = {
+        _id: `temp-${Date.now()}`, // Temporary ID
+        action: data.action,
+        user_name: data.user,
+        user_email: data.email,
+        ip_address: 'Real-time', // Placeholder
+        browser: 'Unknown',
+        device_type: 'Unknown',
+        os: 'Unknown',
+        is_suspicious: false,
+        created_at: data.timestamp,
+        details: {},
+      }
+      setLogs(prevLogs => [newLog, ...prevLogs])
+      
+      // Refresh logs after 2 seconds to get complete data
+      setTimeout(() => {
+        fetchAuditLogs()
+      }, 2000)
     })
+
+    // Refresh logs when page becomes visible (user returns to tab)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchAuditLogs()
+      }
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [user, mounted])
 
   const fetchAuditLogs = async () => {
