@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import axios from 'axios'
 import { AuthProvider } from '@/context/AuthContext'
 import { NotificationProvider } from '@/context/NotificationContext'
+import ErrorBoundary from '@/components/ErrorBoundary'
 // @ts-ignore
 import '@/styles/globals.css'
 
@@ -46,10 +47,12 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [])
 
   return (
-    <NotificationProvider>
-      <AuthProvider>
-        <Component {...pageProps} />
-      </AuthProvider>
-    </NotificationProvider>
+    <ErrorBoundary>
+      <NotificationProvider>
+        <AuthProvider>
+          <Component {...pageProps} />
+        </AuthProvider>
+      </NotificationProvider>
+    </ErrorBoundary>
   )
 }

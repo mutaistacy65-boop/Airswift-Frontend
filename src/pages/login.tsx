@@ -49,18 +49,21 @@ export default function Login() {
       const res = await API.post('/auth/login', form)
       console.log("LOGIN RESPONSE:", res.data);
 
-      // Check if user is verified before allowing login
-      if (!res.data.user?.isVerified) {
-        // Return special response for unverified accounts
-        const email = res.data.user.email
-        router.push(`/verify-otp?email=${encodeURIComponent(email)}&type=login`)
-        return
-      }
-
+      // Validate response data
       const { token, user, message } = res.data
 
       if (!token || !user) {
-        throw new Error(message || 'Login failed')
+        throw new Error(message || 'Login failed: Invalid response from server')
+      }
+
+      // Check if user is verified before allowing login
+      if (!user.isVerified) {
+        // Return special response for unverified accounts
+        const email = user?.email
+        if (email) {
+          router.push(`/verify-otp?email=${encodeURIComponent(email)}&type=login`)
+        }
+        return
       }
 
       localStorage.setItem('token', token)
@@ -86,9 +89,9 @@ export default function Login() {
         console.warn('Draft check failed — ignoring')
       }
 
-      if (user.role === 'admin') {
+      if (user?.role === 'admin') {
         router.push('/admin/dashboard')
-      } else if (!user.has_submitted) {
+      } else if (!user?.has_submitted) {
         router.push('/apply')
       } else {
         router.push('/dashboard')

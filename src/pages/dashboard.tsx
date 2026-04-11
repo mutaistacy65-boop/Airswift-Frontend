@@ -9,7 +9,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!isLoading) {
-      if (!isAuthenticated) {
+      if (!isAuthenticated || !user) {
         router.push('/login')
       } else if (user.role === 'admin') {
         router.push('/admin/dashboard')

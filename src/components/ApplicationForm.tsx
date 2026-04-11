@@ -223,6 +223,19 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     } else if (currentStep === 2) {
       if (!formData.passport) newErrors.passport = 'Passport is required'
       if (!formData.cv) newErrors.cv = 'CV is required'
+    } else if (currentStep === 3) {
+      // Final validation before submission
+      if (!formData.jobId) newErrors.jobId = 'Job title is required'
+      if (!formData.nationalId) newErrors.nationalId = 'National ID is required'
+      if (!formData.phone) newErrors.phone = 'Phone number is required'
+      if (!formData.passport) newErrors.passport = 'Passport is required'
+      if (!formData.cv) newErrors.cv = 'CV is required'
+      
+      if (Object.keys(newErrors).length > 0) {
+        console.warn('Validation failed at step 3:', newErrors)
+        alert('Please fill in all required fields before submitting')
+        return false
+      }
     }
 
     setErrors(newErrors)
@@ -283,9 +296,29 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       if (formData.passport) data.append('passport', formData.passport)
       if (formData.cv) data.append('cv', formData.cv)
 
-      const response = await API.post('/applications', data)
+      // Use fetch instead of axios for FormData to avoid header issues
+      const token = localStorage.getItem('accessToken') || localStorage.getItem('token')
+      const response = await fetch('/api/applications', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
+        body: data,
+      })
 
-      if (response.data.success) {
+      const responseData = await response.json()
+
+      if (!response.ok) {
+        console.error('API Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: responseData,
+        })
+        throw new Error(responseData.message || `Server error: ${response.status}`)
+      }
+
+      if (responseData.success) {
         alert('Application submitted successfully!')
         // Clear drafts after successful submission
         localStorage.removeItem(STORAGE_KEY)
@@ -294,7 +327,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
+              'Authorization': `Bearer ${token}`,
             },
             credentials: 'include',
           })
@@ -303,10 +336,15 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
         }
         if (onSuccess) onSuccess()
         router.push('/dashboard')
+      } else {
+        throw new Error(responseData.message || 'Submission failed')
       }
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Error submitting application'
+      console.error('Application submission error:', error)
+      const message = error.message || 'Error submitting application'
       alert(message)
+      // Show error in console for debugging
+      console.error('Full error details:', error)
     } finally {
       setLoading(false)
     }

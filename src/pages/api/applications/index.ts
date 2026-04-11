@@ -93,13 +93,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     form.parse(req, async (err, fields, files) => {
       if (err) {
         console.error('Error parsing application form:', err)
-        return res.status(500).json({ message: 'Error parsing form data' })
+        return res.status(400).json({ message: `Form parsing error: ${err.message}` })
       }
+
+      console.log('Form parsed successfully:', {
+        fieldKeys: Object.keys(fields),
+        fileKeys: Object.keys(files),
+        hasPassport: Boolean(files.passport),
+        hasCv: Boolean(files.cv),
+      })
 
       try {
         const user = await getAuthUser(req)
         if (!user) {
-          return res.status(401).json({ message: 'Unauthorized' })
+          console.warn('Authentication failed: No user found')
+          return res.status(401).json({ message: 'Unauthorized - please log in again' })
         }
 
         const jobId = getSingleValue(fields.jobId)
@@ -155,19 +163,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const passportFile = files.passport as formidable.File | formidable.File[] | undefined
         const cvFile = files.cv as formidable.File | formidable.File[] | undefined
 
-        const passportPath = Array.isArray(passportFile)
-          ? await saveFile(passportFile[0], uploadDir)
-          : passportFile
-          ? await saveFile(passportFile, uploadDir)
-          : null
+        try {
+          var passportPath = Array.isArray(passportFile)
+            ? await saveFile(passportFile[0], uploadDir)
+            : passportFile
+            ? await saveFile(passportFile, uploadDir)
+            : null
 
-        const cvPath = Array.isArray(cvFile)
-          ? await saveFile(cvFile[0], uploadDir)
-          : cvFile
-          ? await saveFile(cvFile, uploadDir)
-          : null
+          var cvPath = Array.isArray(cvFile)
+            ? await saveFile(cvFile[0], uploadDir)
+            : cvFile
+            ? await saveFile(cvFile, uploadDir)
+            : null
+        } catch (fileError: any) {
+          console.error('File upload error:', fileError)
+          return res.status(400).json({ message: `File upload failed: ${fileError.message}` })
+        }
 
         if (!passportPath || !cvPath) {
+          console.warn('Missing required files:', { passportPath, cvPath })
           return res.status(400).json({ message: 'Passport and CV are required' })
         }
 
@@ -193,7 +207,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         })
       } catch (error: any) {
         console.error('Error creating application:', error)
-        return res.status(500).json({ message: 'Internal server error' })
+        
+        // Provide more specific error messages for debugging
+        let errorMessage = 'Internal server error'
+        
+        if (error.code === 11000) {
+          errorMessage = 'Duplicate application detected'
+        } else if (error.message?.includes('Cast to ObjectId')) {
+          errorMessage = 'Invalid job ID format'
+        } else if (error.message?.includes('ENOSPC')) {
+          errorMessage = 'Server storage full'
+        } else if (error.message?.includes('EACCES')) {
+          errorMessage = 'Server file permission error'
+        }
+        
+        console.error('Detailed error:', {
+          name: error.name,
+          message: error.message,
+          code: error.code,
+          stack: error.stack,
+        })
+        
+        return res.status(500).json({ message: errorMessage })
       }
     })
   } else {
