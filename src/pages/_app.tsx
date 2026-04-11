@@ -4,8 +4,12 @@ import axios from 'axios'
 import { AuthProvider } from '@/context/AuthContext'
 import { NotificationProvider } from '@/context/NotificationContext'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import UserLocationEmitter from '@/components/UserLocationEmitter'
+// @ts-ignore
+import 'leaflet/dist/leaflet.css'
 // @ts-ignore
 import '@/styles/globals.css'
+
 
 /**
  * 🍪 CRITICAL GLOBAL CONFIGURATION 🍪
@@ -50,6 +54,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <ErrorBoundary>
       <NotificationProvider>
         <AuthProvider>
+          <UserLocationEmitter />
           <Component {...pageProps} />
         </AuthProvider>
       </NotificationProvider>

@@ -19,6 +19,11 @@ export type SocketEventType =
   | 'connect'
   | 'disconnect'
   | 'error'
+  | 'user:location'
+  | 'user:online'
+  | 'user:offline'
+  | 'user:activity'
+  | 'admin:alert'
 
 interface UseSocketOptions {
   autoConnect?: boolean
