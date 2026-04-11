@@ -266,15 +266,24 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
     try {
       const data = new FormData()
-      data.append('jobId', formData.jobId)
+      const matchedJob = jobs.find((job: any) => job.title?.toLowerCase?.() === formData.jobId.trim().toLowerCase())
+      const jobIdToSend = matchedJob ? matchedJob._id : formData.jobId
+
+      console.log('SUBMITTING APPLICATION:', {
+        jobIdToSend,
+        nationalId: formData.nationalId,
+        phone: formData.phone,
+        hasPassport: Boolean(formData.passport),
+        hasCv: Boolean(formData.cv),
+      })
+
+      data.append('jobId', jobIdToSend)
       data.append('nationalId', formData.nationalId)
       data.append('phone', formData.phone)
       if (formData.passport) data.append('passport', formData.passport)
       if (formData.cv) data.append('cv', formData.cv)
 
-      const response = await API.post('/applications', data, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      const response = await API.post('/applications', data)
 
       if (response.data.success) {
         alert('Application submitted successfully!')
