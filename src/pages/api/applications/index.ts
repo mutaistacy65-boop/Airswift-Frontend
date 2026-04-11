@@ -5,6 +5,7 @@ import Application from '@/lib/models/Application'
 import User from '@/lib/models/User'
 import Job from '@/lib/models/Job'
 import jwt from 'jsonwebtoken'
+import mongoose from 'mongoose'
 import formidable from 'formidable'
 import fs from 'fs'
 import path from 'path'
@@ -104,23 +105,48 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const jobId = getSingleValue(fields.jobId)
 
         if (!jobId) {
-          return res.status(400).json({ message: 'Job ID required' })
+          return res.status(400).json({ message: 'Job title is required' })
+        }
+
+        let resolvedJob = null
+        let jobObjectId: mongoose.Types.ObjectId | null = null
+
+        if (mongoose.Types.ObjectId.isValid(jobId)) {
+          jobObjectId = new mongoose.Types.ObjectId(jobId)
+          resolvedJob = await Job.findById(jobObjectId)
+        }
+
+        if (!resolvedJob) {
+          // Try matching by title if the user typed a job title
+          resolvedJob = await Job.findOne({
+            title: { $regex: new RegExp(`^${jobId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+          })
+        }
+
+        if (!resolvedJob) {
+          // Create a placeholder job record for the typed job title
+          resolvedJob = await Job.create({
+            title: jobId,
+            description: `Application for ${jobId}`,
+          })
+        }
+
+        const jobToSave = resolvedJob._id
+        const nationalId = getSingleValue(fields.nationalId)
+        const phone = getSingleValue(fields.phone)
+
+        if (!nationalId || !phone) {
+          return res.status(400).json({ message: 'National ID and phone are required' })
         }
 
         // Check if user already applied to this job
         const existingApplication = await Application.findOne({
           user_id: user._id,
-          job_id: jobId,
+          job_id: jobToSave,
         })
 
         if (existingApplication) {
           return res.status(400).json({ message: 'Already applied for this job' })
-        }
-
-        // Verify job exists
-        const job = await Job.findById(jobId)
-        if (!job) {
-          return res.status(404).json({ message: 'Job not found' })
         }
 
         const uploadDir = await makeUploadDir()
@@ -148,7 +174,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Create application
         const application = new Application({
           user_id: user._id,
-          job_id: jobId,
+          job_id: jobToSave,
           national_id: nationalId,
           phone,
           passport_path: passportPath,
