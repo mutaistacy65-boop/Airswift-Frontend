@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import API from '@/services/apiClient'
+import { loginUser } from '@/api/auth'
 import Button from '../components/Button'
 import ContinueDraftModal from '@/components/ContinueDraftModal'
 import { useAuth } from '@/context/AuthContext'
@@ -46,11 +47,19 @@ export default function Login() {
 
     try {
       setIsLoading(true)
-      const res = await API.post('/auth/login', form)
-      console.log("LOGIN RESPONSE:", res.data);
+      console.log('Login attempt with:', { email: form.email, password: '[HIDDEN]' })
+      const res = await loginUser(form)
+      
+      // Handle redirect for unverified accounts
+      if (res.redirect) {
+        router.push(`${res.redirect}?email=${encodeURIComponent(res.email)}&type=login`)
+        return
+      }
+      
+      console.log("LOGIN RESPONSE:", res);
 
       // Validate response data
-      const { token, user, message } = res.data
+      const { token, user, message } = res
 
       if (!token || !user) {
         throw new Error(message || 'Login failed: Invalid response from server')
@@ -97,7 +106,16 @@ export default function Login() {
         router.push('/dashboard')
       }
     } catch (err: any) {
-      const errorMessage = err?.message || err?.toString?.() || 'Login failed'
+      let errorMessage = 'Login failed'
+      
+      if (err?.response?.data?.message) {
+        errorMessage = err.response.data.message
+      } else if (err?.message) {
+        errorMessage = err.message
+      } else if (err?.toString) {
+        errorMessage = err.toString()
+      }
+      
       setError(errorMessage)
       console.error('Login error:', err)
     } finally {
