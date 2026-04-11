@@ -64,11 +64,12 @@ export default function Login() {
       }
 
       localStorage.setItem('token', jwt)
-      localStorage.setItem('token', jwt)
       localStorage.setItem('user', JSON.stringify(user))
       if (user.role) {
         localStorage.setItem('role', user.role)
       }
+
+      console.log("TOKEN:", localStorage.getItem("token"));
 
       // Update AuthContext immediately
       login({ user })

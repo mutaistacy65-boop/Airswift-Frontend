@@ -1,7 +1,18 @@
-const API = process.env.NEXT_PUBLIC_API_URL;
+import axios from "axios";
 
-console.log("API URL:", API);
+const api = axios.create({
+  baseURL: "https://airswift-backend-fjt3.onrender.com/api",
+});
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+// ✅ Attach token automatically
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
 
-export default API_BASE_URL;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
+
+export default api;
