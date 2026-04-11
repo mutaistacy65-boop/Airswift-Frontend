@@ -4,7 +4,7 @@ import { emailLogger } from '@/lib/emailLogger'
 
 /**
  * Email service using NodeMailer
- * Supports both SMTP and SendGrid
+ * Supports Brevo, SendGrid, and custom SMTP
  */
 
 let transporter: any = null
@@ -15,8 +15,20 @@ let transporter: any = null
 const initializeTransporter = async () => {
   if (transporter) return transporter
 
+  // Check if using Brevo
+  if (process.env.BREVO_API_KEY) {
+    transporter = nodemailer.createTransport({
+      host: 'smtp-relay.brevo.com',
+      port: 587,
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: process.env.BREVO_SMTP_USER || 'apikey', // Usually 'apikey' or your Brevo login
+        pass: process.env.BREVO_API_KEY,
+      },
+    })
+  }
   // Check if using SendGrid
-  if (process.env.SENDGRID_API_KEY) {
+  else if (process.env.SENDGRID_API_KEY) {
     transporter = nodemailer.createTransport({
       host: 'smtp.sendgrid.net',
       port: 587,
