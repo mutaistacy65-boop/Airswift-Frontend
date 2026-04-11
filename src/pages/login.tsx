@@ -3,7 +3,6 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import API from '@/services/apiClient'
 import Button from '../components/Button'
-import { loginUser } from '@/api/auth'
 import ContinueDraftModal from '@/components/ContinueDraftModal'
 import { useAuth } from '@/context/AuthContext'
 
@@ -47,23 +46,24 @@ export default function Login() {
 
     try {
       setIsLoading(true)
-      const response = await loginUser(form)
-      console.log('LOGIN RESPONSE:', response)
+      const res = await API.post('/auth/login', form)
+      console.log("LOGIN RESPONSE:", res.data);
 
-      if (response?.redirect === '/verify-otp') {
-        const email = response.email || form.email
+      // Check if user is verified before allowing login
+      if (!res.data.user?.isVerified) {
+        // Return special response for unverified accounts
+        const email = res.data.user.email
         router.push(`/verify-otp?email=${encodeURIComponent(email)}&type=login`)
         return
       }
 
-      const { token, accessToken, user, message } = response as any
-      const jwt = token || accessToken
+      const { token, user, message } = res.data
 
-      if (!jwt || !user) {
+      if (!token || !user) {
         throw new Error(message || 'Login failed')
       }
 
-      localStorage.setItem('token', jwt)
+      localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
       if (user.role) {
         localStorage.setItem('role', user.role)

@@ -333,6 +333,18 @@ export const authVerifyRegistrationOtp = async (req: NextApiRequest, res: NextAp
 
 const proxyToAdminBackend = async (req: NextApiRequest, res: NextApiResponse, endpoint: string) => {
   try {
+    // Verify admin access
+    let user
+    try {
+      user = await verifyToken(req)
+    } catch (error) {
+      return res.status(401).json({ message: "Unauthorized" })
+    }
+
+    if (!user || (user as any).role !== 'admin') {
+      return res.status(403).json({ message: "Admin access required" })
+    }
+
     const url = `${API_URL}/api/admin/${endpoint}`
     const config = {
       method: req.method as any,

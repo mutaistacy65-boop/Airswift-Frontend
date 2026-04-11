@@ -151,15 +151,18 @@ export default function UserDashboard() {
             <h2 className="text-xl font-bold text-gray-900">Recent Notifications</h2>
           </div>
           <div className="space-y-4 p-6">
-            {notifications.slice(0, 5).map(notif => (
-              <div key={notif._id} className="border-l-4 border-blue-500 pl-4 py-2">
-                <h3 className="font-bold text-gray-900">{notif.title}</h3>
-                <p className="text-gray-600 text-sm">{notif.message}</p>
-                <p className="text-gray-400 text-xs mt-1">
-                  {new Date(notif.created_at).toLocaleDateString()}
-                </p>
-              </div>
-            ))}
+            {(() => {
+              const safeNotifications = Array.isArray(notifications) ? notifications : [];
+              return safeNotifications.slice(0, 5).map(notif => (
+                <div key={notif._id} className="border-l-4 border-blue-500 pl-4 py-2">
+                  <h3 className="font-bold text-gray-900">{notif.title}</h3>
+                  <p className="text-gray-600 text-sm">{notif.message}</p>
+                  <p className="text-gray-400 text-xs mt-1">
+                    {new Date(notif.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              ));
+            })()}
           </div>
         </div>
       )}

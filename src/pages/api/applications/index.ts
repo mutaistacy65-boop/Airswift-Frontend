@@ -84,6 +84,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ message: 'Internal server error' })
     }
   } else if (req.method === 'POST') {
+    console.log("USER:", await getAuthUser(req));
+    console.log("BODY:", req.body);
+
     const form = formidable({ multiples: true, keepExtensions: true })
 
     form.parse(req, async (err, fields, files) => {
@@ -99,11 +102,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         const jobId = getSingleValue(fields.jobId)
-        const nationalId = getSingleValue(fields.nationalId)
-        const phone = getSingleValue(fields.phone)
 
-        if (!jobId || !nationalId || !phone) {
-          return res.status(400).json({ message: 'Missing required fields' })
+        if (!jobId) {
+          return res.status(400).json({ message: 'Job ID required' })
         }
 
         // Check if user already applied to this job

@@ -142,6 +142,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
   const fetchJobs = async () => {
     try {
       const response = await API.get('/jobs')
+      console.log("JOBS RESPONSE:", response.data);
       setJobs(response.data.jobs || [])
     } catch (error) {
       console.error('Error fetching jobs:', error)
@@ -212,7 +213,11 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     const newErrors: Record<string, string> = {}
 
     if (currentStep === 1) {
-      if (!formData.jobId) newErrors.jobId = 'Job is required'
+      if (!formData.jobId) {
+        newErrors.jobId = 'Job is required'
+        alert("Please select a job")
+        return false
+      }
       if (!formData.nationalId) newErrors.nationalId = 'National ID is required'
       if (!formData.phone) newErrors.phone = 'Phone number is required'
     } else if (currentStep === 2) {

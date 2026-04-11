@@ -14,7 +14,7 @@ export default function ApplicationPage() {
 
     const check = async () => {
       try {
-        const res = await API.get('/user/status')
+        const res = await API.get('/users/status')
 
         if (res.data.hasApplied) {
           router.push('/dashboard')

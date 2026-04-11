@@ -49,9 +49,9 @@ const JobsPage: React.FC = () => {
 
       const data = await jobService.searchJobs(searchQuery, filters)
       if (page === 1) {
-        setJobs(data.jobs || data)
+        setJobs(data.jobs || [])
       } else {
-        setJobs(prev => [...prev, ...(data.jobs || data)])
+        setJobs(prev => [...prev, ...(data.jobs || [])])
       }
       setHasMore(data.hasMore || false)
     } catch (error) {
