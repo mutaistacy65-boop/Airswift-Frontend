@@ -7,10 +7,13 @@
 import AuditLog from '@/lib/models/AuditLog'
 import User from '@/lib/models/User'
 import { getClientIp, detectDevice } from '@/lib/auditLogger'
+import { AuditAction } from '@/lib/constants/auditActions'
 
 export interface LogActivityOptions {
   user_id?: string
-  action: 'REGISTER' | 'LOGIN' | 'LOGOUT' | 'FAILED_LOGIN' | 'ACTION'
+  action: AuditAction
+  entity?: string
+  entity_id?: string
   request: any
   details?: Record<string, any>
 }
@@ -71,7 +74,7 @@ const checkSuspiciousActivity = async (
  */
 export const logActivity = async (options: LogActivityOptions): Promise<any> => {
   try {
-    const { user_id, action, request, details = {} } = options
+    const { user_id, action, entity, entity_id, request, details = {} } = options
 
     const ip_address = getClientIp(request)
     const user_agent = request.headers['user-agent'] || 'Unknown'
@@ -84,6 +87,8 @@ export const logActivity = async (options: LogActivityOptions): Promise<any> => 
     const auditLog = new AuditLog({
       user_id: user_id || null,
       action,
+      entity: entity || null,
+      entity_id: entity_id || null,
       ip_address,
       user_agent,
       browser,

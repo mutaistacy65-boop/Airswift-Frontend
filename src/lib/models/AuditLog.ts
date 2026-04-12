@@ -4,6 +4,8 @@ import mongoose, { Schema, Document } from 'mongoose'
 export interface IAuditLog extends Document {
   user_id?: string // Optional for failed logins
   action: 'REGISTER' | 'LOGIN' | 'LOGOUT' | 'FAILED_LOGIN' | 'ACTION'
+  entity?: string
+  entity_id?: string
   ip_address: string
   user_agent: string
   browser?: string
@@ -27,6 +29,16 @@ const AuditLogSchema = new Schema(
       type: String,
       enum: ['REGISTER', 'LOGIN', 'LOGOUT', 'FAILED_LOGIN', 'ACTION'],
       required: true,
+      index: true,
+    },
+    entity: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    entity_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
       index: true,
     },
     ip_address: {

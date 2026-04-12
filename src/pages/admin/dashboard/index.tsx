@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import DashboardLayout from '@/layouts/DashboardLayout';
@@ -9,6 +10,11 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, FunnelChar
 import { TrendingUp, Users, Briefcase, Calendar, AlertTriangle, CheckCircle, Clock, DollarSign, Activity, Bell, Settings, Download, FileText, User } from 'lucide-react';
 import api from '@/services/apiClient'
 import AdminPayments from '@/components/AdminPayments'
+import AdminLogs from '@/components/AdminLogs'
+
+const AdminRealtimeMap = dynamic(() => import('@/components/AdminRealtimeMap'), {
+  ssr: false,
+})
 
 export default function AdminDashboard() {
   const { logout } = useAuth();
@@ -212,6 +218,17 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* Real-Time Location Map */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Real-Time User Locations</h3>
+              <p className="text-sm text-gray-500">Live user tracking and admin alerts from the socket feed.</p>
+            </div>
+          </div>
+          <AdminRealtimeMap />
+        </div>
+
         {/* Bottom Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Recent Activities */}
@@ -376,6 +393,15 @@ export default function AdminDashboard() {
               </Link>
             </div>
           </div>
+        </div>
+
+        {/* Recent Audit Logs */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Audit Logs</h3>
+            <span className="text-sm text-gray-500">Latest system activity</span>
+          </div>
+          <AdminLogs limit={5} compact />
         </div>
       </div>
     </DashboardLayout>
