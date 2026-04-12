@@ -74,12 +74,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method Not Allowed' })
   }
 
-  const form = formidable({ multiples: true, keepExtensions: true })
+  const form = formidable({
+    multiples: true,
+    keepExtensions: true,
+    maxFileSize: 5 * 1024 * 1024, // 5 MB limit
+  })
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
       console.error('Error parsing application form:', err)
-      return res.status(500).json({ message: 'Error parsing form data' })
+      const status = err.code === 'LIMIT_FILE_SIZE' || err.message?.includes('maxFileSize') ? 413 : 500
+      return res.status(status).json({ message: err.message || 'Error parsing form data' })
     }
 
     try {
