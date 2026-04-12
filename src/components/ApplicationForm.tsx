@@ -272,6 +272,15 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     setLoading(true)
 
     try {
+      console.log('Submitting application with data:', {
+        jobId: formData.jobId,
+        nationalId: formData.nationalId,
+        phone: formData.phone,
+        hasPassport: !!formData.passport,
+        hasCV: !!formData.cv,
+        token: localStorage.getItem('token') ? 'present' : 'missing'
+      })
+
       const data = new FormData()
       data.append('jobId', formData.jobId)
       data.append('nationalId', formData.nationalId)
@@ -315,7 +324,26 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
         router.push('/dashboard')
       }
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Error submitting application'
+      console.error('Application submission error:', error)
+      console.error('Error response:', error.response?.data)
+      console.error('Error status:', error.response?.status)
+
+      let message = 'Error submitting application'
+
+      if (error.response?.data?.message) {
+        message = error.response.data.message
+      } else if (error.response?.status === 401) {
+        message = 'Authentication failed. Please login again.'
+      } else if (error.response?.status === 400) {
+        message = 'Invalid application data. Please check all fields.'
+      } else if (error.response?.status === 413) {
+        message = 'Files are too large. Please reduce file sizes.'
+      } else if (error.response?.status >= 500) {
+        message = 'Server error. Please try again later.'
+      } else if (!navigator.onLine) {
+        message = 'No internet connection. Please check your connection.'
+      }
+
       alert(message)
     } finally {
       setLoading(false)
