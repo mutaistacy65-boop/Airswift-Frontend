@@ -59,7 +59,9 @@ export default function ResetPassword() {
 
     setIsSubmitting(true)
     try {
-      const result = await api.post('/auth/reset-password', {
+      console.log('Reset request token:', token)
+
+      const result = await api.post(`/auth/reset-password/${token}`, {
         token,
         password,
       })
@@ -73,6 +75,7 @@ export default function ResetPassword() {
       }, 3000)
     } catch (error: any) {
       console.error('Reset error:', error)
+      console.error('Reset error response:', error.response?.data || error.message)
       setResetStatus('error')
       setMessage(error.response?.data?.message || 'Failed to reset password')
     } finally {
