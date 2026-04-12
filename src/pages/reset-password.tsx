@@ -3,9 +3,11 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Head from 'next/head'
 import { api } from '@/utils/api'
+import { useAuth } from '@/context/AuthContext'
 
 export default function ResetPassword() {
   const router = useRouter()
+  const { user } = useAuth()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [resetStatus, setResetStatus] = useState<'loading' | 'form' | 'success' | 'error'>('form')
@@ -16,10 +18,13 @@ export default function ResetPassword() {
   const token = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('token') : null
 
   useEffect(() => {
+    console.log('Incoming token:', token)
+    console.log('User found:', user)
+
     if (token) {
       setResetStatus('form')
     }
-  }, [token])
+  }, [token, user])
 
   const validateForm = () => {
     if (!password || !confirmPassword) {

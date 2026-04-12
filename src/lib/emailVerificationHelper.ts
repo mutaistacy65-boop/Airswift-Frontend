@@ -33,15 +33,19 @@ export function generateVerificationToken(expiryMinutes = 10) {
  */
 export function verifyTokenMatch(providedToken: string, hashedTokenInDB: string): boolean {
   try {
+    console.log('Incoming token:', providedToken)
+
     // Hash the provided token
-    const hashedProvidedToken = crypto
+    const hashedToken = crypto
       .createHash('sha256')
       .update(providedToken)
       .digest('hex')
 
+    console.log('Hashed token:', hashedToken)
+
     // Compare hashes using constant-time comparison to prevent timing attacks
     return crypto.timingSafeEqual(
-      Buffer.from(hashedProvidedToken),
+      Buffer.from(hashedToken),
       Buffer.from(hashedTokenInDB)
     )
   } catch (error) {
