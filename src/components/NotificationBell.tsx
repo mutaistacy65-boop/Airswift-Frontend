@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
 import Link from 'next/link'
 import { useSocket } from '@/hooks/useSocket'
+import { api } from '@/utils/api'
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState<any[]>([])
@@ -21,8 +21,8 @@ export default function NotificationBell() {
   const fetchData = async () => {
     try {
       const [notifRes, msgRes] = await Promise.all([
-        axios.get('https://airswift-backend-fjt3.onrender.com/api/notifications'),
-        axios.get('https://airswift-backend-fjt3.onrender.com/api/messages'),
+        api.get('/notifications'),
+        api.get('/messages'),
       ])
       setNotifications(notifRes.data.notifications || [])
       setMessages(msgRes.data.messages || [])
@@ -44,10 +44,10 @@ export default function NotificationBell() {
 
   const markAsRead = async (id: string, type: 'notification' | 'message') => {
     try {
-      const url = type === 'notification' 
-        ? `https://airswift-backend-fjt3.onrender.com/api/notifications/${id}`
-        : `https://airswift-backend-fjt3.onrender.com/api/messages/${id}`
-      await axios.put(url, { is_read: true })
+      const endpoint = type === 'notification' 
+        ? `/notifications/${id}`
+        : `/messages/${id}`
+      await api.put(endpoint, { is_read: true })
       
       if (type === 'notification') {
         setNotifications(notifications.map(n => (n._id === id ? { ...n, is_read: true } : n)))

@@ -72,6 +72,7 @@ export const AdminLogs = ({ limit = 20, compact = false }: AdminLogsProps) => {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('accessToken')}`,
         },
       })
 
