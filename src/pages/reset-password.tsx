@@ -6,12 +6,14 @@ import { api } from '@/utils/api'
 
 export default function ResetPassword() {
   const router = useRouter()
-  const { token } = router.query
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [resetStatus, setResetStatus] = useState<'loading' | 'form' | 'success' | 'error'>('form')
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Extract token from URL query parameters
+  const token = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('token') : null
 
   useEffect(() => {
     if (token) {
