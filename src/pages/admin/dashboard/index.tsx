@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
+import { useSocket } from '@/hooks/useSocket';
 import MetricCard from '@/components/MetricCard';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, FunnelChart, Funnel, LabelList } from "recharts";
-import { TrendingUp, Users, Briefcase, Calendar, AlertTriangle, CheckCircle, Clock, DollarSign, Activity, Bell, Settings, Download, FileText, User } from 'lucide-react';
+import { TrendingUp, Users, Briefcase, Calendar, AlertTriangle, CheckCircle, Clock, DollarSign, Mail, Bell, Settings, Download, FileText, User } from 'lucide-react';
 import api from '@/services/apiClient'
+import { adminService } from '@/services/adminService'
 import AdminPayments from '@/components/AdminPayments'
 import { AdminLogs } from '@/components/AdminLogs'
 
@@ -25,41 +27,39 @@ export default function AdminDashboard() {
   const [activities, setActivities] = useState<any[]>([])
   const [alerts, setAlerts] = useState<any[]>([])
   const [health, setHealth] = useState<any>(null)
+  const [adminActions, setAdminActions] = useState<any[]>([])
+  const [emailLogs, setEmailLogs] = useState<any[]>([])
+  const [adminActionsLoading, setAdminActionsLoading] = useState(true)
+  const [emailLogsLoading, setEmailLogsLoading] = useState(true)
   const [trendRange, setTrendRange] = useState('7d')
   const [statsLoading, setStatsLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const [summaryRes, funnelRes, activitiesRes, healthRes] = await Promise.all([
-          api.get('/admin/dashboard/summary'),
-          api.get('/admin/dashboard/funnel'),
-          api.get('/admin/dashboard/activities'),
-          api.get('/admin/system/health')
-        ])
+  const { subscribe } = useSocket()
 
-        setSummary(summaryRes.data)
-        setFunnel(funnelRes.data)
-        setActivities(activitiesRes.data)
-        setHealth(healthRes.data)
-      } catch (error) {
-        console.error('Failed to load dashboard data:', error)
-        // Set safe defaults to prevent crashes
-        setSummary({})
-        setFunnel([])
-        setActivities([])
-        setHealth(null)
-      } finally {
-        setStatsLoading(false)
-      }
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      const [summaryRes, funnelRes, activitiesRes, healthRes] = await Promise.all([
+        api.get('/admin/dashboard/summary'),
+        api.get('/admin/dashboard/funnel'),
+        api.get('/admin/dashboard/activities'),
+        api.get('/admin/system/health')
+      ])
+
+      setSummary(summaryRes.data)
+      setFunnel(funnelRes.data)
+      setActivities(activitiesRes.data)
+      setHealth(healthRes.data)
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error)
+      // Set safe defaults to prevent crashes
+      setSummary({})
+      setFunnel([])
+      setActivities([])
+      setHealth(null)
+    } finally {
+      setStatsLoading(false)
     }
-
-    fetchDashboardData()
   }, [])
-
-  useEffect(() => {
-    fetchTrends(trendRange)
-  }, [trendRange])
 
   const fetchTrends = async (range: string) => {
     try {
@@ -70,6 +70,73 @@ export default function AdminDashboard() {
       setTrends([])
     }
   }
+
+  const fetchAdminActions = useCallback(async () => {
+    try {
+      setAdminActionsLoading(true)
+      const response = await adminService.getAuditLogs({ page: 1, limit: 6 })
+      setAdminActions(response.logs || response || [])
+    } catch (error) {
+      console.error('Error fetching admin actions:', error)
+      setAdminActions([])
+    } finally {
+      setAdminActionsLoading(false)
+    }
+  }, [])
+
+  const fetchEmailLogs = useCallback(async () => {
+    try {
+      setEmailLogsLoading(true)
+      const response = await adminService.getEmailLogs({ page: 1, limit: 6 })
+      setEmailLogs(response.logs || response || [])
+    } catch (error) {
+      console.error('Error fetching email logs:', error)
+      setEmailLogs([])
+    } finally {
+      setEmailLogsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchDashboardData()
+  }, [fetchDashboardData])
+
+  useEffect(() => {
+    if (isAuthorized) {
+      fetchAdminActions()
+      fetchEmailLogs()
+    }
+  }, [isAuthorized, fetchAdminActions, fetchEmailLogs])
+
+  useEffect(() => {
+    const unsubscribeUserUpdated = subscribe('user:updated', () => {
+      fetchDashboardData()
+      fetchAdminActions()
+      fetchEmailLogs()
+    })
+
+    const unsubscribeNewApp = subscribe('application:new', () => {
+      fetchDashboardData()
+      fetchAdminActions()
+      fetchEmailLogs()
+    })
+
+    const unsubscribeShortlisted = subscribe('user:shortlisted', () => {
+      fetchDashboardData()
+      fetchAdminActions()
+      fetchEmailLogs()
+    })
+
+    return () => {
+      unsubscribeUserUpdated?.()
+      unsubscribeNewApp?.()
+      unsubscribeShortlisted?.()
+    }
+  }, [subscribe, fetchDashboardData, fetchAdminActions, fetchEmailLogs])
+
+  useEffect(() => {
+    fetchTrends(trendRange)
+  }, [trendRange])
 
   // Protect route
   if (protectedLoading) {
@@ -162,6 +229,34 @@ export default function AdminDashboard() {
           />
         </div>
 
+        {/* Admin Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <MetricCard
+            title="Total Users"
+            value={statsLoading ? '...' : summary?.totalUsers || 0}
+            icon={<Users className="w-6 h-6" />}
+            trend={{ value: summary?.growth?.totalUsers || 0, isPositive: (summary?.growth?.totalUsers || 0) >= 0 }}
+          />
+          <MetricCard
+            title="Active Users"
+            value={statsLoading ? '...' : summary?.activeUsers || 0}
+            icon={<CheckCircle className="w-6 h-6" />}
+            trend={{ value: summary?.growth?.activeUsers || 0, isPositive: (summary?.growth?.activeUsers || 0) >= 0 }}
+          />
+          <MetricCard
+            title="Banned Users"
+            value={statsLoading ? '...' : summary?.bannedUsers || 0}
+            icon={<AlertTriangle className="w-6 h-6" />}
+            trend={{ value: summary?.growth?.bannedUsers || 0, isPositive: (summary?.growth?.bannedUsers || 0) <= 0 }}
+          />
+          <MetricCard
+            title="Emails Sent Today"
+            value={statsLoading ? '...' : summary?.emailsSentToday || 0}
+            icon={<Mail className="w-6 h-6" />}
+            trend={{ value: summary?.growth?.emailsSentToday || 0, isPositive: (summary?.growth?.emailsSentToday || 0) >= 0 }}
+          />
+        </div>
+
         {/* Payments Section */}
         <div className="mb-8">
           <AdminPayments />
@@ -229,66 +324,95 @@ export default function AdminDashboard() {
           <AdminRealtimeMap />
         </div>
 
-        {/* Bottom Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Recent Activities */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Recent Activities</h3>
-              <button className="text-sm text-blue-600 hover:text-blue-800">View all</button>
+        {/* Recent Admin Activity + Email Logs */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <div className="xl:col-span-2 space-y-8">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Recent Admin Actions</h3>
+                  <p className="text-sm text-gray-500">Latest admin audit events from the system.</p>
+                </div>
+                <button
+                  onClick={fetchAdminActions}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Refresh
+                </button>
+              </div>
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {adminActionsLoading ? (
+                  <p className="text-gray-500 text-center py-6">Loading admin actions...</p>
+                ) : adminActions.length > 0 ? (
+                  adminActions.map((log: any) => (
+                    <div key={log._id || log.id} className="rounded-lg border border-gray-200 p-4 hover:bg-gray-50 transition">
+                      <div className="flex items-center justify-between gap-4 text-sm text-gray-600">
+                        <span>{log.user?.name || log.user?.email || 'System'}</span>
+                        <span>{new Date(log.created_at || log.timestamp).toLocaleString()}</span>
+                      </div>
+                      <div className="mt-2 text-sm text-gray-900">
+                        <p className="font-medium">{log.action || log.event || 'ACTION'}</p>
+                        <p className="text-gray-600">Target: {log.details?.targetUser || log.resource || log.resource_id || 'Unknown'}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-6">No recent admin actions available.</p>
+                )}
+              </div>
             </div>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {safeActivities.length > 0 ? (
-                safeActivities.map((activity: any, index: number) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      activity.type === 'application' ? 'bg-blue-100' :
-                      activity.type === 'job' ? 'bg-green-100' :
-                      activity.type === 'interview' ? 'bg-purple-100' : 'bg-orange-100'
-                    }`}>
-                      {activity.type === 'application' && <Users className="w-4 h-4 text-blue-600" />}
-                      {activity.type === 'job' && <Briefcase className="w-4 h-4 text-green-600" />}
-                      {activity.type === 'interview' && <Calendar className="w-4 h-4 text-purple-600" />}
-                      {activity.type === 'user' && <User className="w-4 h-4 text-orange-600" />}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900">{activity.message}</p>
-                      <p className="text-xs text-gray-500">{new Date(activity.timestamp).toLocaleString()}</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500 text-center py-4">No recent activities</p>
-              )}
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Email Logs</h3>
+                  <p className="text-sm text-gray-500">Recent email delivery status from the admin system.</p>
+                </div>
+                <button
+                  onClick={fetchEmailLogs}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Refresh
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-gray-700">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3">Recipient</th>
+                      <th className="px-4 py-3">Subject</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Type</th>
+                      <th className="px-4 py-3">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {emailLogsLoading ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-gray-500">Loading email logs...</td>
+                      </tr>
+                    ) : emailLogs.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-gray-500">No email logs found.</td>
+                      </tr>
+                    ) : (
+                      emailLogs.map((log: any) => (
+                        <tr key={log._id || log.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="px-4 py-3">{log.recipientEmail || log.email || 'Unknown'}</td>
+                          <td className="px-4 py-3">{log.subject || '—'}</td>
+                          <td className="px-4 py-3">{(log.status || 'sent').toUpperCase()}</td>
+                          <td className="px-4 py-3">{log.templateId || log.type || 'Custom'}</td>
+                          <td className="px-4 py-3">{new Date(log.sentAt || log.created_at || Date.now()).toLocaleDateString()}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Quick Actions</h3>
-            <div className="space-y-3">
-              <Link href="/admin/jobs" className="flex items-center gap-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition">
-                <Briefcase className="w-5 h-5 text-blue-600" />
-                <span className="text-sm font-medium text-blue-900">Post New Job</span>
-              </Link>
-              <Link href="/admin/applications" className="flex items-center gap-3 p-3 bg-green-50 hover:bg-green-100 rounded-lg transition">
-                <Users className="w-5 h-5 text-green-600" />
-                <span className="text-sm font-medium text-green-900">Review Applications</span>
-              </Link>
-              <Link href="/admin/interviews" className="flex items-center gap-3 p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition">
-                <Calendar className="w-5 h-5 text-purple-600" />
-                <span className="text-sm font-medium text-purple-900">Schedule Interviews</span>
-              </Link>
-              <Link href="/admin/settings" className="flex items-center gap-3 p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition">
-                <Settings className="w-5 h-5 text-orange-600" />
-                <span className="text-sm font-medium text-orange-900">System Settings</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* System Health & Settings */}
           <div className="space-y-6">
-            {/* System Health */}
             <div className="bg-white p-6 rounded-lg shadow-sm border">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">System Health</h3>
               <div className="space-y-4">
@@ -305,9 +429,6 @@ export default function AdminDashboard() {
                     }`}>
                       {safeHealth?.server?.status || 'unknown'}
                     </span>
-                    {safeHealth?.server?.cpuUsage && (
-                      <span className="text-xs text-gray-500">({safeHealth.server.cpuUsage} CPU)</span>
-                    )}
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
@@ -323,27 +444,6 @@ export default function AdminDashboard() {
                     }`}>
                       {safeHealth?.database?.status || 'unknown'}
                     </span>
-                    {safeHealth?.database?.queryLatency && (
-                      <span className="text-xs text-gray-500">({safeHealth.database.queryLatency} latency)</span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">AI Service</span>
-                  <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${
-                      safeHealth?.aiService?.status === 'online' ? 'bg-green-500' :
-                      safeHealth?.aiService?.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
-                    }`}></div>
-                    <span className={`text-sm capitalize ${
-                      safeHealth?.aiService?.status === 'online' ? 'text-green-600' :
-                      safeHealth?.aiService?.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'
-                    }`}>
-                      {safeHealth?.aiService?.status || 'unknown'}
-                    </span>
-                    {safeHealth?.aiService?.responseLatency && (
-                      <span className="text-xs text-gray-500">({safeHealth.aiService.responseLatency} latency)</span>
-                    )}
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
@@ -359,38 +459,9 @@ export default function AdminDashboard() {
                     }`}>
                       {safeHealth?.emailService?.status || 'unknown'}
                     </span>
-                    {safeHealth?.emailService?.deliverySuccessRate && (
-                      <span className="text-xs text-gray-500">({safeHealth.emailService.deliverySuccessRate} success)</span>
-                    )}
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* System Settings Summary */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">System Settings</h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Platform Name:</span>
-                  <span className="font-medium">Airswift</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Currency:</span>
-                  <span className="font-medium">KES</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">AI Features:</span>
-                  <span className="font-medium text-green-600">Enabled</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Maintenance Mode:</span>
-                  <span className="font-medium text-red-600">Disabled</span>
-                </div>
-              </div>
-              <Link href="/admin/settings" className="text-blue-600 hover:text-blue-800 text-sm mt-4 inline-block">
-                View full settings →
-              </Link>
             </div>
           </div>
         </div>

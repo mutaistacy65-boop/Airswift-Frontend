@@ -184,7 +184,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({
       formData.append('audio', audioFile)
 
       // Transcribe audio
-      const transcriptionResult = await fetch('/api/interview/transcribe', {
+      const transcriptionResult = await fetch('https://airswift-backend-fjt3.onrender.com/api/interview/transcribe', {
         method: 'POST',
         body: formData,
         headers: {

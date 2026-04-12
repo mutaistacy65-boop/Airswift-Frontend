@@ -59,6 +59,16 @@ export const adminService = {
     return response.data
   },
 
+  verifyApplicationDocs: async (id: string) => {
+    const response = await API.patch(`/admin/applications/${id}/verify-docs`)
+    return response.data
+  },
+
+  shortlistApplication: async (id: string) => {
+    const response = await API.patch(`/admin/applications/${id}/shortlist`)
+    return response.data
+  },
+
   addApplicationNote: async (id: string, note: string) => {
     const response = await API.post(`/admin/applications/${id}`, { note })
     return response.data
@@ -200,6 +210,18 @@ export const adminService = {
     return response.data
   },
 
+  suspendUser: async (id: string, suspendedUntil?: string) => {
+    const response = await API.put(`/admin/users/${id}/suspend`, {
+      suspendedUntil,
+    })
+    return response.data
+  },
+
+  banUser: async (id: string) => {
+    const response = await API.put(`/admin/users/${id}/ban`)
+    return response.data
+  },
+
   changeUserRole: async (id: string, role: string) => {
     const response = await API.patch(`/admin/users/${id}/role`, { role })
     return response.data
@@ -224,6 +246,11 @@ export const adminService = {
   // Audit & Reports
   getAuditLogs: async (params?: any) => {
     const response = await API.get('/admin/audit', { params })
+    return response.data
+  },
+
+  getEmailLogs: async (params?: any) => {
+    const response = await API.get('/admin/email-logs', { params })
     return response.data
   },
 

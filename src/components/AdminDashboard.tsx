@@ -35,7 +35,7 @@ export default function AdminDashboard() {
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      await fetch(`/api/admin/application/${id}/status`, {
+      await fetch(`https://airswift-backend-fjt3.onrender.com/api/admin/application/${id}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -52,7 +52,7 @@ export default function AdminDashboard() {
 
   const updateNotes = async (id: string, noteText: string) => {
     try {
-      await fetch(`/api/admin/application/${id}/notes`, {
+      await fetch(`https://airswift-backend-fjt3.onrender.com/api/admin/application/${id}/notes`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

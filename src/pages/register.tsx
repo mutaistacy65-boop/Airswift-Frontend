@@ -22,7 +22,7 @@ export default function Register() {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch("https://airswift-backend-fjt3.onrender.com/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

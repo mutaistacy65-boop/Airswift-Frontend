@@ -218,6 +218,46 @@ Phone: +1-800-TALEX`,
     variables: ['applicantName', 'jobTitle', 'companyName']
   },
   {
+    id: 'user_suspended',
+    name: 'Account Suspended',
+    subject: 'Your account has been temporarily suspended',
+    body: `Dear {{userName}},
+
+We regret to inform you that your account has been temporarily suspended.
+
+Suspension details:
+- Reason: Account suspension
+- Suspended until: {{suspendedUntil}}
+
+While your account is suspended, you will not be able to access the platform. If you believe this is an error or have questions, please contact our support team.
+
+Best regards,
+The TALEX Support Team
+Email: support@talex.com`,
+    stage: 'user_suspended',
+    isActive: true,
+    variables: ['userName', 'suspendedUntil']
+  },
+  {
+    id: 'user_banned',
+    name: 'Account Banned',
+    subject: 'Your account has been permanently banned',
+    body: `Dear {{userName}},
+
+We regret to inform you that your account has been permanently banned.
+
+This means that your account can no longer access the platform.
+
+If you believe this action was taken in error, please contact our support team for assistance.
+
+Best regards,
+The TALEX Support Team
+Email: support@talex.com`,
+    stage: 'user_banned',
+    isActive: true,
+    variables: ['userName']
+  },
+  {
     id: 'password_reset',
     name: 'Password Reset',
     subject: 'Reset Your Talex Password',

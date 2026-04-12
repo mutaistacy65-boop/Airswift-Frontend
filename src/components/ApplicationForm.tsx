@@ -31,7 +31,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
   useEffect(() => {
     const checkDraft = async () => {
       try {
-        const response = await fetch('/api/drafts/check', {
+        const response = await fetch('https://airswift-backend-fjt3.onrender.com/api/drafts/check', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -56,7 +56,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     const loadDraft = async () => {
       try {
         // Try local API first
-        const response = await fetch('/api/drafts', {
+        const response = await fetch('https://airswift-backend-fjt3.onrender.com/api/drafts', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -116,7 +116,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
       // Save to local API
       try {
-        await fetch('/api/drafts/save', {
+        await fetch('https://airswift-backend-fjt3.onrender.com/api/drafts/save', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -153,7 +153,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     setShowDraftModal(false)
     // Load the draft
     try {
-      const response = await fetch('/api/drafts', {
+      const response = await fetch('https://airswift-backend-fjt3.onrender.com/api/drafts', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -196,7 +196,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     // Clear any existing drafts
     localStorage.removeItem(STORAGE_KEY)
     try {
-      fetch('/api/drafts', {
+      fetch('https://airswift-backend-fjt3.onrender.com/api/drafts', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -280,7 +280,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       if (formData.cv) data.append('cv', formData.cv)
 
       // Use fetch instead of axios for FormData to ensure proper multipart/form-data handling
-      const response = await fetch('/api/applications', {
+      const response = await fetch('https://airswift-backend-fjt3.onrender.com/api/applications', {
         method: 'POST',
         body: data,
         headers: {
@@ -300,7 +300,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
         // Clear drafts after successful submission
         localStorage.removeItem(STORAGE_KEY)
         try {
-          await fetch('/api/drafts', {
+          await fetch('https://airswift-backend-fjt3.onrender.com/api/drafts', {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',

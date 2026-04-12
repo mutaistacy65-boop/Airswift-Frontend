@@ -4,10 +4,12 @@ import { io, Socket } from 'socket.io-client'
 export type SocketEventType =
   | 'applicationUpdate'
   | 'applicationCreated'
+  | 'application:new'
   | 'applicationStatusChanged'
   | 'applicationUpdated'
   | 'newApplication'
   | 'statusUpdate'
+  | 'user:shortlisted'
   | 'interviewUpdate'
   | 'interviewScheduled'
   | 'interviewUpdated'
@@ -26,6 +28,7 @@ export type SocketEventType =
   | 'user:online'
   | 'user:offline'
   | 'user:activity'
+  | 'user:updated'
   | 'admin:alert'
 
 interface UseSocketOptions {

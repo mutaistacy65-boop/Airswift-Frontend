@@ -68,7 +68,7 @@ export const AdminLogs = ({ limit = 20, compact = false }: AdminLogsProps) => {
         ...(filters.endDate && { endDate: filters.endDate })
       })
 
-      const response = await fetch(`/api/audit-logs?${params}`, {
+      const response = await fetch(`https://airswift-backend-fjt3.onrender.com/api/audit-logs?${params}`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',

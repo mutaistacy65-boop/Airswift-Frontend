@@ -44,6 +44,7 @@ async function refreshAccessToken(): Promise<string | null> {
       // Store new tokens
       if (typeof window !== 'undefined') {
         localStorage.setItem('token', data.token)
+        localStorage.setItem('accessToken', data.token)
         localStorage.setItem('refreshToken', data.refreshToken)
       }
       return data.token
@@ -71,7 +72,9 @@ export async function apiFetch(
   options: FetchOptions = {}
 ): Promise<any> {
   const accessToken =
-    typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    typeof window !== 'undefined'
+      ? localStorage.getItem('token') || localStorage.getItem('accessToken')
+      : null
 
   const config: AxiosRequestConfig = {
     ...options,

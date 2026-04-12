@@ -53,13 +53,15 @@ interface Application {
   applicantName?: string
   applicantEmail?: string
   applicantPhone?: string
-  createdAt: string
-  updatedAt?: string
+  documentsVerified?: boolean
   documents?: {
     passport?: string
     nationalId?: string
     certificates?: string[]
+    verified?: boolean
   }
+  createdAt: string
+  updatedAt?: string
 }
 
 const AdminApplicationsPage = () => {
@@ -151,9 +153,20 @@ const AdminApplicationsPage = () => {
       addNotification(`Application status updated to ${data.status}`, 'info')
     })
 
+    const unsubscribeAppNew = subscribe('application:new', (data: any) => {
+      fetchApplications()
+      addNotification('New application received!', 'success')
+    })
+
+    const unsubscribeShortlisted = subscribe('user:shortlisted', (data: any) => {
+      addNotification('User shortlisted!', 'success')
+    })
+
     return () => {
       unsubscribeNewApp?.()
       unsubscribeStatus?.()
+      unsubscribeAppNew?.()
+      unsubscribeShortlisted?.()
     }
   }, [subscribe, addNotification])
 
@@ -166,6 +179,66 @@ const AdminApplicationsPage = () => {
       addNotification('Failed to load applications', 'error')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status?.toString().toLowerCase()) {
+      case 'submitted':
+      case 'pending':
+        return 'bg-gray-500'
+      case 'under review':
+      case 'reviewed':
+        return 'bg-yellow-500'
+      case 'shortlisted':
+      case 'accepted':
+        return 'bg-green-500'
+      case 'interview scheduled':
+      case 'interview-scheduled':
+        return 'bg-purple-500'
+      case 'rejected':
+      case 'rejected':
+        return 'bg-red-500'
+      default:
+        return 'bg-slate-500'
+    }
+  }
+
+  const StatusBadge = ({ status }: { status: string }) => (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold text-white ${getStatusBadgeColor(status)}`}>
+      {status?.toString().replace(/-/g, ' ') || 'Unknown'}
+    </span>
+  )
+
+  const isDocsVerified = (app: Application) => {
+    return app.documentsVerified ?? app.documents?.verified ?? false
+  }
+
+  const verifyDocs = async (app: Application) => {
+    try {
+      setUpdating(true)
+      const updatedApp = await adminService.verifyApplicationDocs(app._id)
+      setApplications(prev => prev.map(item => item._id === app._id ? { ...item, ...updatedApp, documentsVerified: true } : item))
+      addNotification('Documents verified successfully', 'success')
+    } catch (error: any) {
+      console.error('Error verifying documents:', error)
+      addNotification(error?.message || 'Failed to verify documents', 'error')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const shortlistApplicant = async (app: Application) => {
+    try {
+      setUpdating(true)
+      const updatedApp = await adminService.shortlistApplication(app._id)
+      setApplications(prev => prev.map(item => item._id === app._id ? { ...item, ...updatedApp, status: 'Shortlisted' } : item))
+      addNotification('Applicant shortlisted successfully', 'success')
+    } catch (error: any) {
+      console.error('Error shortlisting applicant:', error)
+      addNotification(error?.message || 'Failed to shortlist applicant', 'error')
+    } finally {
+      setUpdating(false)
     }
   }
 
@@ -391,9 +464,7 @@ const AdminApplicationsPage = () => {
                           {typeof app.jobId === 'object' ? app.jobId.title : app.jobId}
                         </td>
                         <td className="px-6 py-4 text-sm">
-                          <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
-                            {app.status.replace('-', ' ')}
-                          </span>
+                          <StatusBadge status={app.status} />
                         </td>
                         <td className="px-6 py-4 text-sm">
                           {app.cvScore ? (
@@ -418,6 +489,23 @@ const AdminApplicationsPage = () => {
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">{formatDate(app.createdAt)}</td>
                         <td className="px-6 py-4 text-center">
+                          <div className="flex flex-col items-center justify-center gap-2 sm:gap-1">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => verifyDocs(app)}
+                              disabled={isDocsVerified(app) || updating}
+                              className={`px-3 py-1 rounded text-white text-xs ${isDocsVerified(app) ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            >
+                              {isDocsVerified(app) ? 'Verified' : 'Verify Docs'}
+                            </button>
+                            <button
+                              onClick={() => shortlistApplicant(app)}
+                              disabled={!isDocsVerified(app) || updating}
+                              className={`px-3 py-1 rounded text-white text-xs ${!isDocsVerified(app) ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
+                            >
+                              Shortlist
+                            </button>
+                          </div>
                           <div className="flex items-center justify-center gap-1">
                             <button
                               onClick={() => openDetailModal(app)}
@@ -446,6 +534,7 @@ const AdminApplicationsPage = () => {
                               </button>
                             )}
                           </div>
+                        </div>
                         </td>
                       </tr>
                     ))}
@@ -467,9 +556,7 @@ const AdminApplicationsPage = () => {
                     Applied for: <strong>{typeof selectedApplication.jobId === 'object' ? selectedApplication.jobId.title : selectedApplication.jobId}</strong>
                   </p>
                 </div>
-                <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
-                  {selectedApplication.status.replace('-', ' ')}
-                </span>
+                <StatusBadge status={selectedApplication.status} />
               </div>
 
               <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-2 text-sm">

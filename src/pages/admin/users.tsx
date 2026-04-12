@@ -10,6 +10,7 @@ import Button from '@/components/Button'
 import Modal from '@/components/Modal'
 import Input from '@/components/Input'
 import { adminService } from '@/services/adminService'
+import { emailService as templateEmailService } from '@/services/jobCategoryService'
 import { formatDate } from '@/utils/helpers'
 import { Edit2, Trash2, Plus, Search, Eye, Lock, Unlock, Shield } from 'lucide-react'
 
@@ -166,6 +167,60 @@ export default function AdminUsersPage() {
       fetchUsers()
     } catch (error: any) {
       addNotification(error.response?.data?.message || 'Failed to update user status', 'error')
+    }
+  }
+
+  const handleSuspendUser = async (user: User) => {
+    const confirmSuspend = window.confirm(`Suspend ${user.name}?`)
+    if (!confirmSuspend) {
+      return
+    }
+
+    const suspendedUntil = window.prompt(
+      'Enter suspension end date (YYYY-MM-DD), or leave blank for indefinite suspension.'
+    )
+
+    if (suspendedUntil === null) {
+      return
+    }
+
+    try {
+      await adminService.suspendUser(user._id, suspendedUntil || undefined)
+      try {
+        await templateEmailService.sendEmail('user_suspended', user.email, {
+          userName: user.name || user.email,
+          suspendedUntil: suspendedUntil || 'indefinitely'
+        })
+      } catch (emailError: any) {
+        console.warn('Suspension email failed:', emailError)
+        addNotification('User suspended, but failed to send notification email', 'warning')
+      }
+      addNotification('User suspended successfully', 'success')
+      fetchUsers()
+    } catch (error: any) {
+      addNotification(error.response?.data?.message || 'Failed to suspend user', 'error')
+    }
+  }
+
+  const handleBanUser = async (user: User) => {
+    if (!window.confirm(`Ban ${user.name}? This action may be irreversible.`)) {
+      return
+    }
+
+    try {
+      await adminService.banUser(user._id)
+      try {
+        await templateEmailService.sendEmail('user_banned', user.email, {
+          userName: user.name || user.email
+        })
+      } catch (emailError: any) {
+        console.warn('Ban email failed:', emailError)
+        addNotification('User banned, but failed to send notification email', 'warning')
+      }
+      addNotification('User banned successfully', 'success')
+      fetchUsers()
+    } catch (error: any) {
+      addNotification(error.response?.data?.message || 'Failed to ban user', 'error')
     }
   }
 
@@ -357,6 +412,20 @@ export default function AdminUsersPage() {
                             title="Edit"
                           >
                             <Edit2 size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleSuspendUser(userItem)}
+                            className="text-yellow-600 hover:text-yellow-800"
+                            title="Suspend"
+                          >
+                            <Lock size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleBanUser(userItem)}
+                            className="text-purple-600 hover:text-purple-800"
+                            title="Ban"
+                          >
+                            <Shield size={18} />
                           </button>
                           <button
                             onClick={() => handleDeleteUser(userItem)}
