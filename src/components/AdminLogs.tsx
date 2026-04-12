@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
+import API from '@/services/apiClient'
 
 interface AuditLog {
   _id: string
@@ -68,26 +69,14 @@ export const AdminLogs = ({ limit = 20, compact = false }: AdminLogsProps) => {
         ...(filters.endDate && { endDate: filters.endDate })
       })
 
-      const response = await fetch(`https://airswift-backend-fjt3.onrender.com/api/audit-logs?${params}`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('accessToken')}`,
-        },
-      })
+      const response = await API.get(`/audit-logs?${params}`)
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const data = await response.json()
-
-      setLogs(Array.isArray(data.logs) ? data.logs : [])
+      setLogs(Array.isArray(response.data.logs) ? response.data.logs : [])
       setPagination((prev) => ({
         ...prev,
-        page: data.pagination?.page || override.page || prev.page,
-        pages: data.pagination?.pages || prev.pages,
-        total: data.pagination?.total || 0
+        page: response.data.pagination?.page || override.page || prev.page,
+        pages: response.data.pagination?.pages || prev.pages,
+        total: response.data.pagination?.total || 0
       }))
     } catch (err: any) {
       console.error('Failed to load audit logs:', err)

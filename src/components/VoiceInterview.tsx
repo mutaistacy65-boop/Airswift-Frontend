@@ -183,21 +183,10 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({
       const formData = new FormData()
       formData.append('audio', audioFile)
 
-      // Transcribe audio
-      const transcriptionResult = await fetch('https://airswift-backend-fjt3.onrender.com/api/interview/transcribe', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        credentials: 'include',
-      })
+      // Transcribe audio using API instance for consistent token handling
+      const transcriptionResult = await API.post('/interview/transcribe', formData)
 
-      if (!transcriptionResult.ok) {
-        throw new Error(`HTTP error! status: ${transcriptionResult.status}`)
-      }
-
-      const transcriptionData = await transcriptionResult.json()
+      const transcriptionData = transcriptionResult.data
 
       // Send transcript to interview socket
       socket.emit('voice-response', {

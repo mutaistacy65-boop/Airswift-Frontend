@@ -31,20 +31,11 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
   useEffect(() => {
     const checkDraft = async () => {
       try {
-        const response = await fetch('https://airswift-backend-fjt3.onrender.com/api/drafts/check', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
-          },
-          credentials: 'include',
-        })
-        if (response.ok) {
-          const data = await response.json()
-          setDraftInfo(data)
-          if (data.hasDraft) {
-            setShowDraftModal(true)
-          }
+        const response = await API.get('/drafts/check')
+        const data = response.data
+        setDraftInfo(data)
+        if (data.hasDraft) {
+          setShowDraftModal(true)
         }
       } catch (error) {
         console.log('Error checking draft, proceeding without')
@@ -56,26 +47,17 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     const loadDraft = async () => {
       try {
         // Try local API first
-        const response = await fetch('https://airswift-backend-fjt3.onrender.com/api/drafts', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
-          },
-          credentials: 'include',
-        })
-        if (response.ok) {
-          const data = await response.json()
-          if (data.draft?.form_data) {
-            setFormData(prev => ({
-              ...prev,
-              ...data.draft.form_data,
-              // Files cannot be restored
-              passport: null,
-              cv: null,
-            }))
-            return
-          }
+        const response = await API.get('/drafts')
+        const data = response.data
+        if (data.draft?.form_data) {
+          setFormData(prev => ({
+            ...prev,
+            ...data.draft.form_data,
+            // Files cannot be restored
+            passport: null,
+            cv: null,
+          }))
+          return
         }
       } catch (error) {
         console.log('Local draft not available, trying localStorage')
@@ -116,15 +98,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
       // Save to local API
       try {
-        await fetch('https://airswift-backend-fjt3.onrender.com/api/drafts/save', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
-          },
-          credentials: 'include',
-          body: JSON.stringify({ formData: dataToSave }),
-        })
+        await API.post('/drafts/save', { formData: dataToSave })
       } catch (error) {
         console.log('Local API save failed, localStorage saved')
       }
@@ -153,24 +127,15 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     setShowDraftModal(false)
     // Load the draft
     try {
-      const response = await fetch('https://airswift-backend-fjt3.onrender.com/api/drafts', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
-        },
-        credentials: 'include',
-      })
-      if (response.ok) {
-        const data = await response.json()
-        if (data.draft?.form_data) {
-          setFormData(prev => ({
-            ...prev,
-            ...data.draft.form_data,
-            passport: null,
-            cv: null,
-          }))
-        }
+      const response = await API.get('/drafts')
+      const data = response.data
+      if (data.draft?.form_data) {
+        setFormData(prev => ({
+          ...prev,
+          ...data.draft.form_data,
+          passport: null,
+          cv: null,
+        }))
       }
     } catch (error) {
       console.log('Error loading draft, trying localStorage')
@@ -196,14 +161,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     // Clear any existing drafts
     localStorage.removeItem(STORAGE_KEY)
     try {
-      fetch('https://airswift-backend-fjt3.onrender.com/api/drafts', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
-        },
-        credentials: 'include',
-      })
+      API.delete('/drafts')
     } catch (error) {
       console.log('Error clearing local draft')
     }
@@ -257,6 +215,21 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     setStep(step - 1)
   }
 
+  // Helper function to convert File to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = reader.result as string
+        // Extract base64 part after comma
+        const base64 = result.split(',')[1]
+        resolve(base64)
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -281,21 +254,36 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
         token: localStorage.getItem('token') ? 'present' : 'missing'
       })
 
-      const data = new FormData()
-      data.append('jobId', formData.jobId)
-      data.append('nationalId', formData.nationalId)
-      data.append('phone', formData.phone)
-      if (formData.passport) data.append('passport', formData.passport)
-      if (formData.cv) data.append('cv', formData.cv)
+      // Convert files to base64
+      let passportBase64 = null
+      let cvBase64 = null
 
-      // Use fetch instead of axios for FormData to ensure proper multipart/form-data handling
-      const response = await fetch('https://airswift-backend-fjt3.onrender.com/api/applications', {
+      if (formData.passport) {
+        passportBase64 = await fileToBase64(formData.passport)
+      }
+      if (formData.cv) {
+        cvBase64 = await fileToBase64(formData.cv)
+      }
+
+      // Build exact payload matching backend expectations
+      const payload = {
+        jobId: formData.jobId,
+        nationalId: formData.nationalId,
+        phone: formData.phone,
+        passport: passportBase64,
+        cv: cvBase64
+      }
+
+      console.log('Sending payload with keys:', Object.keys(payload), 'Passport size:', passportBase64?.length, 'CV size:', cvBase64?.length)
+
+      // Send with exact matching keys as JSON
+      const response = await fetch('/api/applications', {
         method: 'POST',
-        body: data,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('accessToken')}`
         },
-        credentials: 'include',
+        body: JSON.stringify(payload)
       })
 
       if (!response.ok) {
@@ -309,14 +297,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
         // Clear drafts after successful submission
         localStorage.removeItem(STORAGE_KEY)
         try {
-          await fetch('https://airswift-backend-fjt3.onrender.com/api/drafts', {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
-            },
-            credentials: 'include',
-          })
+          await API.delete('/drafts')
         } catch (error) {
           console.log('Backend draft cleanup failed')
         }
@@ -325,20 +306,20 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       }
     } catch (error: any) {
       console.error('Application submission error:', error)
-      console.error('Error response:', error.response?.data)
-      console.error('Error status:', error.response?.status)
+      console.error('Error response:', error.response?.data || error.message)
+      console.error('Error status:', error.response?.status || error.status)
 
       let message = 'Error submitting application'
 
       if (error.response?.data?.message) {
         message = error.response.data.message
-      } else if (error.response?.status === 401) {
+      } else if (error.status === 401) {
         message = 'Authentication failed. Please login again.'
-      } else if (error.response?.status === 400) {
+      } else if (error.status === 400) {
         message = 'Invalid application data. Please check all fields.'
-      } else if (error.response?.status === 413) {
+      } else if (error.status === 413) {
         message = 'Files are too large. Please reduce file sizes.'
-      } else if (error.response?.status >= 500) {
+      } else if (error.status >= 500) {
         message = 'Server error. Please try again later.'
       } else if (!navigator.onLine) {
         message = 'No internet connection. Please check your connection.'

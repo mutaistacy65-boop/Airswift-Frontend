@@ -33,6 +33,17 @@ const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-ba
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = BACKEND_BASE_URL.replace(/\/+$/, '').replace(/\/api\/?$/, '') + '/api';
 
+// Global axios interceptor for automatic token injection
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
+
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

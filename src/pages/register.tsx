@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Button from "../components/Button";
+import API from "@/services/apiClient";
 
 export default function Register() {
   const router = useRouter()
@@ -22,38 +23,16 @@ export default function Register() {
     try {
       setLoading(true);
 
-      const res = await fetch("https://airswift-backend-fjt3.onrender.com/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          password: form.password,
-          role: "user",
-        }),
+      const response = await API.post("/auth/register", {
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        role: "user",
       });
 
-      let data: any;
-
-      const contentType = res.headers.get("content-type");
-
-      if (contentType && contentType.includes("application/json")) {
-        data = await res.json();
-      } else {
-        const text = await res.text();
-        console.error("Non-JSON response:", text);
-        throw new Error("Server returned HTML instead of JSON");
-      }
+      const data = response.data;
 
       console.log("REGISTER RESPONSE:", data);
-
-      if (!res.ok) {
-        console.error("Backend error:", data);
-        alert(data?.message || "Something went wrong");
-        return;
-      }
 
       if (data.redirect === "verify" || data.redirect === "/verify-otp") {
         localStorage.setItem("email", form.email);
@@ -74,7 +53,7 @@ export default function Register() {
       router.push("/login");
     } catch (err: any) {
       console.error("Registration error:", err);
-      setError(err?.message || "Registration failed");
+      setError(err?.response?.data?.message || err?.message || "Registration failed");
     } finally {
       setLoading(false);
     }

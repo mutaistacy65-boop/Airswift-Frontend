@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { api } from '@/utils/api'
+import API from '@/services/apiClient'
 
 export default function AdminDashboard() {
   const [applications, setApplications] = useState<any[]>([])
@@ -15,7 +15,7 @@ export default function AdminDashboard() {
 
   const fetchApplications = async () => {
     try {
-      const res = await api.get('/admin/applications')
+      const res = await API.get('/admin/applications')
       const apps = res.data.applications || []
       setApplications(apps)
       // Load notes into local state
@@ -35,15 +35,7 @@ export default function AdminDashboard() {
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      await fetch(`https://airswift-backend-fjt3.onrender.com/api/admin/application/${id}/status`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('token')}`,
-        },
-        credentials: "include",
-        body: JSON.stringify({ status }),
-      });
+      await API.put(`/admin/application/${id}/status`, { status })
       fetchApplications(); // refresh list
     } catch (err) {
       console.error(err)
@@ -52,15 +44,7 @@ export default function AdminDashboard() {
 
   const updateNotes = async (id: string, noteText: string) => {
     try {
-      await fetch(`https://airswift-backend-fjt3.onrender.com/api/admin/application/${id}/notes`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('token')}`,
-        },
-        credentials: "include",
-        body: JSON.stringify({ notes: noteText }),
-      });
+      await API.put(`/admin/application/${id}/notes`, { notes: noteText })
       // Update local state
       setNotes(prev => ({ ...prev, [id]: noteText }))
     } catch (err) {
@@ -75,7 +59,7 @@ export default function AdminDashboard() {
 
   const sendInterview = async () => {
     try {
-      await api.post('/admin/messages/send', {
+      await API.post('/admin/messages/send', {
         user_id: selectedUser,
         subject: form.subject,
         message: form.message,
