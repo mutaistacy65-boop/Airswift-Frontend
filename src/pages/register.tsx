@@ -36,12 +36,15 @@ export default function Register() {
       });
 
       let data: any;
-      try {
+
+      const contentType = res.headers.get("content-type");
+
+      if (contentType && contentType.includes("application/json")) {
         data = await res.json();
-      } catch (err) {
+      } else {
         const text = await res.text();
         console.error("Non-JSON response:", text);
-        throw new Error("Server returned invalid response");
+        throw new Error("Server returned HTML instead of JSON");
       }
 
       console.log("REGISTER RESPONSE:", data);
