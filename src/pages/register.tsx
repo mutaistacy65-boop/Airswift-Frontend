@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Button from "../components/Button";
-import { registerUser } from "../api/auth";
 
 export default function Register() {
   const router = useRouter()
@@ -21,31 +20,51 @@ export default function Register() {
     }
 
     try {
-      setLoading(true)
-      const result = await registerUser(form)
+      setLoading(true);
 
-      if (result?.redirect) {
-        if (result.redirect === 'verify' || result.redirect === '/verify-otp') {
-          router.push(`/verify-otp?email=${encodeURIComponent(form.email)}&type=registration`)
-          return
-        }
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          role: "user",
+        }),
+      });
 
-        if (result.redirect === 'login' || result.redirect === '/login') {
-          router.push('/login')
-          return
-        }
+      const data = await res.json();
+      console.log("REGISTER RESPONSE:", data);
 
-        router.push(result.redirect)
-        return
+      if (!res.ok) {
+        alert(data.message || "Registration failed");
+        return;
       }
 
-      router.push('/login')
+      if (data.redirect === "verify" || data.redirect === "/verify-otp") {
+        localStorage.setItem("email", form.email);
+        router.push("/verify-otp");
+        return;
+      }
+
+      if (data.redirect === "login" || data.redirect === "/login") {
+        router.push("/login");
+        return;
+      }
+
+      if (data.redirect) {
+        router.push(data.redirect);
+        return;
+      }
+
+      router.push("/login");
     } catch (err: any) {
-      const errorMessage = err?.message || err?.toString?.() || "Registration failed";
-      setError(errorMessage);
       console.error("Registration error:", err);
+      setError(err?.message || "Registration failed");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   };
 
