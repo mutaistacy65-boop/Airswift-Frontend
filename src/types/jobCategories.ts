@@ -41,6 +41,8 @@ export type ApplicationStage =
   | 'visa_processing_started'
   | 'visa_ready'
   | 'application_rejected'
+  | 'user_suspended'
+  | 'user_banned'
 
 export interface InterviewPipelineItem {
   applicantId: string

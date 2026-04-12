@@ -24,8 +24,18 @@ export default function Register() {
       setLoading(true)
       const result = await registerUser(form)
 
-      if (result?.redirect === '/verify-otp' || result?.email) {
-        router.push(`/verify-otp?email=${encodeURIComponent(form.email)}&type=registration`)
+      if (result?.redirect) {
+        if (result.redirect === 'verify' || result.redirect === '/verify-otp') {
+          router.push(`/verify-otp?email=${encodeURIComponent(form.email)}&type=registration`)
+          return
+        }
+
+        if (result.redirect === 'login' || result.redirect === '/login') {
+          router.push('/login')
+          return
+        }
+
+        router.push(result.redirect)
         return
       }
 

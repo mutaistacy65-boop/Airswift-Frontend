@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import OTPInput from "../components/OTPInput";
 import axios from 'axios';
@@ -9,6 +9,8 @@ export default function VerifyOTP() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isRegistration, setIsRegistration] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const cooldownRef = useRef(null);
 
   useEffect(() => {
     const { email: emailParam, type } = router.query;
@@ -37,6 +39,14 @@ export default function VerifyOTP() {
     }
   }, [router.query]);
 
+  useEffect(() => {
+    return () => {
+      if (cooldownRef.current) {
+        clearInterval(cooldownRef.current);
+      }
+    };
+  }, []);
+
   const handleComplete = async (otp) => {
     setLoading(true);
     setMessage("");
@@ -62,11 +72,15 @@ export default function VerifyOTP() {
       } else {
         // For verification flow, the user should be logged in now
         // The verify-otp API should return authentication tokens
-        const { user, accessToken } = response.data;
+        const { user, accessToken, refreshToken } = response.data;
         
         if (user && accessToken) {
           // Store authentication data
           localStorage.setItem('token', accessToken);
+          localStorage.setItem('accessToken', accessToken);
+          if (refreshToken) {
+            localStorage.setItem('refreshToken', refreshToken);
+          }
           localStorage.setItem('user', JSON.stringify(user));
           localStorage.setItem('role', user.role);
           
@@ -91,6 +105,8 @@ export default function VerifyOTP() {
   };
 
   const handleResend = async () => {
+    if (cooldown > 0) return;
+
     setMessage("Resending OTP...");
 
     try {
@@ -105,6 +121,19 @@ export default function VerifyOTP() {
       
       await axios.post(endpoint, { email });
       setMessage("📩 OTP resent successfully!");
+      setCooldown(60);
+
+      cooldownRef.current = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            if (cooldownRef.current) {
+              clearInterval(cooldownRef.current);
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     } catch (err) {
       setMessage("❌ Failed to resend OTP");
     }
@@ -128,7 +157,15 @@ export default function VerifyOTP() {
         <OTPInput length={6} onComplete={handleComplete} />
 
         <p className="text-sm text-gray-400 mt-6">
-          Didn't receive code? <span className="text-blue-600 cursor-pointer" onClick={handleResend}>Resend OTP</span>
+          Didn't receive code? 
+          <button
+            type="button"
+            disabled={cooldown > 0}
+            onClick={handleResend}
+            className={`ml-1 font-semibold ${cooldown > 0 ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:text-blue-800 cursor-pointer'}`}
+          >
+            {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend OTP'}
+          </button>
         </p>
 
         {message && (

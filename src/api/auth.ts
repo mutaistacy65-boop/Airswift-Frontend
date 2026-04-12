@@ -41,7 +41,7 @@ export const registerUser = async (formData: RegisterFormData) => {
         
         // Return success response that redirects to verify-otp
         return {
-          redirect: '/verify-otp',
+          redirect: 'verify',
           email: formData.email,
           message: 'Account already exists. Verification code sent to your email.',
           user: { email: formData.email }
@@ -50,7 +50,7 @@ export const registerUser = async (formData: RegisterFormData) => {
         console.warn('Failed to resend verification code:', resendError);
         // Still return the redirect even if resend fails
         return {
-          redirect: '/verify-otp',
+          redirect: 'verify',
           email: formData.email,
           message: 'Account already exists. Please check your email for verification code.',
           user: { email: formData.email }
