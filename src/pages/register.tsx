@@ -35,11 +35,20 @@ export default function Register() {
         }),
       });
 
-      const data = await res.json();
+      let data: any;
+      try {
+        data = await res.json();
+      } catch (err) {
+        const text = await res.text();
+        console.error("Non-JSON response:", text);
+        throw new Error("Server returned invalid response");
+      }
+
       console.log("REGISTER RESPONSE:", data);
 
       if (!res.ok) {
-        alert(data.message || "Registration failed");
+        console.error("Backend error:", data);
+        alert(data?.message || "Something went wrong");
         return;
       }
 
