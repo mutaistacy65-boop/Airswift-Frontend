@@ -74,6 +74,60 @@ const initializeTransporter = async () => {
   return transporter
 }
 
+const getOTPTemplate = (otp: string) => {
+  return `
+    <div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:20px;">
+      <div style="max-width:500px; margin:auto; background:white; padding:30px; border-radius:10px; text-align:center; box-shadow:0 8px 24px rgba(15, 23, 42, 0.08);">
+        <h2 style="color:#1a73e8; margin-bottom:10px;">Airswift</h2>
+        <p style="color:#555; margin-bottom:24px; font-size:16px;">Verify your email address</p>
+
+        <div style="margin:0 auto 24px; width:fit-content; padding:20px 26px; border-radius:16px; background:#f1f5fb; font-size:32px; font-weight:700; letter-spacing:8px; color:#111;">
+          ${otp}
+        </div>
+
+        <p style="color:#777; font-size:15px; margin-bottom:24px; line-height:1.6;">
+          This code will expire in <strong>10 minutes</strong>. Enter it on the Airswift page to continue.
+        </p>
+
+        <hr style="margin:30px 0; border:none; border-top:1px solid #eee;" />
+
+        <p style="font-size:12px; color:#aaa; margin:0;">
+          If you didn’t request this, you can ignore this email.
+        </p>
+      </div>
+    </div>
+  `
+}
+
+const getResetTemplate = (link: string) => {
+  return `
+    <div style="font-family: Arial, sans-serif; background:#f4f6f8; padding:20px;">
+      <div style="max-width:500px; margin:auto; background:white; padding:30px; border-radius:10px; text-align:center; box-shadow:0 8px 24px rgba(15, 23, 42, 0.08);">
+        <h2 style="color:#1a73e8; margin-bottom:10px;">Reset Your Password</h2>
+
+        <p style="color:#555; font-size:16px; margin-bottom:24px; line-height:1.6;">
+          Click the button below to reset your password.
+        </p>
+
+        <a href="${link}" style="display:inline-block; margin-top:20px; padding:12px 24px; background:#1a73e8; color:white; text-decoration:none; border-radius:8px; font-weight:600;">
+          Reset Password
+        </a>
+
+        <p style="margin-top:24px; font-size:12px; color:#aaa; line-height:1.6;">
+          Link expires in <strong>10 minutes</strong>. If you didn’t request this, you can ignore this email.
+        </p>
+      </div>
+    </div>
+  `
+}
+
+export const sendOTPEmail = async (email: string, otp: string) => {
+  const htmlContent = getOTPTemplate(otp)
+  const textContent = `Your Airswift verification code is ${otp}. It expires in 10 minutes. If you didn't request this, ignore this email.`
+
+  return sendEmail(email, 'Your Airswift verification code', textContent, htmlContent)
+}
+
 /**
  * Send verification email
  */
@@ -224,53 +278,7 @@ export const sendPasswordResetEmail = async (
       from: process.env.EMAIL_FROM || 'noreply@airswift.com',
       to: email,
       subject: 'Reset Your Airswift Password',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Password Reset Request</h2>
-          
-          <p style="color: #666; font-size: 16px;">
-            Hi ${name},
-          </p>
-          
-          <p style="color: #666; font-size: 16px;">
-            We received a request to reset your Airswift password. Click the button below to create a new password:
-          </p>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a 
-              href="${resetLink}"
-              style="
-                display: inline-block;
-                padding: 12px 30px;
-                background-color: #007bff;
-                color: white;
-                text-decoration: none;
-                border-radius: 5px;
-                font-weight: bold;
-              "
-            >
-              Reset Password
-            </a>
-          </div>
-          
-          <p style="color: #666; font-size: 14px;">
-            Or copy and paste this link in your browser:
-          </p>
-          <p style="color: #007bff; word-break: break-all; font-size: 12px;">
-            ${resetLink}
-          </p>
-          
-          <p style="color: #999; font-size: 12px; margin-top: 30px;">
-            This link will expire in 1 hour.
-          </p>
-          
-          <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
-          
-          <p style="color: #999; font-size: 12px;">
-            If you didn't request a password reset, you can safely ignore this email.
-          </p>
-        </div>
-      `,
+      html: getResetTemplate(resetLink),
       text: `
         Password Reset Request
         
@@ -280,7 +288,7 @@ export const sendPasswordResetEmail = async (
         
         ${resetLink}
         
-        This link will expire in 1 hour.
+        This link will expire in 10 minutes.
         
         If you didn't request a password reset, you can safely ignore this email.
       `,
