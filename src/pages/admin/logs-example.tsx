@@ -4,7 +4,7 @@
 import React from 'react'
 import { useAuth } from '@/context/AuthContext'
 import DashboardLayout from '@/layouts/DashboardLayout'
-import AdminLogs from '@/components/AdminLogs'
+import { AdminLogs } from '@/components/AdminLogs'
 import { useRouter } from 'next/router'
 
 export default function AdminLogsExamplePage() {

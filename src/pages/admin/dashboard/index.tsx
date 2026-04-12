@@ -10,7 +10,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, FunnelChar
 import { TrendingUp, Users, Briefcase, Calendar, AlertTriangle, CheckCircle, Clock, DollarSign, Activity, Bell, Settings, Download, FileText, User } from 'lucide-react';
 import api from '@/services/apiClient'
 import AdminPayments from '@/components/AdminPayments'
-import AdminLogs from '@/components/AdminLogs'
+import { AdminLogs } from '@/components/AdminLogs'
 
 const AdminRealtimeMap = dynamic(() => import('@/components/AdminRealtimeMap'), {
   ssr: false,
