@@ -28,7 +28,10 @@ import '@/styles/globals.css'
  * Without sameSite: "none" on backend, cookies will NOT be sent
  * with cross-origin requests even with withCredentials: true
  */
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com'
+
 axios.defaults.withCredentials = true;
+axios.defaults.baseURL = BACKEND_BASE_URL.replace(/\/+$/, '').replace(/\/api\/?$/, '') + '/api';
 
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {

@@ -59,7 +59,11 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({
   }, [isOpen])
 
   const initializeSocket = () => {
-    const newSocket = io("https://airswift-backend-fjt3.onrender.com", {
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'https://airswift-backend-fjt3.onrender.com'
+    const socketPath = process.env.NEXT_PUBLIC_SOCKET_PATH || '/api/socket'
+
+    const newSocket = io(socketUrl, {
+      path: socketPath,
       withCredentials: true,
       transports: ["websocket"],
     })

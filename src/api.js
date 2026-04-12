@@ -2,6 +2,7 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: "https://airswift-backend-fjt3.onrender.com/api",
+  withCredentials: true,
 });
 
 // ✅ Attach token automatically

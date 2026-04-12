@@ -80,6 +80,7 @@ export async function apiFetch(
       ...options.headers,
       ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
     },
+    withCredentials: true,
   }
 
   try {
