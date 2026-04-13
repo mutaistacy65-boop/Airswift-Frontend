@@ -158,20 +158,24 @@ const SafeApplicationForm = () => {
       setLoading(true);
       console.log('📤 Preparing form submission...');
 
-      // ✅ FIX 4: Use FormData for file uploads
-      const formDataToSend = new FormData();
+      // Extract values to match exact specification
+      const { jobId, nationalId, phone } = formData;
+      const { passport: passportFile, cv: cvFile } = files;
 
-      formDataToSend.append('jobId', formData.jobId);
-      formDataToSend.append('nationalId', formData.nationalId);
-      formDataToSend.append('phone', formData.phone);
-      formDataToSend.append('passport', files.passport);
-      formDataToSend.append('cv', files.cv);
+      // ✅ FIX 4: Use FormData for file uploads
+      const formDataObj = new FormData();
+
+      formDataObj.append("jobId", jobId);
+      formDataObj.append("nationalId", nationalId);
+      formDataObj.append("phone", phone);
+      formDataObj.append("passport", passportFile);
+      formDataObj.append("cv", cvFile);
 
       console.log('📋 Form data prepared:');
-      console.log('   - CV:', files.cv?.name);
-      console.log('   - Passport:', files.passport?.name);
-      console.log('   - Job:', formData.jobId);
-      console.log('   - Phone:', formData.phone);
+      console.log('   - CV:', cvFile?.name);
+      console.log('   - Passport:', passportFile?.name);
+      console.log('   - Job:', jobId);
+      console.log('   - Phone:', phone);
 
       // ✅ FIX 5: Send with correct headers and error handling
       console.log('📤 Sending application...');
@@ -180,7 +184,7 @@ const SafeApplicationForm = () => {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: formDataToSend,
+        body: formDataObj,
       });
 
       if (!response.ok) {
