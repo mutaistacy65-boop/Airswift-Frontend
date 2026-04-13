@@ -160,25 +160,28 @@ const SafeApplicationForm = () => {
 
       // Extract values to match exact specification
       const { jobTitle, nationalId, phone } = formData;
-      const { passport: passportFile, cv: cvFile, nationalId: idFile } = files;
+      const { passport: passportFile, cv: cvFile } = files;
       const token = localStorage.getItem('token');
 
-      // ✅ FIX 4: Use FormData for file uploads
-      const formDataObj = new FormData();
+      // 🧪 DEBUG VERIFICATION
+      console.log("CV FILE:", cvFile);
+      console.log("IS FILE?", cvFile instanceof File);
+      console.log("PASSPORT FILE:", passportFile);
+      console.log("IS PASSPORT FILE?", passportFile instanceof File);
 
-      formDataObj.append("jobTitle", jobTitle);
-      formDataObj.append("phone", phone);
-      formDataObj.append("nationalId", nationalId);
+      // ✅ USE FORMDATA (100% WORKING VERSION)
+      const submitFormData = new FormData();
 
-      // MUST MATCH BACKEND EXACTLY
-      formDataObj.append("cv", cvFile);
-      formDataObj.append("passport", passportFile);
-      formDataObj.append("idDocument", idFile);
+      submitFormData.append("jobTitle", jobTitle);
+      submitFormData.append("phone", phone);
+      submitFormData.append("nationalId", nationalId);
+
+      submitFormData.append("cv", cvFile);          // MUST BE EXACT
+      submitFormData.append("passport", passportFile);
 
       console.log('📋 Form data prepared:');
       console.log('   - CV:', cvFile?.name);
       console.log('   - Passport:', passportFile?.name);
-      console.log('   - ID Document:', idFile?.name);
       console.log('   - Job Title:', jobTitle);
       console.log('   - Phone:', phone);
 
@@ -189,7 +192,7 @@ const SafeApplicationForm = () => {
         headers: {
           Authorization: `Bearer ${token}`
         },
-        body: formDataObj,
+        body: submitFormData
       });
 
       if (!response.ok) {
