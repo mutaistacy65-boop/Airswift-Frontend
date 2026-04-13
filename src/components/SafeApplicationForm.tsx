@@ -159,22 +159,27 @@ const SafeApplicationForm = () => {
       console.log('📤 Preparing form submission...');
 
       // Extract values to match exact specification
-      const { jobId, nationalId, phone } = formData;
-      const { passport: passportFile, cv: cvFile } = files;
+      const { jobTitle, nationalId, phone } = formData;
+      const { passport: passportFile, cv: cvFile, nationalId: idFile } = files;
+      const token = localStorage.getItem('token');
 
       // ✅ FIX 4: Use FormData for file uploads
       const formDataObj = new FormData();
 
-      formDataObj.append("jobId", jobId);
-      formDataObj.append("nationalId", nationalId);
+      formDataObj.append("jobTitle", jobTitle);
       formDataObj.append("phone", phone);
-      formDataObj.append("passport", passportFile);
+      formDataObj.append("nationalId", nationalId);
+
+      // MUST MATCH BACKEND EXACTLY
       formDataObj.append("cv", cvFile);
+      formDataObj.append("passport", passportFile);
+      formDataObj.append("idDocument", idFile);
 
       console.log('📋 Form data prepared:');
       console.log('   - CV:', cvFile?.name);
       console.log('   - Passport:', passportFile?.name);
-      console.log('   - Job:', jobId);
+      console.log('   - ID Document:', idFile?.name);
+      console.log('   - Job Title:', jobTitle);
       console.log('   - Phone:', phone);
 
       // ✅ FIX 5: Send with correct headers and error handling
@@ -182,7 +187,7 @@ const SafeApplicationForm = () => {
       const response = await fetch('/api/applications', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${token}`
         },
         body: formDataObj,
       });
