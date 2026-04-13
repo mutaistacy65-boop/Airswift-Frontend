@@ -169,15 +169,15 @@ const SafeApplicationForm = () => {
       console.log("PASSPORT FILE:", passportFile);
       console.log("IS PASSPORT FILE?", passportFile instanceof File);
 
-      // ✅ USE FORMDATA (100% WORKING VERSION)
-      const submitFormData = new FormData();
+      const submitData = new FormData();
 
-      submitFormData.append("jobTitle", jobTitle);
-      submitFormData.append("phone", phone);
-      submitFormData.append("nationalId", nationalId);
+      submitData.append("jobTitle", jobTitle);
+      submitData.append("phone", phone);
+      submitData.append("nationalId", nationalId);
 
-      submitFormData.append("cv", cvFile);          // MUST BE EXACT
-      submitFormData.append("passport", passportFile);
+      // MUST MATCH BACKEND EXACTLY
+      submitData.append("cv", cvFile);
+      submitData.append("passport", passportFile);
 
       console.log('📋 Form data prepared:');
       console.log('   - CV:', cvFile?.name);
@@ -185,14 +185,13 @@ const SafeApplicationForm = () => {
       console.log('   - Job Title:', jobTitle);
       console.log('   - Phone:', phone);
 
-      // ✅ FIX 5: Send with correct headers and error handling
       console.log('📤 Sending application...');
       const response = await fetch('/api/applications', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`
         },
-        body: submitFormData
+        body: submitData
       });
 
       if (!response.ok) {
