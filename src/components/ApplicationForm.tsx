@@ -16,7 +16,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
   const [jobs, setJobs] = useState<any[]>([])
   const [saved, setSaved] = useState(false)
   const [step, setStep] = useState(1)
-  const [formData, setFormData] = useState({
+  const [applicationData, setApplicationData] = useState({
     jobId: '',
     nationalId: '',
     phone: '',
@@ -50,7 +50,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
         const response = await API.get('/drafts')
         const data = response.data
         if (data.draft?.form_data) {
-          setFormData(prev => ({
+          setApplicationData(prev => ({
             ...prev,
             ...data.draft.form_data,
             // Files cannot be restored
@@ -68,7 +68,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       if (saved) {
         try {
           const parsedData = JSON.parse(saved)
-          setFormData(prev => ({
+          setApplicationData(prev => ({
             ...prev,
             ...parsedData,
             passport: null,
@@ -88,9 +88,9 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     setSaved(false)
     const timeout = setTimeout(async () => {
       const dataToSave = {
-        jobId: formData.jobId,
-        nationalId: formData.nationalId,
-        phone: formData.phone,
+        jobId: applicationData.jobId,
+        nationalId: applicationData.nationalId,
+        phone: applicationData.phone,
       }
 
       // Save to localStorage
@@ -107,7 +107,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     }, 1000)
 
     return () => clearTimeout(timeout)
-  }, [formData.jobId, formData.nationalId, formData.phone])
+  }, [applicationData.jobId, applicationData.nationalId, applicationData.phone])
 
   useEffect(() => {
     fetchJobs()
@@ -130,7 +130,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       const response = await API.get('/drafts')
       const data = response.data
       if (data.draft?.form_data) {
-        setFormData(prev => ({
+        setApplicationData(prev => ({
           ...prev,
           ...data.draft.form_data,
           passport: null,
@@ -143,7 +143,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       if (saved) {
         try {
           const parsedData = JSON.parse(saved)
-          setFormData(prev => ({
+          setApplicationData(prev => ({
             ...prev,
             ...parsedData,
             passport: null,
@@ -171,16 +171,16 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     const newErrors: Record<string, string> = {}
 
     if (currentStep === 1) {
-      if (!formData.jobId) {
+      if (!applicationData.jobId) {
         newErrors.jobId = 'Job title is required'
         alert("Please enter a job title")
         return false
       }
-      if (!formData.nationalId) newErrors.nationalId = 'National ID is required'
-      if (!formData.phone) newErrors.phone = 'Phone number is required'
+      if (!applicationData.nationalId) newErrors.nationalId = 'National ID is required'
+      if (!applicationData.phone) newErrors.phone = 'Phone number is required'
     } else if (currentStep === 2) {
-      if (!formData.passport) newErrors.passport = 'Passport is required'
-      if (!formData.cv) newErrors.cv = 'CV is required'
+      if (!applicationData.passport) newErrors.passport = 'Passport is required'
+      if (!applicationData.cv) newErrors.cv = 'CV is required'
     }
 
     setErrors(newErrors)
@@ -190,7 +190,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, files } = e.target
     if (files) {
-      setFormData(prev => ({
+      setApplicationData(prev => ({
         ...prev,
         [name]: files[0],
       }))
@@ -199,7 +199,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({
+    setApplicationData(prev => ({
       ...prev,
       [name]: value,
     }))
@@ -213,21 +213,6 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
   const prevStep = () => {
     setStep(step - 1)
-  }
-
-  // Helper function to convert File to base64
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const result = reader.result as string
-        // Extract base64 part after comma
-        const base64 = result.split(',')[1]
-        resolve(base64)
-      }
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -246,44 +231,33 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
     try {
       console.log('Submitting application with data:', {
-        jobId: formData.jobId,
-        nationalId: formData.nationalId,
-        phone: formData.phone,
-        hasPassport: !!formData.passport,
-        hasCV: !!formData.cv,
+        jobId: applicationData.jobId,
+        nationalId: applicationData.nationalId,
+        phone: applicationData.phone,
+        hasPassport: !!applicationData.passport,
+        hasCV: !!applicationData.cv,
         token: localStorage.getItem('token') ? 'present' : 'missing'
       })
 
-      // Convert files to base64
-      let passportBase64 = null
-      let cvBase64 = null
+      // Extract values to match exact specification
+      const { jobId, nationalId, phone, passport: passportFile, cv: cvFile } = applicationData;
 
-      if (formData.passport) {
-        passportBase64 = await fileToBase64(formData.passport)
-      }
-      if (formData.cv) {
-        cvBase64 = await fileToBase64(formData.cv)
-      }
+      const formData = new FormData();
 
-      // Build exact payload matching backend expectations
-      const payload = {
-        jobId: formData.jobId,
-        nationalId: formData.nationalId,
-        phone: formData.phone,
-        passport: passportBase64,
-        cv: cvBase64
-      }
+      formData.append("jobId", jobId);
+      formData.append("nationalId", nationalId);
+      formData.append("phone", phone);
+      formData.append("passport", passportFile);
+      formData.append("cv", cvFile);
 
-      console.log('Sending payload with keys:', Object.keys(payload), 'Passport size:', passportBase64?.length, 'CV size:', cvBase64?.length)
+      console.log('Sending FormData with keys:', Array.from(formData.keys()))
 
-      // Send with exact matching keys as JSON
-      const response = await fetch('/api/applications', {
-        method: 'POST',
+      const response = await fetch("/api/applications", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('accessToken')}`
+          Authorization: `Bearer ${localStorage.getItem("token")}`
         },
-        body: JSON.stringify(payload)
+        body: formData
       })
 
       if (!response.ok) {
@@ -367,7 +341,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       <form onSubmit={handleSubmit}>
         {step === 1 && (
           <Step1
-            formData={formData}
+            formData={applicationData}
             errors={errors}
             jobs={jobs}
             onChange={handleChange}
@@ -376,16 +350,16 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
         )}
         {step === 2 && (
           <Step2
-            formData={formData}
+            formData={applicationData}
             errors={errors}
             onNext={nextStep}
             onPrev={prevStep}
-            setFormData={setFormData}
+            setFormData={setApplicationData}
           />
         )}
         {step === 3 && (
           <Step3
-            formData={formData}
+            formData={applicationData}
             jobs={jobs}
             loading={loading}
             onPrev={prevStep}
