@@ -11,11 +11,9 @@ export const useProtectedRoute = (requiredRole?: 'admin' | 'user') => {
     if (!isLoading) {
       if (!isAuthenticated) {
         router.push('/login')
-      } else if (requiredRole === 'admin' && (user?.role !== 'admin' || user?.email !== 'admin@talex.com')) {
-        // Only allow specific admin credentials
+      } else if (requiredRole === 'admin' && user?.role !== 'admin') {
         router.push('/unauthorized')
       } else if (requiredRole === 'user' && user?.role !== 'user') {
-        // Redirect based on user role
         if (user?.role === 'admin') {
           router.push('/admin/dashboard')
         } else {
@@ -28,7 +26,7 @@ export const useProtectedRoute = (requiredRole?: 'admin' | 'user') => {
   return {
     isAuthorized: !isLoading && isAuthenticated && (
       !requiredRole ||
-      (requiredRole === 'admin' && user?.role === 'admin' && user?.email === 'admin@talex.com') ||
+      (requiredRole === 'admin' && user?.role === 'admin') ||
       (requiredRole === 'user' && user?.role === 'user')
     ),
     isLoading
