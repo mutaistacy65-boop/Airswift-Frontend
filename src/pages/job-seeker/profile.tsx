@@ -58,6 +58,10 @@ const ProfilePage = () => {
     }
   }, [isAuthorized, user])
 
+  useEffect(() => {
+    console.log('CV FILE STATE CHANGED:', cvFile)
+  }, [cvFile])
+
   const handleInputChange = (field: keyof UserProfile, value: string) => {
     setProfile(prev => ({
       ...prev,
@@ -83,21 +87,33 @@ const ProfilePage = () => {
   }
 
   const handleCvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null
-    console.log('CV selected:', file)
-    setCvFile(file)
-    setError(null)
+    const file = e.target.files?.[0]
+
+    console.log('✅ CV selected:', file)
+
+    if (file) {
+      setCvFile(file)
+    }
   }
 
-  const handleSave = async () => {
-    console.log('CV FILE BEFORE SUBMIT:', cvFile)
-    setError(null)
+  const validateForm = () => {
+    console.log('CV during validation:', cvFile)
 
     if (!cvFile) {
       setError('CV file is required')
-      return
+      return false
     }
 
+    return true
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    if (!validateForm()) return
+
+    console.log('FINAL CV:', cvFile)
+    setError(null)
     setSaving(true)
     try {
       const formData = new FormData()
@@ -146,6 +162,7 @@ const ProfilePage = () => {
         <h1 className="text-3xl font-bold mb-8">My Profile</h1>
 
         <div className="bg-white rounded-lg shadow-md p-8">
+          <form onSubmit={handleSubmit} noValidate>
           <div className="mb-8">
             <h2 className="text-2xl font-semibold mb-6">Personal Information</h2>
             <div className="grid md:grid-cols-2 gap-6">
@@ -266,13 +283,14 @@ const ProfilePage = () => {
 
           <div className="border-t pt-6">
             <Button
-              onClick={handleSave}
+              type="submit"
               disabled={saving}
               size="lg"
             >
               {saving ? 'Saving...' : cvFile ? 'Upload CV & Setup Profile' : 'Select CV to Setup Profile'}
             </Button>
           </div>
+          </form>
         </div>
       </div>
     </DashboardLayout>

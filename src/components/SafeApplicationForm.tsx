@@ -14,6 +14,7 @@ const SafeApplicationForm = () => {
     nationalId: null,
     passport: null
   });
+  const [cvFile, setCvFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -26,20 +27,26 @@ const SafeApplicationForm = () => {
   };
 
   // Handle file selection
-  const handleFileChange = (e, fieldName) => {
+  const handleFileChange = (e, fieldKey, fieldLabel) => {
     try {
       const file = e.target.files?.[0];
 
       if (!file) {
-        setFiles(prev => ({ ...prev, [fieldName]: null }));
+        setFiles(prev => ({ ...prev, [fieldKey]: null }));
+        if (fieldKey === 'cv') {
+          setCvFile(null);
+        }
         return;
       }
 
       // ✅ FIX 1: Validate file type
       if (file.type !== 'application/pdf') {
-        setError(`❌ ${fieldName} must be a PDF file. You selected: ${file.type}`);
+        setError(`❌ ${fieldLabel} must be a PDF file. You selected: ${file.type}`);
         e.target.value = ''; // Clear the input
-        setFiles(prev => ({ ...prev, [fieldName]: null }));
+        setFiles(prev => ({ ...prev, [fieldKey]: null }));
+        if (fieldKey === 'cv') {
+          setCvFile(null);
+        }
         return;
       }
 
@@ -55,8 +62,11 @@ const SafeApplicationForm = () => {
         return;
       }
 
-      console.log(`✅ File selected: ${fieldName} - ${file.name} (${(file.size / 1024).toFixed(2)}KB)`);
-      setFiles(prev => ({ ...prev, [fieldName]: file }));
+      console.log(`✅ File selected: ${fieldLabel} - ${file.name} (${(file.size / 1024).toFixed(2)}KB)`);
+      setFiles(prev => ({ ...prev, [fieldKey]: file }));
+      if (fieldKey === 'cv') {
+        setCvFile(file);
+      }
       setError(null); // Clear any previous file errors
     } catch (err) {
       console.error(`Error selecting ${fieldName}:`, err);
@@ -78,6 +88,7 @@ const SafeApplicationForm = () => {
   // Validate form before submission
   const validateForm = () => {
     console.log('🔍 Validating form...');
+    console.log('CV during validation:', cvFile);
 
     // Check required fields
     if (!formData.phone?.trim()) {
@@ -96,7 +107,7 @@ const SafeApplicationForm = () => {
     }
 
     // Check files
-    if (!files.cv) {
+    if (!cvFile) {
       setError('❌ CV file is required');
       return false;
     }
@@ -116,12 +127,19 @@ const SafeApplicationForm = () => {
   };
 
   // Handle form submission
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    console.log('CV at submit:', cvFile);
 
     try {
       setError(null);
       setSuccess(false);
+
+      if (!cvFile) {
+        setError('❌ CV file is required');
+        return;
+      }
 
       // ✅ FIX 3: Validate before submission
       if (!validateForm()) {
@@ -139,11 +157,11 @@ const SafeApplicationForm = () => {
       formDataToSend.append('phone', formData.phone);
 
       // Append files (these must match backend multer field names)
-      formDataToSend.append('cv', files.cv);
+      formDataToSend.append('cv', cvFile);
       formDataToSend.append('passport', files.passport);
 
       console.log('📋 Form data prepared:');
-      console.log('   - CV:', files.cv?.name);
+      console.log('   - CV:', cvFile?.name);
       console.log('   - Passport:', files.passport?.name);
 
       // 🔍 Debug: Log all FormData entries before sending
@@ -184,6 +202,7 @@ const SafeApplicationForm = () => {
         nationalId: null,
         passport: null
       });
+      setCvFile(null);
 
       // Clear file inputs
       Object.values(fileInputRefs).forEach(ref => {
@@ -223,6 +242,10 @@ const SafeApplicationForm = () => {
       setUploadProgress(0);
     }
   };
+
+  useEffect(() => {
+    console.log('🔥 CV STATE:', cvFile);
+  }, [cvFile]);
 
   return (
     <div className="application-form-container">
@@ -298,13 +321,22 @@ const SafeApplicationForm = () => {
               id="cv-upload"
               type="file"
               accept=".pdf,application/pdf"
-              onChange={(e) => handleFileChange(e, 'CV')}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                console.log('✅ CV selected:', file);
+                if (file) {
+                  setCvFile(file);
+                } else {
+                  setCvFile(null);
+                }
+                handleFileChange(e, 'cv', 'CV');
+              }}
               aria-label="Upload CV"
               required
             />
-            {files.cv && (
+            {cvFile && (
               <small className="file-selected">
-                ✅ {files.cv.name} ({(files.cv.size / 1024).toFixed(2)}KB)
+                ✅ {cvFile.name} ({(cvFile.size / 1024).toFixed(2)}KB)
               </small>
             )}
           </div>
@@ -319,7 +351,7 @@ const SafeApplicationForm = () => {
               id="national-id-upload"
               type="file"
               accept=".pdf,application/pdf"
-              onChange={(e) => handleFileChange(e, 'National ID')}
+              onChange={(e) => handleFileChange(e, 'nationalId', 'National ID')}
               aria-label="Upload National ID"
               required
             />
@@ -340,7 +372,7 @@ const SafeApplicationForm = () => {
               id="passport-upload"
               type="file"
               accept=".pdf,application/pdf"
-              onChange={(e) => handleFileChange(e, 'Passport')}
+              onChange={(e) => handleFileChange(e, 'passport', 'Passport')}
               aria-label="Upload Passport"
               required
             />
@@ -395,7 +427,7 @@ const SafeApplicationForm = () => {
           phone: formData.phone,
           nationalId: formData.nationalId,
           files: {
-            cv: files.cv?.name || 'Not selected',
+            cv: cvFile?.name || 'Not selected',
             nationalId: files.nationalId?.name || 'Not selected',
             passport: files.passport?.name || 'Not selected'
           },
