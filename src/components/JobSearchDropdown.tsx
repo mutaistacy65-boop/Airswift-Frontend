@@ -1,16 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import Select from 'react-select';
-
-interface Option {
-  label: string;
-  value: string;
-}
+import React from 'react';
 
 interface JobSearchDropdownProps {
   value: string;
   onChange: (jobTitle: string) => void;
   error?: string;
   required?: boolean;
+  placeholder?: string;
 }
 
 export default function JobSearchDropdown({
@@ -18,121 +13,29 @@ export default function JobSearchDropdown({
   onChange,
   error,
   required = false,
+  placeholder = 'Enter job title...',
 }: JobSearchDropdownProps) {
-  const [options, setOptions] = useState<Option[]>([]);
-  const [selectedOption, setSelectedOption] = useState<Option | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Fetch jobs on mount
-  useEffect(() => {
-    const loadJobs = async () => {
-      try {
-        const res = await fetch("https://airswift-backend-fjt3.onrender.com/api/applications/job-options");
-        const data = await res.json();
-
-        console.log("FULL RESPONSE:", data);
-
-        // ✅ FIX: handle both possible formats
-        const jobsArray = Array.isArray(data)
-          ? data
-          : data.jobs || [];
-
-        console.log("SAFE JOBS ARRAY:", jobsArray);
-
-        // Process jobs for display
-        const sortedJobs = [...jobsArray].sort((a: any, b: any) => {
-          if (typeof a === 'string' && typeof b === 'string') {
-            return a.localeCompare(b)
-          }
-          if (a?.title && b?.title) {
-            return a.title.localeCompare(b.title)
-          }
-          return 0
-        })
-        const options = sortedJobs.map((job: any) => ({
-          label: typeof job === 'string' ? job : job.title || job.label || job.value,
-          value: typeof job === 'string' ? job : job.title || job.value || job.label,
-        }))
-        options.sort((a, b) => a.label.localeCompare(b.label))
-        console.log("🔧 Final options:", options)
-        setOptions(options);
-
-      } catch (error) {
-        console.error("Error fetching jobs:", error);
-        setOptions([]); // fallback
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadJobs();
-  }, []);
-
-  // Sync external value changes
-  useEffect(() => {
-    if (value) {
-      const selected = options.find((opt) => opt.value === value);
-      setSelectedOption(selected || null);
-    } else {
-      setSelectedOption(null);
-    }
-  }, [value, options]);
-
-  // Handle job selection
-  const handleChange = (option: Option | null) => {
-    if (option) {
-      setSelectedOption(option);
-      onChange(option.value);
-    } else {
-      setSelectedOption(null);
-      onChange('');
-    }
-  };
-
-  // Custom styles for react-select
-  const customStyles = {
-    control: (base: any) => ({
-      ...base,
-      borderColor: error ? '#ef4444' : '#d1d5db',
-      '&:hover': {
-        borderColor: error ? '#ef4444' : '#9ca3af',
-      },
-      boxShadow: error ? '0 0 0 3px rgba(239, 68, 68, 0.1)' : 'none',
-    }),
-    option: (base: any, state: any) => ({
-      ...base,
-      backgroundColor: state.isSelected
-        ? '#2563eb'
-        : state.isFocused
-        ? '#dbeafe'
-        : 'white',
-      color: state.isSelected ? 'white' : 'black',
-      cursor: 'pointer',
-      padding: '8px 16px',
-    }),
-    menu: (base: any) => ({
-      ...base,
-      zIndex: 10,
-    }),
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(e.target.value);
   };
 
   return (
     <div>
-      <label className="sr-only">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
         Job Title {required && <span className="text-red-500">*</span>}
       </label>
 
-      <Select
-        options={options}
-        value={selectedOption}
+      <input
+        type="text"
+        value={value}
         onChange={handleChange}
-        placeholder="Type job title..."
-        aria-label="Job Title"
-        isLoading={isLoading}
-        isClearable
-        isSearchable
-        styles={customStyles}
-        noOptionsMessage={() => 'No jobs found'}
+        placeholder={placeholder}
+        required={required}
+        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
+          error
+            ? 'border-red-500 focus:ring-red-500'
+            : 'border-gray-300 focus:ring-blue-500'
+        }`}
       />
 
       {/* Error Message */}
