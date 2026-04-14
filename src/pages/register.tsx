@@ -34,19 +34,13 @@ export default function Register() {
 
       console.log("REGISTER RESPONSE:", data);
 
-      if (data.redirect === "verify" || data.redirect === "/verify-otp") {
-        localStorage.setItem("email", form.email);
-        router.push("/verify-otp");
+      if (data.redirect === "/verify-otp") {
+        router.push(`/verify-otp?email=${data.email}`);
         return;
       }
 
-      if (data.redirect === "login" || data.redirect === "/login") {
-        router.push("/login");
-        return;
-      }
-
-      if (data.redirect) {
-        router.push(data.redirect);
+      if (data.redirect === "/login") {
+        setError("Please login");
         return;
       }
 

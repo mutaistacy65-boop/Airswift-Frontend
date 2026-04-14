@@ -3,8 +3,12 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { serialize } from 'cookie'
 import jwt from 'jsonwebtoken'
 import axios from 'axios'
+import crypto from 'crypto'
+import bcrypt from 'bcryptjs'
 import { logActivity } from '@/lib/auditLogService'
 import { connectDB } from '@/lib/mongodb'
+import User from '@/lib/models/User'
+import { sendOTPEmail } from '@/lib/emailService'
 
 /**
  * 🍪 CRITICAL BACKEND REQUIREMENT 🍪
@@ -237,62 +241,69 @@ export const adminLogin = async (req: NextApiRequest, res: NextApiResponse) => {
 
 export const authRegister = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
-    await connectDB()
-    
-    // Call proxy first to register
-    const url = `${API_URL}/api/auth/register`
-    const config = {
-      method: req.method as any,
-      headers: {
-        'Content-Type': 'application/json',
-        'user-agent': req.headers['user-agent'],
-      },
-      ...(req.method !== 'GET' && { data: req.body }),
-    }
+    await connectDB();
 
-    const result = await axios(url, config)
-    const data = result.data
+    const { name, email, password, role } = req.body;
 
-    // If registration successful, log the activity
-    if (result.status >= 200 && result.status < 300 && data.user) {
-      try {
-        await logActivity({
-          user_id: data.user._id || data.user.id,
-          action: 'REGISTER',
-          request: req,
-          details: {
-            email: data.user.email,
-            name: data.user.name,
-          },
-        })
+    // Check if user exists
+    const existingUser = await User.findOne({ email });
 
-        // Emit real-time event for audit log dashboard
-        const io = (res.socket as any)?.server?.io
-        if (io) {
-          try {
-            io.emit('audit_log', {
-              action: 'REGISTER',
-              user: data.user.name || data.user.email,
-              email: data.user.email,
-              timestamp: new Date().toISOString(),
-            })
-          } catch (socketErr) {
-            console.warn('Socket emission failed:', socketErr)
-          }
+    if (existingUser) {
+      if (existingUser.isVerified) {
+        // Exists and verified
+        return res.json({ redirect: "/login" });
+      } else {
+        // Exists but not verified - resend OTP if not in cooldown
+        if (existingUser.otpExpires && existingUser.otpExpires > new Date(Date.now() - 60000)) {
+          return res.status(429).json({ message: "Please wait before requesting another OTP" });
         }
-      } catch (auditError) {
-        console.warn('Failed to log registration activity:', auditError)
-        // Continue even if audit log fails
+
+        // Generate new OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        existingUser.otp = otp;
+        existingUser.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        await existingUser.save();
+
+        await sendOTPEmail(email, otp);
+
+        return res.json({ redirect: "/verify-otp", email });
       }
     }
 
-    return res.status(result.status).json(data)
-  } catch (error: any) {
-    console.error('Registration error:', error)
-    if (error.response) {
-      return res.status(error.response.status).json(error.response.data)
+    // New user
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role: role || 'user',
+      isVerified: false,
+      otp,
+      otpExpires: new Date(Date.now() + 10 * 60 * 1000),
+    });
+
+    await newUser.save();
+
+    await sendOTPEmail(email, otp);
+
+    // Log registration
+    try {
+      await logActivity({
+        user_id: newUser._id,
+        action: 'REGISTER',
+        request: req,
+        details: { email: newUser.email, name: newUser.name },
+      });
+    } catch (auditError) {
+      console.warn('Failed to log registration:', auditError);
     }
-    return res.status(500).json({ message: 'Internal server error' })
+
+    res.json({ redirect: "/verify-otp", email });
+  } catch (error: any) {
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 }
 
@@ -305,11 +316,63 @@ export const authRefresh = async (req: NextApiRequest, res: NextApiResponse) => 
 }
 
 export const authForgotPassword = async (req: NextApiRequest, res: NextApiResponse) => {
-  return proxyToBackend(req, res, 'forgot-password')
+  try {
+    await connectDB();
+
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+
+    await user.save();
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const resetLink = `${frontendUrl}/reset-password?token=${token}`;
+
+    await sendEmail(user.email, "Reset Password", `Click here to reset your password: ${resetLink}`, `<p>Click <a href="${resetLink}">here</a> to reset your password.</p>`);
+
+    res.json({ message: "Reset link sent" });
+  } catch (error: any) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 }
 
 export const authResetPassword = async (req: NextApiRequest, res: NextApiResponse) => {
-  return proxyToBackend(req, res, 'reset-password')
+  try {
+    await connectDB();
+
+    const { token, password } = req.body;
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    // Hash the password
+    user.password = await bcrypt.hash(password, 10);
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+
+    await user.save();
+
+    res.json({ message: "Password reset successful" });
+  } catch (error: any) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 }
 
 export const authResendOtp = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -329,7 +392,34 @@ export const authVerifyOtp = async (req: NextApiRequest, res: NextApiResponse) =
 }
 
 export const authVerifyRegistrationOtp = async (req: NextApiRequest, res: NextApiResponse) => {
-  return proxyToBackend(req, res, 'verify-registration-otp')
+  try {
+    await connectDB();
+
+    const { email, otp } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.otp !== otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    if (user.otpExpires && user.otpExpires < new Date()) {
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
+    user.isVerified = true;
+    user.otp = null;
+    user.otpExpires = null;
+
+    await user.save();
+
+    res.json({ message: "Account verified. You can login now." });
+  } catch (error: any) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 }
 
 const proxyToAdminBackend = async (req: NextApiRequest, res: NextApiResponse, endpoint: string) => {
