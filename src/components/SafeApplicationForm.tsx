@@ -146,10 +146,12 @@ const SafeApplicationForm = () => {
 
       // Append files (these must match backend multer field names)
       formDataToSend.append('cv', cvFile);
+      formDataToSend.append('nationalId', files.nationalId);
       formDataToSend.append('passport', files.passport);
 
       console.log('📋 Form data prepared:');
       console.log('   - CV:', cvFile?.name);
+      console.log('   - National ID:', files.nationalId?.name);
       console.log('   - Passport:', files.passport?.name);
 
       // 🔍 Debug: Log all FormData entries before sending
