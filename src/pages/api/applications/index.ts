@@ -172,13 +172,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const cvFile = files.cv as formidable.File | formidable.File[] | undefined
 
         try {
-          let passportPath = Array.isArray(passportFile)
+          const passportPath = Array.isArray(passportFile)
             ? await saveFile(passportFile[0], uploadDir)
             : passportFile
             ? await saveFile(passportFile, uploadDir)
             : null
 
-          let cvPath = Array.isArray(cvFile)
+          const cvPath = Array.isArray(cvFile)
             ? await saveFile(cvFile[0], uploadDir)
             : cvFile
             ? await saveFile(cvFile, uploadDir)

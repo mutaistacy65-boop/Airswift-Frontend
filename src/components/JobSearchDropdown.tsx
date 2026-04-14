@@ -25,21 +25,22 @@ export default function JobSearchDropdown({
 
   // Fetch jobs on mount
   useEffect(() => {
-    const fetchJobs = async () => {
+    const loadJobs = async () => {
       try {
-        setIsLoading(true);
-        const response = await fetch("https://airswift-backend-fjt3.onrender.com/api/applications/job-options");
-        const data = await response.json();
+        const res = await fetch("https://airswift-backend-fjt3.onrender.com/api/applications/job-options");
+        const data = await res.json();
 
-        // 1. Inspect the actual response
-        console.log("JOBS RAW:", data);
-        console.log("TYPE:", typeof data);
+        console.log("FULL RESPONSE:", data);
 
-        console.log("JOBS:", data);
-        const jobs = Array.isArray(data)
+        // ✅ FIX: handle both possible formats
+        const jobsArray = Array.isArray(data)
           ? data
-          : data?.jobs || []
-        const sortedJobs = [...jobs].sort((a: any, b: any) => {
+          : data.jobs || [];
+
+        console.log("SAFE JOBS ARRAY:", jobsArray);
+
+        // Process jobs for display
+        const sortedJobs = [...jobsArray].sort((a: any, b: any) => {
           if (typeof a === 'string' && typeof b === 'string') {
             return a.localeCompare(b)
           }
@@ -53,15 +54,18 @@ export default function JobSearchDropdown({
           value: typeof job === 'string' ? job : job.title || job.value || job.label,
         }))
         options.sort((a, b) => a.label.localeCompare(b.label))
+        console.log("🔧 Final options:", options)
         setOptions(options);
-        setIsLoading(false);
+
       } catch (error) {
-        console.error('Error fetching jobs:', error);
+        console.error("Error fetching jobs:", error);
+        setOptions([]); // fallback
+      } finally {
         setIsLoading(false);
       }
     };
 
-    fetchJobs();
+    loadJobs();
   }, []);
 
   // Sync external value changes

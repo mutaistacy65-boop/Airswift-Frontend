@@ -27,64 +27,77 @@ const JobDropdown: React.FC<JobDropdownProps> = ({ onSelect, defaultValue = '' }
     setValue(defaultValue)
   }, [defaultValue])
 
-  const normalizeJobs = (data: any): JobItem[] => {
-    const rawJobs = data?.jobs
-
-    if (!rawJobs) {
-      return []
-    }
-
-    const flatJobs: JobItem[] = []
-
-    if (Array.isArray(rawJobs)) {
-      rawJobs.forEach((jobItem: any) => {
-        if (typeof jobItem === 'string') {
-          flatJobs.push({ id: jobItem, title: jobItem, category: 'Jobs' })
-        } else {
-          flatJobs.push({
-            id: jobItem.id?.toString() || jobItem._id?.toString() || jobItem.title,
-            title: jobItem.title || jobItem.name || jobItem.label || jobItem.value || String(jobItem.id || jobItem._id || ''),
-            category: jobItem.category || 'Jobs',
-            ...jobItem,
-          })
-        }
-      })
-    } else if (typeof rawJobs === 'object') {
-      Object.entries(rawJobs).forEach(([category, jobList]) => {
-        if (!Array.isArray(jobList)) return
-        jobList.forEach((jobItem: any) => {
-          if (typeof jobItem === 'string') {
-            flatJobs.push({ id: jobItem, title: jobItem, category })
-          } else {
-            flatJobs.push({
-              id: jobItem.id?.toString() || jobItem._id?.toString() || jobItem.title,
-              title: jobItem.title || jobItem.name || jobItem.label || jobItem.value || String(jobItem.id || jobItem._id || ''),
-              category,
-              ...jobItem,
-            })
-          }
-        })
-      })
-    }
-
-    return flatJobs.sort((a, b) => a.title.localeCompare(b.title))
-  }
-
   const fetchJobs = async () => {
     try {
       setLoading(true)
+      setError(null)
+
+      console.log('📡 Fetching jobs from API...')
       const response = await api.get('/applications/job-options')
 
-      // 1. Inspect the actual response
-      console.log("JOBS RAW:", response.data);
-      console.log("TYPE:", typeof response.data);
+      // 🔍 STEP 1: Inspect the actual response
+      console.log('JOBS RAW:', response.data)
+      console.log('TYPE:', typeof response.data)
 
-      const flattenedJobs = normalizeJobs(response.data)
-      setJobs(flattenedJobs)
-      setError(null)
+      const payload = response.data?.data || response.data
+      console.log('PAYLOAD:', payload)
+      console.log('Has jobs property:', payload && 'jobs' in payload)
+
+      // 🔍 STEP 2: Handle different response formats (safe version)
+      const jobsData = Array.isArray(payload)
+        ? payload
+        : payload?.jobs || {}
+
+      console.log('SAFE JOBS:', jobsData)
+      console.log('Jobs type:', typeof jobsData)
+      console.log('Is array:', Array.isArray(jobsData))
+
+      // 🔍 STEP 3: Flatten grouped jobs into a single array for dropdown
+      const flatJobs: JobItem[] = []
+      
+      if (typeof jobsData === 'object' && !Array.isArray(jobsData)) {
+        // jobsData is grouped by category (object with category keys)
+        console.log('✅ Jobs are grouped by category')
+        Object.entries(jobsData).forEach(([category, jobList]: [string, any]) => {
+          console.log(`Processing category: ${category}`, jobList)
+          if (Array.isArray(jobList)) {
+            jobList.forEach((job: any) => {
+              flatJobs.push({
+                id: job.id?.toString() || job._id?.toString() || job.title,
+                title: job.title || job.name || job.label || job.value,
+                category,
+                ...job,
+              })
+            })
+          }
+        })
+      } else if (Array.isArray(jobsData)) {
+        // jobsData is already a flat array
+        console.log('✅ Jobs are already a flat array')
+        jobsData.forEach((job: any) => {
+          flatJobs.push({
+            id: job.id?.toString() || job._id?.toString() || job.title,
+            title: job.title || job.name || job.label || job.value,
+            category: job.category || 'Jobs',
+            ...job,
+          })
+        })
+      }
+
+      console.log('FINAL FLAT JOBS:', flatJobs)
+      console.log('Total jobs count:', flatJobs.length)
+
+      if (flatJobs.length === 0) {
+        console.warn('⚠️ No jobs found after processing')
+        setError('No jobs available. Please try again later.')
+      }
+
+      setJobs(flatJobs)
     } catch (err: any) {
-      console.error('Error fetching jobs:', err)
-      setError('Failed to load jobs')
+      console.error('❌ Error fetching jobs:', err)
+      console.error('Error message:', err.message)
+      console.error('Error response:', err.response?.data)
+      setError(err.response?.data?.message || 'Failed to load jobs')
     } finally {
       setLoading(false)
     }
@@ -133,15 +146,19 @@ const JobDropdown: React.FC<JobDropdownProps> = ({ onSelect, defaultValue = '' }
       <option value="">
         {loading ? 'Loading jobs...' : 'Select a job position...'}
       </option>
-      {Object.entries(groupedJobs).map(([category, categoryJobs]) => (
-        <optgroup key={category} label={category}>
-          {categoryJobs.map((job) => (
-            <option key={job.id} value={job.id}>
-              {job.title}
-            </option>
-          ))}
-        </optgroup>
-      ))}
+      {Array.isArray(jobs) && jobs.length > 0 ? (
+        Object.entries(groupedJobs).map(([category, categoryJobs]) => (
+          <optgroup key={category} label={category}>
+            {categoryJobs.map((job) => (
+              <option key={job.id} value={job.id}>
+                {job.title}
+              </option>
+            ))}
+          </optgroup>
+        ))
+      ) : (
+        !loading && <option disabled>No jobs available</option>
+      )}
     </select>
   )
 }
