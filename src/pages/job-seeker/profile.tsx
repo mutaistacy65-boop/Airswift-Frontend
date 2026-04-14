@@ -37,6 +37,7 @@ const ProfilePage = () => {
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [skillInput, setSkillInput] = useState('')
   const [cvFile, setCvFile] = useState<File | null>(null)
 
@@ -81,9 +82,19 @@ const ProfilePage = () => {
     }))
   }
 
+  const handleCvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null
+    console.log('CV selected:', file)
+    setCvFile(file)
+    setError(null)
+  }
+
   const handleSave = async () => {
+    console.log('CV FILE BEFORE SUBMIT:', cvFile)
+    setError(null)
+
     if (!cvFile) {
-      addNotification('Please upload your CV before profile setup.', 'error')
+      setError('CV file is required')
       return
     }
 
@@ -168,11 +179,14 @@ const ProfilePage = () => {
                 <input
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  onChange={(e) => setCvFile(e.target.files?.[0] || null)}
+                  onChange={handleCvChange}
                   className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
                 {cvFile && (
                   <p className="text-sm text-gray-600 mt-2">Selected file: {cvFile.name}</p>
+                )}
+                {error && (
+                  <p className="text-sm text-red-600 mt-2">{error}</p>
                 )}
                 <p className="text-xs text-gray-500 mt-2">Upload your CV to automatically populate skills, experience, and education from the profile setup endpoint.</p>
               </div>
