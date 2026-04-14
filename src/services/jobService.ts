@@ -90,11 +90,8 @@ export const jobService = {
       }
     }
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : ''
-
-    const response = await API.post('/applications/apply', formData, {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    })
+    // ✅ Authorization header is set automatically by API interceptor
+    const response = await API.post('/applications/apply', formData)
     return response.data
   },
 
