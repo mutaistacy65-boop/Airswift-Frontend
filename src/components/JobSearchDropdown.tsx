@@ -30,6 +30,11 @@ export default function JobSearchDropdown({
         setIsLoading(true);
         const response = await fetch("https://airswift-backend-fjt3.onrender.com/api/applications/job-options");
         const data = await response.json();
+
+        // 1. Inspect the actual response
+        console.log("JOBS RAW:", data);
+        console.log("TYPE:", typeof data);
+
         console.log("JOBS:", data);
         const jobs = Array.isArray(data)
           ? data

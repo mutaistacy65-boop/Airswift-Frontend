@@ -35,7 +35,31 @@ const JobSelector: React.FC<JobSelectorProps> = ({ onSelect, selectedJobId = nul
       const response = await api.get('/applications/job-options')
       console.log('✅ Jobs fetched:', response.data)
 
-      setJobs(response.data.jobs || {})
+      // 1. Inspect the actual response
+      console.log("JOBS RAW:", response.data);
+      console.log("TYPE:", typeof response.data);
+
+      // 2. Handle different API response formats
+      let jobsData = {}
+
+      if (response.data && typeof response.data === 'object') {
+        if (response.data.jobs) {
+          // Case A: Data wrapped in object { "jobs": [...] }
+          console.log("📦 Case A: jobs property found")
+          jobsData = response.data.jobs
+        } else if (Array.isArray(response.data)) {
+          // Case B: Direct array response
+          console.log("📦 Case B: direct array response")
+          jobsData = { "Jobs": response.data }
+        } else {
+          // Case C: Other object format
+          console.log("📦 Case C: other object format")
+          jobsData = response.data
+        }
+      }
+
+      console.log("🔧 Final jobsData:", jobsData)
+      setJobs(jobsData)
     } catch (err: any) {
       console.error('❌ Error fetching jobs:', err)
       setError(err.response?.data?.message || 'Failed to load jobs')
