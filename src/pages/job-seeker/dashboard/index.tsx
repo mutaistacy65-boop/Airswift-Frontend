@@ -21,6 +21,7 @@ const JobSeekerDashboard: React.FC = () => {
   const [savedJobs, setSavedJobs] = useState<any[]>([])
   const [notifications, setNotifications] = useState<any[]>([])
   const [profileCompletion, setProfileCompletion] = useState(75)
+  const [application, setApplication] = useState(null)
 
   const { subscribe } = useSocket()
 
@@ -42,6 +43,34 @@ const JobSeekerDashboard: React.FC = () => {
 
     return unsubscribe
   }, [subscribe, addNotification])
+
+  // Fetch user's application
+  useEffect(() => {
+    const fetchApplication = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await fetch(
+          "https://airswift-backend-fjt3.onrender.com/api/applications/my",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        setApplication(data);
+
+      } catch (err) {
+        console.error("Error fetching application:", err);
+      }
+    };
+
+    fetchApplication();
+  }, []);
 
   const fetchDashboardData = async () => {
     try {
@@ -258,6 +287,31 @@ const JobSeekerDashboard: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Application Display */}
+          {application ? (
+            <div className="bg-white shadow p-6 rounded-lg mb-8">
+              <h2 className="text-xl font-bold mb-4">Your Application</h2>
+
+              <p><strong>Job:</strong> {application.jobId?.title}</p>
+              <p><strong>Status:</strong> {application.status}</p>
+              <p><strong>Phone:</strong> {application.phone}</p>
+              <p><strong>National ID:</strong> {application.nationalId}</p>
+
+              <p className="mt-2 text-sm text-gray-500">
+                Applied on: {new Date(application.createdAt).toLocaleDateString()}
+              </p>
+
+              {/* Files */}
+              <div className="mt-4">
+                <a href={application.cv} target="_blank">📄 View CV</a>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white shadow p-6 rounded-lg mb-8">
+              <p>No application submitted yet.</p>
+            </div>
+          )}
 
           {/* Main Content Grid */}
           <div className="grid lg:grid-cols-3 gap-8 mb-8">

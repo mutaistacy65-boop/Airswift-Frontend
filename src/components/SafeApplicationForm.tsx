@@ -21,7 +21,7 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const fileInputRefs = {
@@ -126,7 +126,7 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
 
     try {
       setError(null);
-      setSuccess(false);
+      setSuccess(null);
 
       if (!cvFile) {
         setError('❌ CV file is required');
@@ -164,75 +164,36 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
         console.log(`   ${pair[0]}:`, pair[1] instanceof File ? `File(${pair[1].name}, ${pair[1].size} bytes)` : pair[1]);
       }
 
-      const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
-      if (!token) {
-        setError('❌ Authentication required. Please log in and try again.');
-        setLoading(false);
-        return;
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(
+        "https://airswift-backend-fjt3.onrender.com/api/applications",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formDataToSend,
+        }
+      );
+
+      if (response.ok) {
+        console.log("✅ Application submitted successfully");
+
+        setSuccess("Application submitted successfully!");
+
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 1500);
+      } else {
+        const error = await response.text();
+        console.error("❌ Error:", error);
+        setError(`❌ Submission failed: ${error}`);
       }
-
-      const response = await api.post('/applications', formDataToSend, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      console.log('✅ Application submitted successfully:', response.data);
-      setSuccess(true);
-      setUploadProgress(0);
-
-      if (onSuccess) {
-        onSuccess();
-      }
-
-      // Reset form
-      setFormData({
-        jobId: '',
-        phone: '',
-        nationalId: '',
-        coverLetter: ''
-      });
-      setFiles({
-        cv: null,
-        nationalId: null,
-        passport: null
-      });
-      setCvFile(null);
-
-      // Clear file inputs
-      Object.values(fileInputRefs).forEach(ref => {
-        if (ref.current) ref.current.value = '';
-      });
-
-      // Show success message for 3 seconds
-      setTimeout(() => setSuccess(false), 3000);
 
     } catch (err) {
-      console.error('❌ Application submission error:', err);
-
-      const backendData = err.response?.data || {};
-      const backendMessage = backendData.message || backendData.error;
-
-      // ✅ FIX 6: Handle different error types
-      let errorMessage = 'Failed to submit application. Please try again.';
-
-      if (err.response?.status === 400) {
-        errorMessage = `❌ ${backendMessage || 'Invalid form data'}`;
-      } else if (err.response?.status === 401) {
-        errorMessage = '❌ Your session has expired. Please log in again.';
-        setTimeout(() => window.location.href = '/login', 2000);
-      } else if (err.response?.status === 413) {
-        errorMessage = '❌ Files are too large. Maximum 5MB per file.';
-      } else if (err.response?.status === 500) {
-        errorMessage = '❌ Server error. Please try again later.';
-      } else if (err.message === 'Network Error') {
-        errorMessage = '❌ Network error. Check your connection.';
-      } else if (backendMessage) {
-        errorMessage = `❌ ${backendMessage}`;
-      }
-
-      setError(errorMessage);
+      console.error("❌ Submission error:", err);
+      setError("❌ Network error. Please try again.");
     } finally {
       setLoading(false);
       setUploadProgress(0);
@@ -255,7 +216,7 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
       {/* Success Message */}
       {success && (
         <div className="success-message" role="status">
-          ✅ Application submitted successfully! Redirecting to dashboard...
+          ✅ {success}
         </div>
       )}
 
@@ -565,5 +526,3 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
     </div>
   );
 };
-
-export default SafeApplicationForm;
