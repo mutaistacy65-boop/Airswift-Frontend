@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
-import api from '@/services/apiClient';
 
 interface Option {
   label: string;
@@ -44,10 +43,12 @@ export default function JobSearchDropdown({
           }
           return 0
         })
-        setOptions(sortedJobs.map((job: any) => ({
+        const options = sortedJobs.map((job: any) => ({
           label: typeof job === 'string' ? job : job.title || job.label || job.value,
           value: typeof job === 'string' ? job : job.title || job.value || job.label,
-        })));
+        }))
+        options.sort((a, b) => a.label.localeCompare(b.label))
+        setOptions(options);
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching jobs:', error);
