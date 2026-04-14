@@ -52,9 +52,6 @@ const Navbar: React.FC = () => {
         <div className="hidden md:flex items-center gap-8">
           {isAuthenticated ? (
             <>
-              <Link href="/jobs" className="text-gray-600 hover:text-primary transition font-medium">
-                Jobs
-              </Link>
               <Link
                 href={user?.role === 'admin' ? '/admin/dashboard' : '/job-seeker/dashboard'}
                 className="text-gray-600 hover:text-primary transition font-medium flex items-center gap-2"
@@ -151,14 +148,6 @@ const Navbar: React.FC = () => {
                   </div>
                   <span className="text-sm font-medium text-gray-700">{user?.name}</span>
                 </div>
-
-                <Link
-                  href="/jobs"
-                  className="block px-3 py-2 text-gray-600 hover:text-primary hover:bg-green-50 rounded-lg transition"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Jobs
-                </Link>
 
                 <Link
                   href={user?.role === 'admin' ? '/admin/dashboard' : '/job-seeker/dashboard'}
