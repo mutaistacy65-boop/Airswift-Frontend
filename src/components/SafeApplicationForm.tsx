@@ -27,52 +27,40 @@ const SafeApplicationForm = () => {
   };
 
   // Handle file selection
-  const handleFileChange = (e, fieldKey, fieldLabel) => {
-    try {
-      const file = e.target.files?.[0];
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    fieldName: string
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file) return
 
-      if (!file) {
-        setFiles(prev => ({ ...prev, [fieldKey]: null }));
-        if (fieldKey === 'cv') {
-          setCvFile(null);
-        }
-        return;
-      }
+    const maxSize = 5 * 1024 * 1024
 
-      // ✅ FIX 1: Validate file type
-      if (file.type !== 'application/pdf') {
-        setError(`❌ ${fieldLabel} must be a PDF file. You selected: ${file.type}`);
-        e.target.value = ''; // Clear the input
-        setFiles(prev => ({ ...prev, [fieldKey]: null }));
-        if (fieldKey === 'cv') {
-          setCvFile(null);
-        }
-        return;
-      }
-
-      // ✅ FIX 2: Validate file size (5MB max)
-      const maxSize = 5 * 1024 * 1024; // 5MB
-      if (file.size > maxSize) {
-        setError(
-          `❌ ${fieldName} is too large (${(file.size / 1024 / 1024).toFixed(2)}MB). ` +
-          `Maximum size is 5MB.`
-        );
-        e.target.value = ''; // Clear the input
-        setFiles(prev => ({ ...prev, [fieldName]: null }));
-        return;
-      }
-
-      console.log(`✅ File selected: ${fieldLabel} - ${file.name} (${(file.size / 1024).toFixed(2)}KB)`);
-      setFiles(prev => ({ ...prev, [fieldKey]: file }));
-      if (fieldKey === 'cv') {
-        setCvFile(file);
-      }
-      setError(null); // Clear any previous file errors
-    } catch (err) {
-      console.error(`Error selecting ${fieldName}:`, err);
-      setError(`Error selecting ${fieldName}: ${err.message}`);
+    if (file.size > maxSize) {
+      setError(
+        `❌ ${fieldName} is too large (${(file.size / 1024 / 1024).toFixed(2)}MB). Maximum size is 5MB.`
+      )
+      e.target.value = ''
+      return
     }
-  };
+
+    if (file.type !== 'application/pdf') {
+      setError(`❌ ${fieldName} must be a PDF file. You selected: ${file.type}`)
+      e.target.value = ''
+      return
+    }
+
+    console.log(`✅ ${fieldName} selected:`, file)
+
+    const fileKey = fieldName === 'CV' ? 'cv' : fieldName === 'National ID' ? 'nationalId' : 'passport'
+    setFiles(prev => ({ ...prev, [fileKey]: file }))
+
+    if (fieldName === 'CV') {
+      setCvFile(file)
+    }
+
+    setError(null)
+  }
 
   // Handle text input changes
   const handleInputChange = (e) => {
@@ -321,16 +309,7 @@ const SafeApplicationForm = () => {
               id="cv-upload"
               type="file"
               accept=".pdf,application/pdf"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                console.log('✅ CV selected:', file);
-                if (file) {
-                  setCvFile(file);
-                } else {
-                  setCvFile(null);
-                }
-                handleFileChange(e, 'cv', 'CV');
-              }}
+              onChange={(e) => handleFileChange(e, 'CV')}
               aria-label="Upload CV"
               required
             />
@@ -351,7 +330,7 @@ const SafeApplicationForm = () => {
               id="national-id-upload"
               type="file"
               accept=".pdf,application/pdf"
-              onChange={(e) => handleFileChange(e, 'nationalId', 'National ID')}
+              onChange={(e) => handleFileChange(e, 'National ID')}
               aria-label="Upload National ID"
               required
             />
@@ -372,7 +351,7 @@ const SafeApplicationForm = () => {
               id="passport-upload"
               type="file"
               accept=".pdf,application/pdf"
-              onChange={(e) => handleFileChange(e, 'passport', 'Passport')}
+              onChange={(e) => handleFileChange(e, 'Passport')}
               aria-label="Upload Passport"
               required
             />
