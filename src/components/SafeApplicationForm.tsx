@@ -219,8 +219,6 @@ const SafeApplicationForm = () => {
 
   return (
     <div className="application-form-container">
-      <h2>📝 Job Application Form</h2>
-
       {/* Error Message */}
       {error && (
         <div className="error-message" role="alert">

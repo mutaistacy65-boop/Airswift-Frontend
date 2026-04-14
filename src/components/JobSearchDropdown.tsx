@@ -108,7 +108,7 @@ export default function JobSearchDropdown({
 
   return (
     <div>
-      <label className="block text-sm font-medium mb-2">
+      <label className="sr-only">
         Job Title {required && <span className="text-red-500">*</span>}
       </label>
 
@@ -116,7 +116,8 @@ export default function JobSearchDropdown({
         options={options}
         value={selectedOption}
         onChange={handleChange}
-        placeholder="Search job (A-Z)..."
+        placeholder="Type job title..."
+        aria-label="Job Title"
         isLoading={isLoading}
         isClearable
         isSearchable
