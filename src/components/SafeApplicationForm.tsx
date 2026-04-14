@@ -2,7 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import api from '@/services/apiClient'; // Your axios instance
 import JobSearchDropdown from './JobSearchDropdown';
 
-const SafeApplicationForm = () => {
+interface SafeApplicationFormProps {
+  onSuccess?: () => void;
+}
+
+export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormProps) {
   const [formData, setFormData] = useState({
     jobId: '',
     phone: '',
@@ -177,6 +181,10 @@ const SafeApplicationForm = () => {
       console.log('✅ Application submitted successfully:', response.data);
       setSuccess(true);
       setUploadProgress(0);
+
+      if (onSuccess) {
+        onSuccess();
+      }
 
       // Reset form
       setFormData({

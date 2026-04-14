@@ -49,7 +49,7 @@ export default function ApplicationPage() {
             </p>
           </div>
 
-          <ApplicationForm />
+          <ApplicationForm onSuccess={handleApplicationSuccess} />
         </div>
       </div>
     </MainLayout>
