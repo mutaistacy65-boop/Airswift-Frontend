@@ -340,9 +340,8 @@ export default function SendMessagePage() {
           data.append('attachment', formData.attachment)
         }
 
-        const response = await API.post('/messages', data, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
+        const response = await API.post('/messages', data)
+        // ✅ DO NOT set Content-Type - axios handles it automatically for FormData
 
         if (response.data.success) {
           // Update application status to shortlisted (if not already)

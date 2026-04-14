@@ -35,7 +35,9 @@ export const apiFetch = async (url, options = {}) => {
   const config = {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      // Only set Content-Type for non-FormData requests
+      // FormData will set it automatically with boundary
+      ...(!(options.data instanceof FormData) && { 'Content-Type': 'application/json' }),
       ...(options.headers || {}),
       ...(token && { Authorization: `Bearer ${token}` }),
     },

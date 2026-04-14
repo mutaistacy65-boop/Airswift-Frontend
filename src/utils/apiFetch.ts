@@ -79,7 +79,9 @@ export async function apiFetch(
   const config: AxiosRequestConfig = {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      // Only set Content-Type for non-FormData requests
+      // FormData will set it automatically with boundary
+      ...(!(options.data instanceof FormData) && { 'Content-Type': 'application/json' }),
       ...options.headers,
       ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
     },
