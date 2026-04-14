@@ -66,8 +66,7 @@ const AdminJobsPage = () => {
   const sidebarItems = [
     { label: '📊 Dashboard', href: '/admin/dashboard' },
     { label: '👥 Users', href: '/admin/users' },
-    { label: '💼 Jobs', href: '/admin/jobs' },
-    { label: '📝 Applications', href: '/admin/applications' },
+    { label: ' Applications', href: '/admin/applications' },
     { label: '📞 Interviews', href: '/admin/interviews' },
     { label: '💰 Payments', href: '/admin/payments' },
     { label: '📋 Audit Logs', href: '/admin/audit' },
@@ -85,7 +84,17 @@ const AdminJobsPage = () => {
     try {
       setLoading(true)
       const data = await jobService.getAllJobs()
-      setJobs(Array.isArray(data) ? data : data.jobs || [])
+      const jobs = Array.isArray(data) ? data : data?.jobs || []
+      const sortedJobs = [...jobs].sort((a: any, b: any) => {
+        if (typeof a === 'string' && typeof b === 'string') {
+          return a.localeCompare(b)
+        }
+        if (a?.title && b?.title) {
+          return a.title.localeCompare(b.title)
+        }
+        return 0
+      })
+      setJobs(sortedJobs)
     } catch (error) {
       addNotification('Failed to load jobs', 'error')
     } finally {

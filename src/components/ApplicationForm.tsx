@@ -3,6 +3,7 @@ import API from '@/services/apiClient'
 import { useRouter } from 'next/router'
 import DocumentUpload from './DocumentUpload'
 import ContinueDraftModal from './ContinueDraftModal'
+import JobSearchDropdown from './JobSearchDropdown'
 
 interface ApplicationFormProps {
   onSuccess?: () => void
@@ -117,7 +118,19 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     try {
       const response = await API.get('/jobs')
       console.log("JOBS RESPONSE:", response.data);
-      setJobs(response.data.jobs || [])
+      const jobs = Array.isArray(response.data)
+        ? response.data
+        : response.data?.jobs || []
+      const sortedJobs = [...jobs].sort((a: any, b: any) => {
+        if (typeof a === 'string' && typeof b === 'string') {
+          return a.localeCompare(b)
+        }
+        if (a?.title && b?.title) {
+          return a.title.localeCompare(b.title)
+        }
+        return 0
+      })
+      setJobs(sortedJobs)
     } catch (error) {
       console.error('Error fetching jobs:', error)
     }
@@ -381,16 +394,16 @@ function Step1({ formData, errors, jobs, onChange, onNext }: any) {
   return (
     <>
       <div>
-        <label className="block text-sm font-medium mb-2">Job Title *</label>
-        <input
-          type="text"
-          name="jobId"
+        <JobSearchDropdown
           value={formData.jobId}
-          onChange={onChange}
-          placeholder="Enter the job title you want to apply for"
-          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onChange={(jobTitle) =>
+            onChange({
+              target: { name: 'jobId', value: jobTitle },
+            } as any)
+          }
+          error={errors.jobId}
+          required
         />
-        {errors.jobId && <p className="text-red-500 text-sm mt-1">{errors.jobId}</p>}
       </div>
 
       <div>

@@ -105,8 +105,7 @@ export default function SendMessagePage() {
   const sidebarItems = [
     { label: '📊 Dashboard', href: '/admin/dashboard' },
     { label: '👥 Users', href: '/admin/users' },
-    { label: '💼 Jobs', href: '/admin/jobs' },
-    { label: '📝 Applications', href: '/admin/applications' },
+    { label: ' Applications', href: '/admin/applications' },
     { label: '📞 Interviews', href: '/admin/interviews' },
     { label: '💰 Payments', href: '/admin/payments' },
     { label: '📋 Audit Logs', href: '/admin/audit' },

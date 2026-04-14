@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '@/services/apiClient'; // Your axios instance
+import JobSearchDropdown from './JobSearchDropdown';
 
 const SafeApplicationForm = () => {
-  const [jobs, setJobs] = useState([]);
   const [formData, setFormData] = useState({
     jobId: '',
-    jobTitle: '',
     phone: '',
     nationalId: '',
     coverLetter: ''
@@ -24,32 +23,6 @@ const SafeApplicationForm = () => {
     cv: useRef(null),
     nationalId: useRef(null),
     passport: useRef(null)
-  };
-
-  // Fetch available jobs on component mount
-  useEffect(() => {
-    fetchJobs();
-  }, []);
-
-  const fetchJobs = async () => {
-    try {
-      console.log('📥 Fetching available jobs...');
-      const response = await api.get('/applications/job-options');
-
-      // ✅ SAFE: Ensure jobs is always an array
-      const jobsData = Array.isArray(response.data)
-        ? response.data
-        : response.data?.jobs
-        ? response.data.jobs
-        : [];
-
-      setJobs(jobsData);
-      console.log('✅ Jobs loaded:', jobsData.length);
-    } catch (err) {
-      console.error('❌ Error fetching jobs:', err);
-      setError('Failed to load available jobs. Please refresh the page.');
-      setJobs([]);
-    }
   };
 
   // Handle file selection
@@ -117,8 +90,8 @@ const SafeApplicationForm = () => {
       return false;
     }
 
-    if (!formData.jobId && !formData.jobTitle?.trim()) {
-      setError('❌ Please select or enter a job title');
+    if (!formData.jobId?.trim()) {
+      setError('❌ Please select a job title');
       return false;
     }
 
@@ -158,40 +131,28 @@ const SafeApplicationForm = () => {
       setLoading(true);
       console.log('📤 Preparing form submission...');
 
-      // Extract values to match exact specification
-      const { jobTitle, nationalId, phone } = formData;
-      const { passport: passportFile, cv: cvFile } = files;
-      const token = localStorage.getItem('token');
+      // ✅ Use FormData for file uploads
+      const formDataToSend = new FormData();
 
-      // 🧪 DEBUG VERIFICATION
-      console.log("CV FILE:", cvFile);
-      console.log("IS FILE?", cvFile instanceof File);
-      console.log("PASSPORT FILE:", passportFile);
-      console.log("IS PASSPORT FILE?", passportFile instanceof File);
+      formDataToSend.append('jobId', formData.jobId);
+      formDataToSend.append('nationalId', formData.nationalId);
+      formDataToSend.append('phone', formData.phone);
 
-      const submitData = new FormData();
-
-      submitData.append("jobTitle", jobTitle);
-      submitData.append("phone", phone);
-      submitData.append("nationalId", nationalId);
-
-      // MUST MATCH BACKEND EXACTLY
-      submitData.append("cv", cvFile);
-      submitData.append("passport", passportFile);
+      // Append files (these must match backend multer field names)
+      formDataToSend.append('cv', files.cv);
+      formDataToSend.append('passport', files.passport);
 
       console.log('📋 Form data prepared:');
-      console.log('   - CV:', cvFile?.name);
-      console.log('   - Passport:', passportFile?.name);
-      console.log('   - Job Title:', jobTitle);
-      console.log('   - Phone:', phone);
+      console.log('   - CV:', files.cv?.name);
+      console.log('   - Passport:', files.passport?.name);
 
-      console.log('📤 Sending application...');
+      // ✅ Send with correct headers (NO Content-Type for FormData)
       const response = await fetch('/api/applications', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
-        body: submitData
+        body: formDataToSend,
       });
 
       if (!response.ok) {
@@ -207,7 +168,6 @@ const SafeApplicationForm = () => {
       // Reset form
       setFormData({
         jobId: '',
-        jobTitle: '',
         phone: '',
         nationalId: '',
         coverLetter: ''
@@ -276,39 +236,14 @@ const SafeApplicationForm = () => {
       )}
 
       <form onSubmit={handleSubmit} encType="multipart/form-data">
-        {/* Job Selection */}
+        {/* Job Selection with Search & Dropdown */}
         <div className="form-group">
-          <label htmlFor="job-select">
-            Job Title <span className="required">*</span>
-          </label>
-          <select
-            id="job-select"
-            name="jobId"
+          <JobSearchDropdown
             value={formData.jobId}
-            onChange={handleInputChange}
-          >
-            <option value="">Select from available jobs...</option>
-            {Array.isArray(jobs) && jobs.map(job => (
-              <option key={job._id || job.id} value={job._id || job.id}>
-                {job.title}
-              </option>
-            ))}
-          </select>
-          <small>Or type a custom job title below</small>
-        </div>
-
-        {/* Custom Job Title */}
-        <div className="form-group">
-          <label htmlFor="job-title">
-            Custom Job Title (optional)
-          </label>
-          <input
-            id="job-title"
-            type="text"
-            name="jobTitle"
-            value={formData.jobTitle}
-            onChange={handleInputChange}
-            placeholder="Enter job title if not in list"
+            onChange={(jobTitle) =>
+              setFormData(prev => ({ ...prev, jobId: jobTitle }))
+            }
+            required
           />
         </div>
 
@@ -452,7 +387,6 @@ const SafeApplicationForm = () => {
         <summary>🔍 Debug Information (Click to expand)</summary>
         <pre>{JSON.stringify({
           jobSelected: formData.jobId,
-          jobTitle: formData.jobTitle,
           phone: formData.phone,
           nationalId: formData.nationalId,
           files: {

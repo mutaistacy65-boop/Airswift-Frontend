@@ -48,12 +48,24 @@ const JobsPage: React.FC = () => {
       }
 
       const data = await jobService.searchJobs(searchQuery, filters)
+      const jobs = Array.isArray(data)
+        ? data
+        : data?.jobs || []
+      const sortedJobs = [...jobs].sort((a: any, b: any) => {
+        if (typeof a === 'string' && typeof b === 'string') {
+          return a.localeCompare(b)
+        }
+        if (a?.title && b?.title) {
+          return a.title.localeCompare(b.title)
+        }
+        return 0
+      })
       if (page === 1) {
-        setJobs(data.jobs || [])
+        setJobs(sortedJobs)
       } else {
-        setJobs(prev => [...prev, ...(data.jobs || [])])
+        setJobs(prev => [...prev, ...sortedJobs])
       }
-      setHasMore(data.hasMore || false)
+      setHasMore(data?.hasMore || false)
     } catch (error) {
       addNotification('Failed to load jobs', 'error')
     } finally {
