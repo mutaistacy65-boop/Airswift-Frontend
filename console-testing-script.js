@@ -26,6 +26,16 @@ function log(title, data) {
   console.log(`%c${title}`, 'color: #0066cc; font-weight: bold; font-size: 14px;', data);
 }
 
+async function safeParseResponse(response) {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    console.error('Non-JSON response:', text);
+    return { rawText: text };
+  }
+}
+
 // ==========================================
 // REGISTRATION TESTS
 // ==========================================
@@ -51,7 +61,7 @@ async function registerNewUser() {
       body: JSON.stringify(userData),
     });
 
-    const data = await response.json();
+    const data = await safeParseResponse(response);
     log('✅ REGISTER RESPONSE:', data);
 
     // Store email in localStorage for OTP verification
@@ -101,7 +111,7 @@ async function loginUser(email, password) {
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await response.json();
+    const data = await safeParseResponse(response);
     log('✅ LOGIN RESPONSE:', data);
 
     if (data.token) {
@@ -239,7 +249,7 @@ async function manualApiTest(method, endpoint, data) {
       body: data ? JSON.stringify(data) : undefined,
     });
 
-    const responseData = await response.json();
+    const responseData = await safeParseResponse(response);
     log(`✅ RESPONSE (${response.status}):`, responseData);
     return responseData;
   } catch (error) {

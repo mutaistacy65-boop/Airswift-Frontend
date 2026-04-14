@@ -160,23 +160,21 @@ const SafeApplicationForm = () => {
         console.log(`   ${pair[0]}:`, pair[1] instanceof File ? `File(${pair[1].name}, ${pair[1].size} bytes)` : pair[1]);
       }
 
-      // ✅ Send with correct headers (NO Content-Type for FormData)
-      const response = await fetch('/api/applications', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-          // ❌ DO NOT set Content-Type manually for FormData
-        },
-        body: formDataToSend,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP ${response.status}`);
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+      if (!token) {
+        setError('❌ Authentication required. Please log in and try again.');
+        setLoading(false);
+        return;
       }
 
-      const data = await response.json();
-      console.log('✅ Application submitted successfully:', data);
+      const response = await api.post('/applications', formDataToSend, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      console.log('✅ Application submitted successfully:', response.data);
       setSuccess(true);
       setUploadProgress(0);
 

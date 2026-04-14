@@ -93,7 +93,14 @@ export default function ApplicationSubmissionTester() {
     try {
       log('🔍 Checking jobs endpoint...', 'info');
       const response = await fetch(`${apiUrl}/applications/job-options`);
-      const data = await response.json();
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        console.error('Non-JSON response:', text);
+        data = { rawText: text };
+      }
       if (Array.isArray(data)) {
         setStatusMessage(`✅ Found ${data.length} available jobs`, 'success');
         log(`Jobs endpoint working. Available jobs: ${data.length}`, 'success');

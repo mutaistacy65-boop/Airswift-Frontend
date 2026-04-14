@@ -271,20 +271,22 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
         console.log(`   ${pair[0]}:`, pair[1] instanceof File ? `File(${pair[1].name}, ${pair[1].size} bytes)` : pair[1]);
       }
 
-      const response = await fetch("/api/applications", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`
-          // ❌ DO NOT set Content-Type manually for FormData
-        },
-        body: formData
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+      if (!token) {
+        console.error('No authentication token found!');
+        alert('Authentication required. Please log in and try again.');
+        setLoading(false);
+        return;
       }
 
-      const result = await response.json()
+      const response = await API.post('/applications', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const result = response.data
 
       if (result.success) {
         alert('Application submitted successfully!')

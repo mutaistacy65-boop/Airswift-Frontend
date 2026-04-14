@@ -118,7 +118,14 @@ const ApplicationFormTester = {
         body: formData,
       });
       
-      const data = await response.json();
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        console.error('Non-JSON response:', text);
+        data = { rawText: text };
+      }
       console.log('Response status:', response.status);
       console.log('Response data:', data);
       
