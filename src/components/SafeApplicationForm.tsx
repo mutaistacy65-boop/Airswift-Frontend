@@ -146,11 +146,18 @@ const SafeApplicationForm = () => {
       console.log('   - CV:', files.cv?.name);
       console.log('   - Passport:', files.passport?.name);
 
+      // 🔍 Debug: Log all FormData entries before sending
+      console.log('🔍 FormData entries debug:');
+      for (let pair of formDataToSend.entries()) {
+        console.log(`   ${pair[0]}:`, pair[1] instanceof File ? `File(${pair[1].name}, ${pair[1].size} bytes)` : pair[1]);
+      }
+
       // ✅ Send with correct headers (NO Content-Type for FormData)
       const response = await fetch('/api/applications', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
+          // ❌ DO NOT set Content-Type manually for FormData
         },
         body: formDataToSend,
       });

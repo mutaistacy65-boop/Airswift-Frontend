@@ -263,12 +263,19 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       formData.append("passport", passportFile);
       formData.append("cv", cvFile);
 
-      console.log('Sending FormData with keys:', Array.from(formData.keys()))
+      console.log('📋 Sending FormData with keys:', Array.from(formData.keys()));
+
+      // 🔍 Debug: Log all FormData entries before sending
+      console.log('🔍 FormData entries debug:');
+      for (let pair of formData.entries()) {
+        console.log(`   ${pair[0]}:`, pair[1] instanceof File ? `File(${pair[1].name}, ${pair[1].size} bytes)` : pair[1]);
+      }
 
       const response = await fetch("/api/applications", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`
+          // ❌ DO NOT set Content-Type manually for FormData
         },
         body: formData
       })
