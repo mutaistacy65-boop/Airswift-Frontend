@@ -1,5 +1,8 @@
 
 import { useEffect, useState } from "react";
+import socket from '@/services/socket'
+import { useNotification } from '@/context/NotificationContext'
+import { adminService } from '@/services/adminService'
 
 export default function AdminSettings() {
   const [form, setForm] = useState({
@@ -36,33 +39,40 @@ export default function AdminSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const { addNotification } = useNotification()
 
   // 🔄 FETCH SETTINGS
   useEffect(() => {
     const fetchSettings = async () => {
-      const token = localStorage.getItem("token");
-
       try {
-        const res = await fetch(
-          "https://airswift-backend-fjt3.onrender.com/api/settings",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        const data = await res.json();
-        setForm(data);
+        const data = await adminService.getSettings()
+        setForm(data)
       } catch (error) {
-        console.error("Error fetching settings:", error);
+        console.error("Error fetching settings:", error)
+        addNotification('Failed to load settings', 'error')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchSettings();
-  }, []);
+    fetchSettings()
+  }, [addNotification])
+
+  useEffect(() => {
+    if (!socket) return
+
+    const handleSettingsUpdated = (newSettings: any) => {
+      console.log('🔄 Settings updated in real-time', newSettings)
+      setForm(newSettings)
+      addNotification('⚙️ Settings were updated in real time', 'info')
+    }
+
+    socket.on('settings_updated', handleSettingsUpdated)
+
+    return () => {
+      socket.off('settings_updated', handleSettingsUpdated)
+    }
+  }, [addNotification])
 
   // � FRONTEND PAYMENT BUTTON
   const handlePay = async () => {
@@ -102,30 +112,20 @@ export default function AdminSettings() {
 
   // �💾 SAVE SETTINGS
   const handleSave = async () => {
-    setSaving(true);
-    const token = localStorage.getItem("token");
+    setSaving(true)
 
     try {
-      await fetch(
-        "https://airswift-backend-fjt3.onrender.com/api/settings",
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(form),
-        }
-      );
-
-      alert("✅ Settings saved successfully");
+      await adminService.updateSettings(form)
+      addNotification('✅ Settings saved successfully', 'success')
+      alert('✅ Settings saved successfully')
     } catch (error) {
-      console.error("Error saving settings:", error);
-      alert("❌ Failed to save settings");
+      console.error('Error saving settings:', error)
+      addNotification('❌ Failed to save settings', 'error')
+      alert('❌ Failed to save settings')
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   if (loading) {
     return <div className="p-6">Loading settings...</div>;
