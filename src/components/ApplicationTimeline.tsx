@@ -17,6 +17,9 @@ export default function ApplicationTimeline({
   timeline = [],
   currentStatus,
 }: ApplicationTimelineProps) {
+  // Temporary debug log to verify props are working
+  console.log("Timeline props working", timeline, currentStatus);
+
   const currentStep = steps.indexOf(currentStatus.toLowerCase());
 
   return (
