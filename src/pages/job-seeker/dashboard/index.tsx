@@ -9,6 +9,7 @@ import Loader from '@/components/Loader'
 import { jobService } from '@/services/jobService'
 import { useNotification } from '@/context/NotificationContext'
 import { useSocket } from '@/hooks/useSocket'
+import API from '@/services/apiClient'
 
 const JobSeekerDashboard: React.FC = () => {
   const { isAuthorized, isLoading } = useProtectedRoute('user')
@@ -25,11 +26,31 @@ const JobSeekerDashboard: React.FC = () => {
 
   const { subscribe } = useSocket()
 
+  const [hasApplied, setHasApplied] = useState<boolean | null>(null)
+
   useEffect(() => {
     if (isAuthorized) {
+      checkApplicationStatus()
       fetchDashboardData()
     }
   }, [isAuthorized])
+
+  // Check if user has applied - redirect to apply if not
+  const checkApplicationStatus = async () => {
+    try {
+      const res = await API.get('/users/status')
+      const applied = res.data?.hasApplied || false
+      setHasApplied(applied)
+
+      if (!applied) {
+        router.push('/apply')
+      }
+    } catch (err) {
+      console.error('Failed to check application status:', err)
+      // On error, assume they haven't applied and redirect
+      router.push('/apply')
+    }
+  }
 
   // Real-time listener for application updates
   useEffect(() => {
@@ -171,12 +192,12 @@ const JobSeekerDashboard: React.FC = () => {
     addNotification('Logged out successfully', 'success')
   }
 
-  if (isLoading) {
+  if (isLoading || hasApplied === null) {
     return <Loader fullScreen />
   }
 
-  if (!isAuthorized) {
-    return null
+  if (!isAuthorized || hasApplied === false) {
+    return null // Will redirect in useEffect
   }
 
   return (

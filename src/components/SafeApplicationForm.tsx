@@ -182,6 +182,11 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
 
         setSuccess("Application submitted successfully!");
 
+        // Call onSuccess callback if provided
+        if (onSuccess) {
+          onSuccess();
+        }
+
         setTimeout(() => {
           window.location.href = "/dashboard";
         }, 1500);
