@@ -1,13 +1,23 @@
 import React from 'react'
 
-interface ApplicationTimelineProps {
+interface TimelineStep {
   status: string
+  timestamp?: string
+  notes?: string
 }
 
-const steps = ["Pending", "Reviewed", "Accepted"];
+interface ApplicationTimelineProps {
+  timeline?: TimelineStep[]
+  currentStatus: string
+}
 
-export default function ApplicationTimeline({ status }: ApplicationTimelineProps) {
-  const currentStep = steps.indexOf(status);
+const steps = ["pending", "reviewed", "accepted"];
+
+export default function ApplicationTimeline({
+  timeline = [],
+  currentStatus,
+}: ApplicationTimelineProps) {
+  const currentStep = steps.indexOf(currentStatus.toLowerCase());
 
   return (
     <div className="flex justify-between items-center mt-6">

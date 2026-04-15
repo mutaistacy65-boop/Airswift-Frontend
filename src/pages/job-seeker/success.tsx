@@ -54,7 +54,7 @@ export default function SuccessPage() {
         </div>
 
         {/* Timeline */}
-        <ApplicationTimeline status={application.status || "Pending"} />
+        <ApplicationTimeline currentStatus={application.status || "pending"} />
 
         {/* Button */}
         <button
