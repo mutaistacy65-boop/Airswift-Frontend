@@ -23,11 +23,7 @@ export default function ApplicationPage() {
 
     const checkStatus = async () => {
       try {
-        const res = await API.get('/users/status', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        })
+        const res = await API.get('/users/status')
 
         if (res.data?.hasApplied) {
           setHasApplied(true)
@@ -54,32 +50,13 @@ export default function ApplicationPage() {
 
           {/* ✅ IF ALREADY APPLIED */}
           {hasApplied ? (
-            <div className="bg-white p-8 rounded-xl shadow text-center">
-              <h2 className="text-2xl font-bold text-green-600 mb-4">
-                ✅ Application Already Submitted
-              </h2>
-
-              <p className="text-gray-600 mb-2">
-                You have already submitted your application.
+            <div className="bg-yellow-100 p-4 rounded-lg text-center">
+              <p className="mb-3 font-semibold">
+                You have already submitted your application
               </p>
-
-              {application?.status && (
-                <p className="text-gray-600 mb-6">
-                  Status: <span className={`font-semibold ${
-                    application.status === 'accepted'
-                      ? 'text-green-600'
-                      : application.status === 'rejected'
-                      ? 'text-red-600'
-                      : 'text-yellow-600'
-                  }`}>
-                    {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
-                  </span>
-                </p>
-              )}
-
               <button
-                onClick={() => router.push('/dashboard')}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+                onClick={() => router.push("/job-seeker/dashboard")}
+                className="bg-blue-600 text-white px-4 py-2 rounded"
               >
                 Go to Dashboard
               </button>
@@ -94,7 +71,7 @@ export default function ApplicationPage() {
                 </p>
               </div>
 
-              <ApplicationForm onSuccess={() => router.push('/dashboard')} />
+              <ApplicationForm onSuccess={() => router.push('/job-seeker/success')} />
             </>
           )}
 

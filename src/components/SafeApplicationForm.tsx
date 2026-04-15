@@ -160,48 +160,33 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
 
       // 🔍 Debug: Log all FormData entries before sending
       console.log('🔍 FormData entries debug:');
-      for (let pair of formDataToSend.entries()) {
+      for (const pair of formDataToSend.entries()) {
         console.log(`   ${pair[0]}:`, pair[1] instanceof File ? `File(${pair[1].name}, ${pair[1].size} bytes)` : pair[1]);
       }
 
-      const token = localStorage.getItem("token");
+      try {
+        const response = await api.post("/applications", formDataToSend);
 
-      const response = await fetch(
-        "https://airswift-backend-fjt3.onrender.com/api/applications",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formDataToSend,
-        }
-      );
-
-      if (response.ok) {
         console.log("✅ Application submitted successfully");
 
         setSuccess("Application submitted successfully!");
+
+        // Save application data to localStorage
+        localStorage.setItem("latestApplication", JSON.stringify(response.data));
 
         // Call onSuccess callback if provided
         if (onSuccess) {
           onSuccess();
         }
-
-        setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 1500);
-      } else {
-        const error = await response.text();
-        console.error("❌ Error:", error);
-        setError(`❌ Submission failed: ${error}`);
+      } catch (err) {
+        console.error("❌ Submission error:", err);
+        setError("❌ Network error. Please try again.");
+      } finally {
+        setLoading(false);
+        setUploadProgress(0);
       }
-
     } catch (err) {
-      console.error("❌ Submission error:", err);
-      setError("❌ Network error. Please try again.");
-    } finally {
-      setLoading(false);
-      setUploadProgress(0);
+      console.error("❌ Outer error:", err);
     }
   };
 
