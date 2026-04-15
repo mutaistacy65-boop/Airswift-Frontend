@@ -79,22 +79,8 @@ const JobSeekerDashboard: React.FC = () => {
   useEffect(() => {
     const fetchApplication = async () => {
       try {
-        const token = localStorage.getItem("token");
-
-        const res = await fetch(
-          "https://airswift-backend-fjt3.onrender.com/api/applications/my",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!res.ok) return;
-
-        const data = await res.json();
-        setApplication(data);
-
+        const res = await API.get("/applications/my");
+        setApplication(res.data);
       } catch (err) {
         console.error("Error fetching application:", err);
       }

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import socket from '@/services/socket'
 import { useNotification } from '@/context/NotificationContext'
 import { adminService } from '@/services/adminService'
+import API from "@/lib/api";
 
 export default function AdminSettings() {
   const [form, setForm] = useState({
@@ -77,25 +78,14 @@ export default function AdminSettings() {
   // � FRONTEND PAYMENT BUTTON
   const handlePay = async () => {
     setPaymentProcessing(true);
-    const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch(
-        "https://airswift-backend-fjt3.onrender.com/api/payments/pay",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            phone: "+2547XXXXXXXX",
-            amount: 100,
-          }),
-        }
-      );
+      const res = await API.post("/payments/pay", {
+        phone: "+2547XXXXXXXX",
+        amount: 100,
+      });
 
-      const data = await res.json();
+      const data = res.data;
       
       // ✅ ENHANCED SUCCESS MESSAGE
       alert("✅ Payment successful! Receipt sent to your email.");

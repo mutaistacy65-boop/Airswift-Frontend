@@ -7,7 +7,7 @@ const socket: Socket | null = typeof window !== 'undefined'
   ? io(socketUrl, {
       ...(socketPath ? { path: socketPath } : {}),
       withCredentials: true,
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'], // 👈 Add polling as fallback
     })
   : null
 

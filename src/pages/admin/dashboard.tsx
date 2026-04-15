@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import API from "@/lib/api";
+import socket from '@/services/socket';
+import StatusTimeline from "@/components/StatusTimeline";
 
 export default function AdminDashboard() {
   const [applications, setApplications] = useState([]);
@@ -14,37 +17,36 @@ export default function AdminDashboard() {
     fetchApplications();
   }, []);
 
+  // Listen for real-time application updates
+  useEffect(() => {
+    socket.on("new_application", (data) => {
+      console.log("🔥 New application received:", data);
+      // add to top instantly
+      setApplications((prev) => [data, ...prev]);
+    });
+
+    socket.on("application_status_updated", (updatedApp) => {
+      console.log("🔥 Status updated:", updatedApp);
+      setApplications((prev) =>
+        prev.map((app) =>
+          app._id === updatedApp._id ? updatedApp : app
+        )
+      );
+    });
+
+    return () => {
+      socket.off("new_application");
+      socket.off("application_status_updated");
+    };
+  }, []);
+
   const fetchApplications = async () => {
-    const token = localStorage.getItem("token");
-
-    const res = await fetch(
-      "https://airswift-backend-fjt3.onrender.com/api/admin/applications",
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    const data = await res.json();
-    setApplications(data);
+    const res = await API.get("/admin/applications");
+    setApplications(res.data);
   };
 
   const updateStatus = async (id, action) => {
-    const token = localStorage.getItem("token");
-
-    await fetch(
-      `https://airswift-backend-fjt3.onrender.com/api/admin/applications/${id}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ action }),
-      }
-    );
-
+    await API.put(`/admin/applications/${id}`, { action });
     fetchApplications(); // refresh
   };
 
@@ -69,6 +71,10 @@ export default function AdminDashboard() {
                 {app.status}
               </span>
             </p>
+
+            <div className="mt-2 mb-3">
+              <StatusTimeline status={app.status || 'pending'} />
+            </div>
 
             <div className="mt-3 flex gap-2">
               <button

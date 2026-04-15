@@ -89,10 +89,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!userId || !socket) return
 
     if (socket.connected) {
-      socket.emit('join', userId)
+      socket.emit('join_user', userId)
+      if (user?.role === 'admin') {
+        socket.emit('join_admin')
+      }
     } else {
       socket.once('connect', () => {
-        socket.emit('join', userId)
+        socket.emit('join_user', userId)
+        if (user?.role === 'admin') {
+          socket.emit('join_admin')
+        }
       })
     }
   }, [user])

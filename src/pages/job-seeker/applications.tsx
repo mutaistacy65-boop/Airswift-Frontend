@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useSocket } from "@/hooks/useSocket";
 import { useNotification } from "@/context/NotificationContext";
-import ApplicationTimeline from "@/components/ApplicationTimeline";
+import StatusTimeline from "@/components/StatusTimeline";
+import API from "@/lib/api";
 
 export default function MyApplications() {
   const [apps, setApps] = useState([]);
@@ -10,19 +11,8 @@ export default function MyApplications() {
 
   useEffect(() => {
     const fetchApps = async () => {
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(
-        "https://airswift-backend-fjt3.onrender.com/api/applications/my",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await res.json();
-      setApps(data);
+      const res = await API.get("/applications/my");
+      setApps(res.data);
     };
 
     fetchApps();
@@ -31,12 +21,10 @@ export default function MyApplications() {
   // Listen for real-time application status updates
   useEffect(() => {
     // Listen for status updates from admin actions
-    const unsubscribeStatusUpdate = subscribe("statusUpdate", (data: any) => {
+    const unsubscribeStatusUpdate = subscribe("application_status_updated", (data: any) => {
       setApps((prev) =>
         prev.map((app) =>
-          app._id === data.applicationId || app._id === data.id
-            ? { ...app, status: data.status }
-            : app
+          app._id === data._id ? data : app
         )
       );
       
@@ -52,35 +40,23 @@ export default function MyApplications() {
       }
     });
 
-    // Listen for general application updates
-    const unsubscribeAppUpdate = subscribe("application_updated", (data: any) => {
-      if (data.applicationId) {
-        setApps((prev) =>
-          prev.map((app) =>
-            app._id === data.applicationId ? { ...app, ...data.updates } : app
-          )
-        );
-        addNotification("📝 Your application status has been updated", "info");
+    // Listen for new applications
+    const unsubscribeNewApp = subscribe("new_application", (data: any) => {
+      // Only add if it's the current user's application
+      const currentUserId = JSON.parse(localStorage.getItem("user") || "{}")?._id;
+      if (data.user === currentUserId) {
+        setApps((prev) => [data, ...prev]);
       }
     });
 
     // Listen for interview scheduling
-    const unsubscribeInterview = subscribe("interviewScheduled", (data: any) => {
-      if (data.applicationId) {
-        setApps((prev) =>
-          prev.map((app) =>
-            app._id === data.applicationId
-              ? { ...app, status: "Interview Scheduled", interviewId: data.interviewId }
-              : app
-          )
-        );
-        addNotification("📅 Interview has been scheduled! Check your email for details.", "success");
-      }
+    const unsubscribeInterview = subscribe("interview_scheduled", (data: any) => {
+      addNotification("📅 New Interview Scheduled!", "success");
     });
 
     return () => {
       unsubscribeStatusUpdate?.();
-      unsubscribeAppUpdate?.();
+      unsubscribeNewApp?.();
       unsubscribeInterview?.();
     };
   }, [subscribe, addNotification]);
@@ -136,10 +112,7 @@ export default function MyApplications() {
 
               {/* APPLICATION TIMELINE */}
               <div className="mb-4">
-                <ApplicationTimeline
-                  timeline={app.timeline || []}
-                  currentStatus={app.status || 'pending'}
-                />
+                <StatusTimeline status={app.status || 'pending'} />
               </div>
 
               {/* FILES */}
