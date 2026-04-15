@@ -1,300 +1,225 @@
-import React, { useState, useEffect } from 'react'
-import DashboardLayout from '@/layouts/DashboardLayout'
-import { useProtectedRoute } from '@/hooks/useProtectedRoute'
-import { useAuth } from '@/context/AuthContext'
-import { useNotification } from '@/context/NotificationContext'
-import Loader from '@/components/Loader'
-import Button from '@/components/Button'
-import Input from '@/components/Input'
-import Textarea from '@/components/Textarea'
-import { profileService } from '@/services/profileService'
+import { useEffect, useState } from "react";
 
-interface UserProfile {
-  name: string
-  email: string
-  phone: string
-  bio: string
-  skills: string[]
-  experience: string
-  education: string
-  location: string
-}
+export default function ProfilePage() {
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    location: "",
+    skills: "",
+    experience: "",
+  });
+  const [loadingCV, setLoadingCV] = useState(false);
 
-const ProfilePage = () => {
-  const { isAuthorized, isLoading } = useProtectedRoute('user')
-  const { user } = useAuth()
-  const { addNotification } = useNotification()
+  // Calculate profile completion
+  const calculateCompletion = () => {
+    const fields = [form.name, form.phone, form.location, form.skills, form.experience];
+    const filledFields = fields.filter(field => field && field.trim() !== "").length;
+    return Math.round((filledFields / fields.length) * 100);
+  };
 
-  const [profile, setProfile] = useState<UserProfile>({
-    name: '',
-    email: '',
-    phone: '',
-    bio: '',
-    skills: [],
-    experience: '',
-    education: '',
-    location: ''
-  })
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [skillInput, setSkillInput] = useState('')
-  const [cvFile, setCvFile] = useState<File | null>(null)
+  const completion = calculateCompletion();
 
+  // Get missing fields
+  const getMissingFields = () => {
+    const missingFields = [];
+    if (!form.phone || form.phone.trim() === "") missingFields.push("Phone");
+    if (!form.location || form.location.trim() === "") missingFields.push("Location");
+    if (!form.skills || form.skills.trim() === "") missingFields.push("Skills");
+    return missingFields;
+  };
+
+  const missingFields = getMissingFields();
+
+  // LOAD USER DATA
   useEffect(() => {
-    if (isAuthorized && user) {
-      // Load user profile data
-      setProfile({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        bio: user.bio || '',
-        skills: user.skills || [],
-        experience: user.experience || '',
-        education: user.education || '',
-        location: user.location || ''
-      })
-      setLoading(false)
-    }
-  }, [isAuthorized, user])
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    console.log('CV FILE STATE CHANGED:', cvFile)
-  }, [cvFile])
+      const res = await fetch(
+        "https://airswift-backend-fjt3.onrender.com/api/users/profile",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-  const handleInputChange = (field: keyof UserProfile, value: string) => {
-    setProfile(prev => ({
-      ...prev,
-      [field]: value
-    }))
-  }
+      const data = await res.json();
+      setForm(data);
+    };
 
-  const handleAddSkill = () => {
-    if (skillInput.trim() && !profile.skills.includes(skillInput.trim())) {
-      setProfile(prev => ({
-        ...prev,
-        skills: [...prev.skills, skillInput.trim()]
-      }))
-      setSkillInput('')
-    }
-  }
+    fetchProfile();
+  }, []);
 
-  const handleRemoveSkill = (skillToRemove: string) => {
-    setProfile(prev => ({
-      ...prev,
-      skills: prev.skills.filter(skill => skill !== skillToRemove)
-    }))
-  }
+  // HANDLE CV UPLOAD + AUTO-FILL
+  const handleCVUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const handleCvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-
-    console.log('✅ CV selected:', file)
-
-    if (file) {
-      setCvFile(file)
-    }
-  }
-
-  const validateForm = () => {
-    console.log('CV during validation:', cvFile)
-
-    if (!cvFile) {
-      setError('CV file is required')
-      return false
-    }
-
-    return true
-  }
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-
-    if (!validateForm()) return
-
-    console.log('FINAL CV:', cvFile)
-    setError(null)
-    setSaving(true)
+    setLoadingCV(true);
     try {
-      const formData = new FormData()
-      formData.append('name', profile.name)
-      formData.append('phone', profile.phone)
-      formData.append('location', profile.location)
-      formData.append('cv', cvFile)
+      const formData = new FormData();
+      formData.append("cv", file);
 
-      const data = await profileService.setupProfile(formData)
+      const token = localStorage.getItem("token");
 
-      if (data?.profile) {
-        setProfile(prev => ({
-          ...prev,
-          name: data.profile.name || prev.name,
-          skills: data.profile.skills || prev.skills,
-          education: data.profile.education || prev.education,
-          experience: data.profile.experience || prev.experience,
-        }))
-      }
+      const res = await fetch(
+        "https://airswift-backend-fjt3.onrender.com/api/users/parse-cv",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      const data = await res.json();
+
+      // 🔥 AUTO-FILL FORM
+      setForm((prev) => ({
+        ...prev,
+        name: data.name || prev.name,
+        phone: data.phone || prev.phone,
+        skills: data.skills?.join(", ") || prev.skills,
+        experience: data.experience || prev.experience,
+      }));
     } catch (error) {
-      console.error('Profile setup error:', error)
-      addNotification('Failed to setup profile. Please try again.', 'error')
+      console.error("CV upload error:", error);
     } finally {
-      setSaving(false)
+      setLoadingCV(false);
     }
-  }
+  };
 
-  if (isLoading || loading) {
-    return <Loader fullScreen />
-  }
+  // SAVE PROFILE
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!isAuthorized) {
-    return null
-  }
+    const token = localStorage.getItem("token");
 
-  const sidebarItems = [
-    { label: 'Dashboard', href: '/job-seeker/dashboard', icon: '📊' },
-    { label: 'My Applications', href: '/job-seeker/applications', icon: '📋' },
-    { label: 'Interviews', href: '/job-seeker/interviews', icon: '📞' },
-    { label: 'Profile', href: '/job-seeker/profile', icon: '👤' },
-  ]
+    await fetch(
+      "https://airswift-backend-fjt3.onrender.com/api/users/profile",
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(form),
+      }
+    );
+
+    alert("✅ Profile updated successfully");
+  };
 
   return (
-    <DashboardLayout sidebarItems={sidebarItems}>
-      <div>
-        <h1 className="text-3xl font-bold mb-8">My Profile</h1>
+    <div className="p-6 max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6">My Profile</h1>
 
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <form onSubmit={handleSubmit} noValidate>
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold mb-6">Personal Information</h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <Input
-                label="Full Name"
-                value={profile.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                required
-              />
-              <Input
-                label="Email"
-                type="email"
-                value={profile.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                required
-              />
-              <Input
-                label="Phone Number"
-                value={profile.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                required
-              />
-              <Input
-                label="Location"
-                value={profile.location}
-                onChange={(e) => handleInputChange('location', e.target.value)}
-                placeholder="City, Country"
-              />
-              <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Upload CV</label>
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleCvChange}
-                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                />
-                {cvFile && (
-                  <p className="text-sm text-gray-600 mt-2">Selected file: {cvFile.name}</p>
-                )}
-                {error && (
-                  <p className="text-sm text-red-600 mt-2">{error}</p>
-                )}
-                <p className="text-xs text-gray-500 mt-2">Upload your CV to automatically populate skills, experience, and education from the profile setup endpoint.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold mb-6">Professional Information</h2>
-
-            <div className="mb-6">
-              <Textarea
-                label="Professional Bio"
-                value={profile.bio}
-                onChange={(e) => handleInputChange('bio', e.target.value)}
-                rows={4}
-                placeholder="Tell us about yourself, your career goals, and what you're looking for..."
-              />
-            </div>
-
-            <div className="mb-6">
-              <Textarea
-                label="Work Experience"
-                value={profile.experience}
-                onChange={(e) => handleInputChange('experience', e.target.value)}
-                rows={4}
-                placeholder="Describe your work experience, previous roles, and achievements..."
-              />
-            </div>
-
-            <div className="mb-6">
-              <Textarea
-                label="Education"
-                value={profile.education}
-                onChange={(e) => handleInputChange('education', e.target.value)}
-                rows={3}
-                placeholder="List your educational background, degrees, certifications..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">Skills</label>
-              <div className="flex gap-2 mb-3">
-                <Input
-                  value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  placeholder="Add a skill..."
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
-                />
-                <Button onClick={handleAddSkill} type="button">
-                  Add
-                </Button>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {profile.skills.map((skill, index) => (
-                  <span
-                    key={index}
-                    className="bg-primary text-white px-3 py-1 rounded-full text-sm flex items-center gap-2"
-                  >
-                    {skill}
-                    <button
-                      onClick={() => handleRemoveSkill(skill)}
-                      className="text-white hover:text-red-200"
-                      type="button"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-
-              {profile.skills.length === 0 && (
-                <p className="text-gray-500 text-sm mt-2">No skills added yet. Add skills to improve your job matches.</p>
-              )}
-            </div>
-          </div>
-
-          <div className="border-t pt-6">
-            <Button
-              type="submit"
-              disabled={saving}
-              size="lg"
-            >
-              {saving ? 'Saving...' : cvFile ? 'Upload CV & Setup Profile' : 'Select CV to Setup Profile'}
-            </Button>
-          </div>
-          </form>
+      {/* PROGRESS BAR UI */}
+      <div className="bg-white p-4 rounded-lg shadow mb-6">
+        <div className="flex justify-between mb-2">
+          <span className="text-sm font-medium">Profile Completion</span>
+          <span className="text-sm font-bold">{completion}%</span>
         </div>
-      </div>
-    </DashboardLayout>
-  )
-}
 
-export default ProfilePage
+        <div className="w-full bg-gray-200 rounded-full h-3">
+          <div
+            className="bg-blue-600 h-3 rounded-full transition-all duration-500"
+            style={{ width: `${completion}%` }}
+          />
+        </div>
+
+        {completion < 100 && (
+          <p className="text-xs text-gray-500 mt-2">
+            Complete your profile to increase your chances of getting hired 🚀
+          </p>
+        )}
+
+        {missingFields.length > 0 && (
+          <p className="text-xs text-red-500 mt-2">
+            Missing: {missingFields.join(", ")}
+          </p>
+        )}
+      </div>
+
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow">
+        <div className="space-y-4">
+          {/* CV UPLOAD SECTION */}
+          <div>
+            <label className="block text-sm font-medium mb-1">📄 Upload CV (PDF)</label>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={handleCVUpload}
+              disabled={loadingCV}
+              className="w-full p-2 border rounded"
+            />
+            {loadingCV && <p className="text-sm text-blue-600 mt-2">🔍 Extracting CV data...</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Name</label>
+            <input
+              type="text"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full p-2 border rounded"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Phone</label>
+            <input
+              type="text"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              className="w-full p-2 border rounded"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Location</label>
+            <input
+              type="text"
+              value={form.location}
+              onChange={(e) => setForm({ ...form, location: e.target.value })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Skills</label>
+            <input
+              type="text"
+              value={form.skills}
+              onChange={(e) => setForm({ ...form, skills: e.target.value })}
+              className="w-full p-2 border rounded"
+              placeholder="e.g., JavaScript, React, Node.js"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Experience</label>
+            <textarea
+              value={form.experience}
+              onChange={(e) => setForm({ ...form, experience: e.target.value })}
+              className="w-full p-2 border rounded"
+              rows={4}
+              placeholder="Describe your work experience..."
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Save Profile
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}

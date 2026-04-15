@@ -1,95 +1,477 @@
 
-import React, { useEffect, useState } from 'react'
-import { useRouter } from 'next/router'
-import DashboardLayout from '@/layouts/DashboardLayout'
-import { useAuth } from '@/context/AuthContext'
-import { useProtectedRoute } from '@/hooks/useProtectedRoute'
-import AdminSettingsPanel from '@/components/AdminSettingsPanel'
-import Loader from '@/components/Loader'
-import { Settings as SettingsIcon } from 'lucide-react'
+import { useEffect, useState } from "react";
 
 export default function AdminSettings() {
-  const router = useRouter()
-  const { user, isLoading: authLoading } = useAuth()
-  const { isAuthorized, isLoading: protectedLoading } = useProtectedRoute('admin')
+  const [form, setForm] = useState({
+    platformName: "",
+    currency: "USD",
+    rateLimits: {
+      maxJobsPerDay: 50,
+      maxApplicationsPerDay: 100,
+    },
+    contact: {
+      email: "",
+      phone: "",
+    },
+    legal: {
+      termsUrl: "",
+      privacyUrl: "",
+    },
+    payment: {
+      apiKey: "",
+      mpesa: {
+        consumerKey: "",
+        consumerSecret: "",
+        shortcode: "",
+        passkey: "",
+        callbackUrl: "",
+      },
+    },
+    features: {
+      emailNotifications: true,
+      maintenanceMode: false,
+    },
+  });
 
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+
+  // 🔄 FETCH SETTINGS
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'admin')) {
-      router.push('/login')
+    const fetchSettings = async () => {
+      const token = localStorage.getItem("token");
+
+      try {
+        const res = await fetch(
+          "https://airswift-backend-fjt3.onrender.com/api/settings",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const data = await res.json();
+        setForm(data);
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
+  // � FRONTEND PAYMENT BUTTON
+  const handlePay = async () => {
+    setPaymentProcessing(true);
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(
+        "https://airswift-backend-fjt3.onrender.com/api/payments/pay",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            phone: "+2547XXXXXXXX",
+            amount: 100,
+          }),
+        }
+      );
+
+      const data = await res.json();
+      
+      // ✅ ENHANCED SUCCESS MESSAGE
+      alert("✅ Payment successful! Receipt sent to your email.");
+      
+      // Optional: Show receipt details
+      console.log("Payment response:", data);
+    } catch (error) {
+      console.error("Payment error:", error);
+      alert("❌ Payment failed");
+    } finally {
+      setPaymentProcessing(false);
     }
-  }, [authLoading, user, router])
+  };
 
-  if (authLoading || protectedLoading) return <Loader />
-  
-  if (!isAuthorized) return null
+  // �💾 SAVE SETTINGS
+  const handleSave = async () => {
+    setSaving(true);
+    const token = localStorage.getItem("token");
 
-  const sidebarItems = [
-    { label: '📊 Dashboard', href: '/admin/dashboard' },
-    { label: '👥 Users', href: '/admin/users' },
-    { label: ' Applications', href: '/admin/applications' },
-    { label: '📞 Interviews', href: '/admin/interviews' },
-    { label: '💰 Payments', href: '/admin/payments' },
-    { label: '📋 Audit Logs', href: '/admin/audit' },
-    { label: '🔍 Health', href: '/admin/health' },
-    { label: '⚙️ Settings', href: '/admin/settings' },
-  ]
+    try {
+      await fetch(
+        "https://airswift-backend-fjt3.onrender.com/api/settings",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(form),
+        }
+      );
+
+      alert("✅ Settings saved successfully");
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      alert("❌ Failed to save settings");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="p-6">Loading settings...</div>;
+  }
 
   return (
-    <DashboardLayout sidebarItems={sidebarItems}>
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <div className="bg-blue-100 p-3 rounded-lg">
-            <SettingsIcon size={24} className="text-blue-600" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Settings</h1>
-            <p className="text-gray-600 mt-1">Configure global application settings and preferences</p>
+    <div className="p-6 max-w-6xl mx-auto">
+      <h1 className="text-3xl font-bold mb-8">⚙️ Admin Settings</h1>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Platform Settings */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-4">📱 Platform Settings</h2>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Platform Name</label>
+              <input
+                type="text"
+                value={form.platformName}
+                onChange={(e) =>
+                  setForm({ ...form, platformName: e.target.value })
+                }
+                className="w-full p-2 border rounded"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Currency</label>
+              <select
+                value={form.currency}
+                onChange={(e) =>
+                  setForm({ ...form, currency: e.target.value })
+                }
+                className="w-full p-2 border rounded"
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="KES">KES</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* Settings Panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Settings */}
-          <div className="lg:col-span-2">
-            <AdminSettingsPanel />
-          </div>
+        {/* Rate Limits */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-4">⚡ Rate Limits</h2>
 
-          {/* Settings Info Sidebar */}
           <div className="space-y-4">
-            {/* General Settings */}
-            <div className="bg-white rounded-lg p-6 shadow-md">
-              <h3 className="font-semibold text-gray-900 mb-4">General Settings</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>✓ Language & Locale</li>
-                <li>✓ Time Zone Configuration</li>
-                <li>✓ Email Notifications</li>
-                <li>✓ Privacy Controls</li>
-              </ul>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Max Jobs Per Day
+              </label>
+              <input
+                type="number"
+                value={form.rateLimits.maxJobsPerDay}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    rateLimits: {
+                      ...form.rateLimits,
+                      maxJobsPerDay: Number(e.target.value),
+                    },
+                  })
+                }
+                className="w-full p-2 border rounded"
+              />
             </div>
 
-            {/* Security Settings */}
-            <div className="bg-white rounded-lg p-6 shadow-md">
-              <h3 className="font-semibold text-gray-900 mb-4">Security</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>✓ Change Password</li>
-                <li>✓ Two-Factor Authentication</li>
-                <li>✓ Session Management</li>
-                <li>✓ API Keys</li>
-              </ul>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Max Applications Per Day
+              </label>
+              <input
+                type="number"
+                value={form.rateLimits.maxApplicationsPerDay}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    rateLimits: {
+                      ...form.rateLimits,
+                      maxApplicationsPerDay: Number(e.target.value),
+                    },
+                  })
+                }
+                className="w-full p-2 border rounded"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Contact Settings */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-4">📧 Contact Info</h2>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Email</label>
+              <input
+                type="email"
+                value={form.contact.email}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    contact: { ...form.contact, email: e.target.value },
+                  })
+                }
+                className="w-full p-2 border rounded"
+              />
             </div>
 
-            {/* System Info */}
-            <div className="bg-white rounded-lg p-6 shadow-md">
-              <h3 className="font-semibold text-gray-900 mb-4">System Information</h3>
-              <div className="space-y-2 text-sm text-gray-600">
-                <p><strong>Version:</strong> 1.0.0</p>
-                <p><strong>Last Updated:</strong> Today</p>
-                <p><strong>Status:</strong> <span className="text-green-600">Operational</span></p>
-              </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Phone</label>
+              <input
+                type="text"
+                value={form.contact.phone}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    contact: { ...form.contact, phone: e.target.value },
+                  })
+                }
+                className="w-full p-2 border rounded"
+              />
             </div>
+          </div>
+        </div>
+
+        {/* Legal Settings */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-4">⚖️ Legal</h2>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Terms URL</label>
+              <input
+                type="url"
+                value={form.legal.termsUrl}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    legal: { ...form.legal, termsUrl: e.target.value },
+                  })
+                }
+                className="w-full p-2 border rounded"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Privacy URL
+              </label>
+              <input
+                type="url"
+                value={form.legal.privacyUrl}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    legal: { ...form.legal, privacyUrl: e.target.value },
+                  })
+                }
+                className="w-full p-2 border rounded"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Settings */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-4">💳 Payment Settings</h2>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">API Key</label>
+              <input
+                type="password"
+                value={form.payment.apiKey}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    payment: { ...form.payment, apiKey: e.target.value },
+                  })
+                }
+                className="w-full p-2 border rounded"
+                placeholder="••••••••••••"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* M-Pesa Settings */}
+        <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-4">📱 M-Pesa Configuration</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Consumer Key</label>
+              <input
+                type="password"
+                value={form.payment.mpesa.consumerKey}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    payment: {
+                      ...form.payment,
+                      mpesa: { ...form.payment.mpesa, consumerKey: e.target.value },
+                    },
+                  })
+                }
+                className="w-full p-2 border rounded"
+                placeholder="Consumer Key"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Consumer Secret</label>
+              <input
+                type="password"
+                value={form.payment.mpesa.consumerSecret}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    payment: {
+                      ...form.payment,
+                      mpesa: { ...form.payment.mpesa, consumerSecret: e.target.value },
+                    },
+                  })
+                }
+                className="w-full p-2 border rounded"
+                placeholder="Consumer Secret"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Shortcode</label>
+              <input
+                type="text"
+                value={form.payment.mpesa.shortcode}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    payment: {
+                      ...form.payment,
+                      mpesa: { ...form.payment.mpesa, shortcode: e.target.value },
+                    },
+                  })
+                }
+                className="w-full p-2 border rounded"
+                placeholder="Shortcode"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Passkey</label>
+              <input
+                type="password"
+                value={form.payment.mpesa.passkey}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    payment: {
+                      ...form.payment,
+                      mpesa: { ...form.payment.mpesa, passkey: e.target.value },
+                    },
+                  })
+                }
+                className="w-full p-2 border rounded"
+                placeholder="Passkey"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium mb-1">Callback URL</label>
+              <input
+                type="url"
+                value={form.payment.mpesa.callbackUrl}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    payment: {
+                      ...form.payment,
+                      mpesa: { ...form.payment.mpesa, callbackUrl: e.target.value },
+                    },
+                  })
+                }
+                className="w-full p-2 border rounded"
+                placeholder="Callback URL"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Features */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-4">✨ Features</h2>
+
+          <div className="space-y-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.features.emailNotifications}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    features: {
+                      ...form.features,
+                      emailNotifications: e.target.checked,
+                    },
+                  })
+                }
+                className="w-4 h-4"
+              />
+              <span className="text-sm font-medium">Email Notifications</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.features.maintenanceMode}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    features: {
+                      ...form.features,
+                      maintenanceMode: e.target.checked,
+                    },
+                  })
+                }
+                className="w-4 h-4"
+              />
+              <span className="text-sm font-medium">Maintenance Mode</span>
+            </label>
           </div>
         </div>
       </div>
-    </DashboardLayout>
-  )
+
+      {/* Save Button */}
+      <div className="mt-8 flex gap-4">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+        >
+          {saving ? "Saving..." : "💾 Save Settings"}
+        </button>
+      </div>
+    </div>
+  );
 }

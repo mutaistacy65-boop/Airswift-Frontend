@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
@@ -8,6 +8,7 @@ import { useNotification } from '@/context/NotificationContext'
 import Loader from '@/components/Loader'
 import Button from '@/components/Button'
 import Modal from '@/components/Modal'
+import socket from '@/services/socket'
 import { adminService } from '@/services/adminService'
 import { formatDate } from '@/utils/helpers'
 import { Eye, Search, Download, DollarSign, TrendingUp, BarChart3 } from 'lucide-react'
@@ -86,14 +87,7 @@ export default function AdminPaymentsPage() {
     { label: '⚙️ Settings', href: '/admin/settings' },
   ]
 
-  useEffect(() => {
-    if (isAuthorized) {
-      fetchPayments()
-      fetchStats()
-    }
-  }, [isAuthorized, currentPage, searchTerm, statusFilter, serviceFilter])
-
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     try {
       setLoading(true)
       const params = {
@@ -112,9 +106,9 @@ export default function AdminPaymentsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentPage, pageSize, searchTerm, statusFilter, serviceFilter, addNotification])
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       setStatsLoading(true)
       const response = await adminService.getPaymentStats()
@@ -125,7 +119,34 @@ export default function AdminPaymentsPage() {
     } finally {
       setStatsLoading(false)
     }
-  }
+  }, [addNotification])
+
+  useEffect(() => {
+    if (isAuthorized) {
+      fetchPayments()
+      fetchStats()
+    }
+  }, [isAuthorized, fetchPayments, fetchStats])
+
+  useEffect(() => {
+    if (!socket) return
+
+    const handlePaymentSuccess = (payment: Payment) => {
+      addNotification('📊 New payment received', 'success')
+      fetchStats()
+
+      if (statusFilter === 'all' && serviceFilter === 'all' && currentPage === 1) {
+        setPayments((prev) => [payment, ...prev.filter((p) => p._id !== payment._id)].slice(0, pageSize))
+        setTotalPayments((prev) => prev + 1)
+      }
+    }
+
+    socket.on('payment_success', handlePaymentSuccess)
+
+    return () => {
+      socket.off('payment_success', handlePaymentSuccess)
+    }
+  }, [fetchStats, statusFilter, serviceFilter, currentPage, pageSize, addNotification])
 
   const handleViewPayment = (payment: Payment) => {
     setSelectedPayment(payment)

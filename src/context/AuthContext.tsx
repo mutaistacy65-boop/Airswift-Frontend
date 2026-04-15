@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import socket from '@/services/socket'
 
 interface User {
   id?: string
@@ -71,6 +72,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false)
     }
   }, [mounted])
+
+  useEffect(() => {
+    const userId = user?.id || user?._id
+    if (!userId || !socket) return
+
+    if (socket.connected) {
+      socket.emit('join', userId)
+    } else {
+      socket.once('connect', () => {
+        socket.emit('join', userId)
+      })
+    }
+  }, [user])
 
   const login = (data: any) => {
     setUser(data.user)

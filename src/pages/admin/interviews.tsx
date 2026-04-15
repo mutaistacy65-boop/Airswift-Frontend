@@ -4,6 +4,7 @@ import DashboardLayout from '@/layouts/DashboardLayout'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
+import { useSocket } from '@/hooks/useSocket'
 import InterviewCalendar from '@/components/InterviewCalendar'
 import Loader from '@/components/Loader'
 import Button from '@/components/Button'
@@ -36,6 +37,7 @@ interface Interview {
 const AdminInterviewsPage: React.FC = () => {
   const { isAuthorized, isLoading } = useProtectedRoute('admin')
   const { addNotification } = useNotification()
+  const { subscribe, isConnected } = useSocket()
   const [interviews, setInterviews] = useState<Interview[]>([])
   const [stats, setStats] = useState({
     scheduled: 0,
@@ -79,6 +81,39 @@ const AdminInterviewsPage: React.FC = () => {
       fetchStats()
     }
   }, [isAuthorized])
+
+  useEffect(() => {
+    const unsubscribeNewInterview = subscribe('new_interview', (data: any) => {
+      if (!data) return
+      setInterviews((prev) => [data, ...prev])
+      addNotification('🔥 New interview scheduled', 'success')
+      fetchStats()
+    })
+
+    const unsubscribeInterviewScheduled = subscribe('interviewScheduled', (data: any) => {
+      if (!data) return
+      setInterviews((prev) => [data, ...prev])
+      addNotification('📅 Interview has been scheduled', 'success')
+      fetchStats()
+    })
+
+    const unsubscribeInterviewUpdated = subscribe('interviewUpdated', (data: any) => {
+      if (!data?.id && !data?._id) return
+      setInterviews((prev) =>
+        prev.map((iv) =>
+          iv._id === data._id || iv.id === data.id ? { ...iv, ...data } : iv
+        )
+      )
+      addNotification('📝 Interview details updated', 'info')
+      fetchStats()
+    })
+
+    return () => {
+      unsubscribeNewInterview?.()
+      unsubscribeInterviewScheduled?.()
+      unsubscribeInterviewUpdated?.()
+    }
+  }, [subscribe, addNotification])
 
   const fetchInterviews = async () => {
     try {

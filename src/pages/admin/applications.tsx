@@ -86,6 +86,20 @@ const AdminApplicationsPage = () => {
   const [emailSubject, setEmailSubject] = useState('')
   const [emailBody, setEmailBody] = useState('')
   const [cvScore, setCvScore] = useState<CVScore | null>(null)
+  const audioRef = React.useRef<HTMLAudioElement>(null)
+
+  // Play notification sound
+  const playNotificationSound = () => {
+    try {
+      if (audioRef.current) {
+        audioRef.current.play().catch(() => {
+          console.log('Audio playback failed or blocked by browser')
+        })
+      }
+    } catch (error) {
+      console.error('Error playing notification sound:', error)
+    }
+  }
 
   const sidebarItems = [
     { label: '📊 Dashboard', href: '/admin/dashboard' },
@@ -112,8 +126,9 @@ const AdminApplicationsPage = () => {
 
   // Subscribe to real-time updates
   useEffect(() => {
-    // Listen for new applications
-    const unsubscribeNewApp = subscribe('newApplication', (data: any) => {
+    const handleNewApplication = (data: any) => {
+      if (!data) return
+
       const newApp: Application = {
         _id: data._id || data.id,
         id: data._id || data.id,
@@ -136,11 +151,31 @@ const AdminApplicationsPage = () => {
         updatedAt: data.updatedAt,
         documents: data.documents,
       }
+
       setApplications(prev => [newApp, ...prev])
-      addNotification(`New application from ${newApp.fullName}`, 'success')
+      playNotificationSound()
+      addNotification(`🔥 New application from ${newApp.fullName}!`, 'success')
+
+      if (typeof window !== 'undefined' && document.hidden) {
+        alert(`📩 New application received from ${newApp.fullName}`)
+      }
+    }
+
+    const unsubscribeNewApp = subscribe('newApplication', handleNewApplication)
+    const unsubscribeNewAppSnake = subscribe('new_application', handleNewApplication)
+    const unsubscribeAppNew = subscribe('application:new', (data: any) => {
+      if (data && (data._id || data.id)) {
+        handleNewApplication(data)
+      } else {
+        fetchApplications()
+        playNotificationSound()
+        addNotification('🔥 New application received!', 'success')
+        if (typeof window !== 'undefined' && document.hidden) {
+          alert('📩 New application received!')
+        }
+      }
     })
 
-    // Listen for status updates 
     const unsubscribeStatus = subscribe('statusUpdate', (data: any) => {
       setApplications(prev =>
         prev.map(app =>
@@ -152,9 +187,17 @@ const AdminApplicationsPage = () => {
       addNotification(`Application status updated to ${data.status}`, 'info')
     })
 
-    const unsubscribeAppNew = subscribe('application:new', (data: any) => {
-      fetchApplications()
-      addNotification('New application received!', 'success')
+    const unsubscribeAppUpdated = subscribe('application_updated', (data: any) => {
+      if (data?.applicationId) {
+        setApplications(prev =>
+          prev.map(app =>
+            app._id === data.applicationId || app._id === data.id
+              ? { ...app, ...data.updates }
+              : app
+          )
+        )
+        addNotification('📝 Application updated', 'info')
+      }
     })
 
     const unsubscribeShortlisted = subscribe('user:shortlisted', (data: any) => {
@@ -163,8 +206,10 @@ const AdminApplicationsPage = () => {
 
     return () => {
       unsubscribeNewApp?.()
+      unsubscribeNewAppSnake?.()
       unsubscribeStatus?.()
       unsubscribeAppNew?.()
+      unsubscribeAppUpdated?.()
       unsubscribeShortlisted?.()
     }
   }, [subscribe, addNotification])
@@ -709,6 +754,13 @@ const AdminApplicationsPage = () => {
             </div>
           )}
         </Modal>
+
+        {/* Audio notification element */}
+        <audio
+          ref={audioRef}
+          src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAAC aABCABAAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj=="
+          preload="auto"
+        />
       </div>
     </DashboardLayout>
   )

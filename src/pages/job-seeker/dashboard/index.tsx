@@ -42,7 +42,17 @@ const JobSeekerDashboard: React.FC = () => {
     })
 
     return unsubscribe
-  }, [subscribe, addNotification])
+  }, [subscribe, addNotification, fetchDashboardData])
+
+  useEffect(() => {
+    const unsubscribe = subscribe('payment_success', (data: any) => {
+      console.log('Payment success event received:', data)
+      fetchDashboardData()
+      addNotification('💰 Payment successful!', 'success')
+    })
+
+    return unsubscribe
+  }, [subscribe, addNotification, fetchDashboardData])
 
   // Fetch user's application
   useEffect(() => {
@@ -72,7 +82,7 @@ const JobSeekerDashboard: React.FC = () => {
     fetchApplication();
   }, []);
 
-  const fetchDashboardData = async () => {
+  async function fetchDashboardData() {
     try {
       const applicationsData = await jobService.getMyApplications()
       setStats({
