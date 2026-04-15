@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import API from '@/services/apiClient';
 
 export default function ProfilePage() {
   const [form, setForm] = useState({
@@ -9,6 +10,7 @@ export default function ProfilePage() {
     experience: "",
   });
   const [loadingCV, setLoadingCV] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Calculate profile completion
   const calculateCompletion = () => {
@@ -30,26 +32,19 @@ export default function ProfilePage() {
 
   const missingFields = getMissingFields();
 
-  // LOAD USER DATA
+  // LOAD PROFILE DATA ON PAGE LOAD
   useEffect(() => {
     const fetchProfile = async () => {
-      const token = localStorage.getItem("token");
+      try {
+        const res = await API.get('/profile')
+        setForm(res.data || {})
+      } catch (err) {
+        console.error('Failed to load profile:', err)
+      }
+    }
 
-      const res = await fetch(
-        "https://airswift-backend-fjt3.onrender.com/api/users/profile",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await res.json();
-      setForm(data);
-    };
-
-    fetchProfile();
-  }, []);
+    fetchProfile()
+  }, [])
 
   // HANDLE CV UPLOAD + AUTO-FILL
   const handleCVUpload = async (e) => {
@@ -61,28 +56,19 @@ export default function ProfilePage() {
       const formData = new FormData();
       formData.append("cv", file);
 
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(
-        "https://airswift-backend-fjt3.onrender.com/api/users/parse-cv",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
-
-      const data = await res.json();
+      const res = await API.post('/users/parse-cv', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
       // 🔥 AUTO-FILL FORM
       setForm((prev) => ({
         ...prev,
-        name: data.name || prev.name,
-        phone: data.phone || prev.phone,
-        skills: data.skills?.join(", ") || prev.skills,
-        experience: data.experience || prev.experience,
+        name: res.data.name || prev.name,
+        phone: res.data.phone || prev.phone,
+        skills: res.data.skills?.join(", ") || prev.skills,
+        experience: res.data.experience || prev.experience,
       }));
     } catch (error) {
       console.error("CV upload error:", error);
@@ -92,24 +78,17 @@ export default function ProfilePage() {
   };
 
   // SAVE PROFILE
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const token = localStorage.getItem("token");
-
-    await fetch(
-      "https://airswift-backend-fjt3.onrender.com/api/users/profile",
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(form),
-      }
-    );
-
-    alert("✅ Profile updated successfully");
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await API.post('/profile', form)
+      alert('✅ Profile saved successfully')
+    } catch (err) {
+      console.error('Failed to save profile:', err)
+      alert('❌ Failed to save profile')
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -143,7 +122,7 @@ export default function ProfilePage() {
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow">
+      <form className="bg-white p-6 rounded shadow">
         <div className="space-y-4">
           {/* CV UPLOAD SECTION */}
           <div>
@@ -213,10 +192,12 @@ export default function ProfilePage() {
           </div>
 
           <button
-            type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
           >
-            Save Profile
+            {saving ? '💾 Saving...' : '💾 Save Profile'}
           </button>
         </div>
       </form>

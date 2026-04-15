@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import socket from '@/services/socket'
+import API from '@/services/apiClient'
 
 interface User {
   id?: string
@@ -19,8 +20,17 @@ interface User {
   location?: string
 }
 
+interface Profile {
+  name?: string
+  phone?: string
+  location?: string
+  skills?: string
+  experience?: string
+}
+
 interface AuthContextType {
   user: User | null
+  profile: Profile | null
   isLoading: boolean
   isAuthenticated: boolean
   login: (data: any) => void
@@ -57,6 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     return null
   })
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [isLoading, setIsLoading] = useState(!user) // Only loading if no user in localStorage
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
@@ -86,12 +97,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user])
 
-  const login = (data: any) => {
+  const login = async (data: any) => {
+    // Store token and user data
+    localStorage.setItem('token', data.token)
+    localStorage.setItem('user', JSON.stringify(data.user))
     setUser(data.user)
+
+    // 🔥 Fetch profile after login
+    try {
+      const res = await API.get('/profile')
+      setProfile(res.data)
+    } catch (err) {
+      console.error('Failed to fetch profile after login:', err)
+    }
   }
 
   const logout = () => {
     setUser(null)
+    setProfile(null)
     // Clear localStorage
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token')
@@ -109,7 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAuthenticated = !!user && !!user.email && !!user.role && !isLoading
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, profile, isLoading, isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   )
