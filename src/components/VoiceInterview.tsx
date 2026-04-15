@@ -66,6 +66,11 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({
       path: socketPath,
       withCredentials: true,
       transports: ["websocket"],
+      auth: {
+        token: typeof window !== 'undefined'
+          ? localStorage.getItem('token') || localStorage.getItem('accessToken') || undefined
+          : undefined,
+      },
     })
 
     newSocket.on('connect', () => {

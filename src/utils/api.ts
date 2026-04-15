@@ -1,4 +1,4 @@
-import axios from "axios";
+import API, { API_URL } from '@/services/apiClient';
 
 /**
  * 🍪 CRITICAL: withCredentials: true
@@ -16,29 +16,6 @@ import axios from "axios";
  * Backend MUST set secure: true (on HTTPS) ✅
  */
 
-const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com';
-
-export const API_URL =
-  BACKEND_BASE_URL.replace(/\/+$/, '') +
-  (BACKEND_BASE_URL.endsWith('/api') ? '' : '/api');
-
-export const api = axios.create({
-  baseURL: API_URL,
-  withCredentials: true,  // 🍪 CRITICAL for cookie-based auth
-});
-
-// Request interceptor
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url} with token: ${token.substring(0, 20)}...`);
-  } else {
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url} (no token)`);
-  }
-
-  return config;
-});
-
-export default api;
+export const api = API;
+export default API;
+export { API_URL };

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import OTPInput from "../components/OTPInput";
-import { api } from '../utils/api';
+import API from '@/services/apiClient';
 
 export default function VerifyOTP() {
   const router = useRouter();
@@ -55,7 +55,7 @@ export default function VerifyOTP() {
       // Use verify-registration-otp for registration, verify-otp for general verification
       const endpoint = isRegistration ? '/api/auth/verify-registration-otp' : '/api/auth/verify-otp';
       
-      const response = await api.post(endpoint, {
+      const response = await API.post(endpoint, {
         email,
         otp
       });
@@ -119,7 +119,7 @@ export default function VerifyOTP() {
         endpoint = '/api/auth/resend-verification';
       }
       
-      await api.post(endpoint, { email });
+      await API.post(endpoint, { email });
       setMessage("📩 OTP resent successfully!");
       setCooldown(60);
 

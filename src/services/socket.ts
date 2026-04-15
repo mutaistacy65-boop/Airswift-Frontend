@@ -8,6 +8,9 @@ const socket: Socket | null = typeof window !== 'undefined'
       ...(socketPath ? { path: socketPath } : {}),
       withCredentials: true,
       transports: ['websocket', 'polling'], // 👈 Add polling as fallback
+      auth: {
+        token: localStorage.getItem('token') || localStorage.getItem('accessToken') || undefined,
+      },
     })
   : null
 

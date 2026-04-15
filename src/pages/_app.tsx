@@ -1,6 +1,6 @@
 import type { AppProps } from 'next/app'
 import { useEffect } from 'react'
-import axios from 'axios'
+import '@/services/apiClient'
 import { AuthProvider } from '@/context/AuthContext'
 import { NotificationProvider } from '@/context/NotificationContext'
 import ErrorBoundary from '@/components/ErrorBoundary'
@@ -10,39 +10,16 @@ import 'leaflet/dist/leaflet.css'
 // @ts-ignore
 import '@/styles/globals.css'
 
-
 /**
  * 🍪 CRITICAL GLOBAL CONFIGURATION 🍪
- * 
- * This enables ALL axios requests to send cookies automatically.
- * 
- * BACKEND REQUIREMENT (MANDATORY):
- * Backend must set cookies with:
- * 
- * res.cookie('accessToken', token, {
- *   httpOnly: true,        ✅ no JS access (XSS protection)
- *   secure: true,          ✅ HTTPS only (production)
- *   sameSite: "none",      ✅ cross-origin (CRITICAL)
- * });
- * 
- * Without sameSite: "none" on backend, cookies will NOT be sent
- * with cross-origin requests even with withCredentials: true
+ *
+ * We use one shared axios client in src/services/apiClient.ts.
+ * This instance includes baseURL, withCredentials, and token injection.
+ *
+ * Use the shared API client for backend requests:
+ *   API.get('/profile')
+ *   API.post('/applications', data)
  */
-const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com'
-
-axios.defaults.withCredentials = true;
-axios.defaults.baseURL = BACKEND_BASE_URL.replace(/\/+$/, '').replace(/\/api\/?$/, '') + '/api';
-
-// Global axios interceptor for automatic token injection
-axios.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
 
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
