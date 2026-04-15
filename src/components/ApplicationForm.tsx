@@ -33,7 +33,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     const checkDraft = async () => {
       try {
         const response = await API.get('/drafts/check')
-        const data = response.data
+        const data = response.data || {}
         setDraftInfo(data)
         if (data.hasDraft) {
           setShowDraftModal(true)
@@ -49,7 +49,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       try {
         // Try local API first
         const response = await API.get('/drafts')
-        const data = response.data
+        const data = response.data || {}
         if (data.draft?.form_data) {
           setApplicationData(prev => ({
             ...prev,
@@ -141,7 +141,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     // Load the draft
     try {
       const response = await API.get('/drafts')
-      const data = response.data
+      const data = response.data || {}
       if (data.draft?.form_data) {
         setApplicationData(prev => ({
           ...prev,

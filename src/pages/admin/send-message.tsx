@@ -125,7 +125,7 @@ export default function SendMessagePage() {
       setLoading(true)
       const response = await API.get('/applications')
       // Get only shortlisted applications
-      const shortlisted = response.data.applications?.filter(
+      const shortlisted = (response.data?.applications || [])?.filter(
         (app: any) => app.status === 'shortlisted'
       ) || []
       setApplications(shortlisted)

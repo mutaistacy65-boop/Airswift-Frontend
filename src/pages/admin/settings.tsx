@@ -67,10 +67,10 @@ export default function AdminSettings() {
       addNotification('⚙️ Settings were updated in real time', 'info')
     }
 
-    socket.on('settings_updated', handleSettingsUpdated)
+    socket.on('settingsUpdated', handleSettingsUpdated)
 
     return () => {
-      socket.off('settings_updated', handleSettingsUpdated)
+      socket.off('settingsUpdated', handleSettingsUpdated)
     }
   }, [addNotification])
 

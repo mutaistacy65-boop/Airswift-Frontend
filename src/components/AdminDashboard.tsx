@@ -16,7 +16,7 @@ export default function AdminDashboard() {
   const fetchApplications = async () => {
     try {
       const res = await API.get('/admin/applications')
-      const apps = res.data.applications || []
+      const apps = res.data?.applications || []
       setApplications(apps)
       // Load notes into local state
       const notesMap: { [key: string]: string } = {}

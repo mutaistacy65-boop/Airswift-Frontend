@@ -45,10 +45,10 @@ export default function AdminDashboard() {
         api.get('/admin/system/health')
       ])
 
-      setSummary(summaryRes.data)
-      setFunnel(funnelRes.data)
-      setActivities(activitiesRes.data)
-      setHealth(healthRes.data)
+      setSummary(summaryRes.data || {})
+      setFunnel(funnelRes.data || [])
+      setActivities(activitiesRes.data || [])
+      setHealth(healthRes.data || {})
     } catch (error) {
       console.error('Failed to load dashboard data:', error)
       // Set safe defaults to prevent crashes

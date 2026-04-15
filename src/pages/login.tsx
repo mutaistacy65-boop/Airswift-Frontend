@@ -96,8 +96,8 @@ export default function Login() {
       // Check for drafts
       try {
         const draftRes = await API.get('/drafts/check')
-        if (draftRes.data.hasDraft) {
-          setDraftInfo(draftRes.data)
+        if (draftRes.data?.hasDraft) {
+          setDraftInfo(draftRes.data || {})
           setShowModal(true)
           return
         }

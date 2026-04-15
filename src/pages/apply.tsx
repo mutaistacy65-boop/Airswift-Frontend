@@ -16,7 +16,7 @@ export default function ApplicationPage() {
       try {
         const res = await API.get('/users/status')
 
-        if (res.data.hasApplied) {
+        if (res.data?.hasApplied) {
           router.push('/dashboard')
         }
       } catch (err) {

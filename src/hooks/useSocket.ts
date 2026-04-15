@@ -12,7 +12,7 @@ export type SocketEventType =
   | 'new_application'
   | 'new_interview'
   | 'payment_success'
-  | 'settings_updated'
+  | 'settingsUpdated'
   | 'statusUpdate'
   | 'user:shortlisted'
   | 'interviewUpdate'

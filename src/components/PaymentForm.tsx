@@ -15,7 +15,7 @@ export default function PaymentForm() {
         amount,
       })
 
-      alert(res.data.message)
+      alert(res.data?.message || 'Payment initiated')
     } catch (err) {
       console.error(err)
       alert('Payment failed')
