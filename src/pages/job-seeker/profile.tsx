@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import API from '@/services/apiClient';
 
 export default function ProfilePage() {
-  const [form, setForm] = useState({
+  const [formData, setFormData] = useState({
     name: "",
     phone: "",
     location: "",
@@ -14,7 +14,7 @@ export default function ProfilePage() {
 
   // Calculate profile completion
   const calculateCompletion = () => {
-    const fields = [form.name, form.phone, form.location, form.skills, form.experience];
+    const fields = [formData.name, formData.phone, formData.location, formData.skills, formData.experience];
     const filledFields = fields.filter(field => field && field.trim() !== "").length;
     return Math.round((filledFields / fields.length) * 100);
   };
@@ -24,9 +24,9 @@ export default function ProfilePage() {
   // Get missing fields
   const getMissingFields = () => {
     const missingFields = [];
-    if (!form.phone || form.phone.trim() === "") missingFields.push("Phone");
-    if (!form.location || form.location.trim() === "") missingFields.push("Location");
-    if (!form.skills || form.skills.trim() === "") missingFields.push("Skills");
+    if (!formData.phone || formData.phone.trim() === "") missingFields.push("Phone");
+    if (!formData.location || formData.location.trim() === "") missingFields.push("Location");
+    if (!formData.skills || formData.skills.trim() === "") missingFields.push("Skills");
     return missingFields;
   };
 
@@ -37,7 +37,7 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       try {
         const res = await API.get('/profile')
-        setForm(res.data || {})
+        setFormData(res.data || {})
       } catch (err) {
         console.error('Failed to load profile:', err)
       }
@@ -63,7 +63,7 @@ export default function ProfilePage() {
       });
 
       // 🔥 AUTO-FILL FORM
-      setForm((prev) => ({
+      setFormData((prev) => ({
         ...prev,
         name: res.data.name || prev.name,
         phone: res.data.phone || prev.phone,
@@ -81,7 +81,7 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await API.post('/profile', form)
+      await API.post('/profile', formData)
       alert('✅ Profile saved successfully')
     } catch (err) {
       console.error('Failed to save profile:', err)
@@ -141,8 +141,8 @@ export default function ProfilePage() {
             <label className="block text-sm font-medium mb-1">Name</label>
             <input
               type="text"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full p-2 border rounded"
               required
             />
@@ -152,8 +152,8 @@ export default function ProfilePage() {
             <label className="block text-sm font-medium mb-1">Phone</label>
             <input
               type="text"
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               className="w-full p-2 border rounded"
               required
             />
@@ -163,8 +163,8 @@ export default function ProfilePage() {
             <label className="block text-sm font-medium mb-1">Location</label>
             <input
               type="text"
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
+              value={formData.location}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               className="w-full p-2 border rounded"
             />
           </div>
@@ -173,8 +173,8 @@ export default function ProfilePage() {
             <label className="block text-sm font-medium mb-1">Skills</label>
             <input
               type="text"
-              value={form.skills}
-              onChange={(e) => setForm({ ...form, skills: e.target.value })}
+              value={formData.skills}
+              onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
               className="w-full p-2 border rounded"
               placeholder="e.g., JavaScript, React, Node.js"
             />
@@ -183,8 +183,8 @@ export default function ProfilePage() {
           <div>
             <label className="block text-sm font-medium mb-1">Experience</label>
             <textarea
-              value={form.experience}
-              onChange={(e) => setForm({ ...form, experience: e.target.value })}
+              value={formData.experience}
+              onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
               className="w-full p-2 border rounded"
               rows={4}
               placeholder="Describe your work experience..."
