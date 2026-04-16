@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react'
-import API from '@/services/apiClient'
+import api from '@/lib/api'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
 
@@ -107,7 +107,7 @@ export default function EmailTemplatesPage() {
         alert('Template updated successfully!')
       } else {
         // Create
-        const response = await API.post('/email-templates', data)
+        const response = await api.post('/email-templates', data)
         setTemplates([...templates, response.data.template])
         alert('Template created successfully!')
       }

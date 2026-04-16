@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import API from '@/services/apiClient';
+import api from '@/lib/api';
 
 export default function ProfilePage() {
   const [formData, setFormData] = useState({
@@ -58,7 +58,7 @@ export default function ProfilePage() {
 
       // ✅ DO NOT set Content-Type - axios handles it automatically for FormData
       // ✅ Authorization header added by interceptor
-      const res = await API.post('/users/parse-cv', formData);
+      const res = await api.post('/users/parse-cv', formData);
 
       // 🔥 AUTO-FILL FORM
       setFormData((prev) => ({
@@ -79,7 +79,7 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await API.post('/profile', formData)
+      await api.post('/profile', formData)
       alert('✅ Profile saved successfully')
     } catch (err) {
       console.error('Failed to save profile:', err)

@@ -1,4 +1,4 @@
-import API from '@/services/apiClient';
+import api from '@/lib/api';
 
 export interface RegisterFormData {
   name: string;
@@ -19,7 +19,7 @@ export const registerUser = async (formData: RegisterFormData) => {
       role: 'user'
     };
     
-    const result = await API.post('/auth/register', registrationData);
+    const result = await api.post('/auth/register', registrationData);
 
     const data = result.data;
 
@@ -36,7 +36,7 @@ export const registerUser = async (formData: RegisterFormData) => {
       
       try {
         // Try to resend verification code
-        const resendResult = await API.post('/auth/resend-verification', { email: formData.email });
+        const resendResult = await api.post('/auth/resend-verification', { email: formData.email });
         console.log('Resend verification response:', resendResult.data);
         
         // Return success response that redirects to verify-otp
@@ -91,7 +91,7 @@ export const registerUser = async (formData: RegisterFormData) => {
 
 export const loginUser = async (formData: LoginFormData) => {
   try {
-    const result = await API.post('/auth/login', formData);
+    const result = await api.post('/auth/login', formData);
 
     const data = result.data;
     console.log('LOGIN RESPONSE:', data);
@@ -115,7 +115,7 @@ export const loginUser = async (formData: LoginFormData) => {
 
 export const verifyOTP = async (email: string, otp: string) => {
   try {
-    const result = await API.post('/auth/verify-otp', {
+    const result = await api.post('/auth/verify-otp', {
       email,
       otp
     });

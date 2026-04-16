@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Button from "../components/Button";
-import API from "@/services/apiClient";
+import api from "@/lib/api";
 
 export default function Register() {
   const router = useRouter()
@@ -23,7 +23,7 @@ export default function Register() {
     try {
       setLoading(true);
 
-      const response = await API.post("/auth/register", {
+      const response = await api.post("/auth/register", {
         name: form.name,
         email: form.email,
         password: form.password,

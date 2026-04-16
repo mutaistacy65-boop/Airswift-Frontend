@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Head from 'next/head'
-import API from '@/services/apiClient'
+import api from '@/lib/api'
 
 export default function VerifyEmail() {
   const router = useRouter()
@@ -53,7 +53,7 @@ export default function VerifyEmail() {
 
     setIsResending(true)
     try {
-      const result = await API.post('/auth/resend-verification', {
+      const result = await api.post('/auth/resend-verification', {
         email
       })
 

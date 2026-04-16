@@ -3,7 +3,7 @@ import { io, Socket } from 'socket.io-client'
 import Button from '@/components/Button'
 import Modal from '@/components/Modal'
 import Loader from '@/components/Loader'
-import API from '@/services/apiClient'
+import api from '@/lib/api'
 
 interface VoiceInterviewProps {
   isOpen: boolean

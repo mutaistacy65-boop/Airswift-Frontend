@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import API from '@/services/apiClient'
+import api from '@/lib/api'
 import { loginUser } from '@/api/auth'
 import Button from '../components/Button'
 import ContinueDraftModal from '@/components/ContinueDraftModal'
@@ -95,7 +95,7 @@ export default function Login() {
 
       // Check for drafts
       try {
-        const draftRes = await API.get('/drafts/check')
+        const draftRes = await api.get('/drafts/check')
         if (draftRes.data?.hasDraft) {
           setDraftInfo(draftRes.data || {})
           setShowModal(true)

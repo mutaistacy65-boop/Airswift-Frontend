@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import socket from '@/services/socket'
 import { useNotification } from '@/context/NotificationContext'
 import { adminService } from '@/services/adminService'
-import API from "@/lib/api";
+import api from "@/lib/api";
 
 export default function AdminSettings() {
   const [form, setForm] = useState({
@@ -80,7 +80,7 @@ export default function AdminSettings() {
     setPaymentProcessing(true);
 
     try {
-      const res = await API.post("/payments/pay", {
+      const res = await api.post("/payments/pay", {
         phone: "+2547XXXXXXXX",
         amount: 100,
       });

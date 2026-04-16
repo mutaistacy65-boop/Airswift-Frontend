@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import API from '@/services/apiClient'
+import api from '@/lib/api'
 import { useRouter } from 'next/router'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
@@ -129,8 +129,13 @@ export default function SendMessagePage() {
         (app: any) => app.status === 'shortlisted'
       ) || []
       setApplications(shortlisted)
-    } catch (error) {
-      console.error('Error fetching applications:', error)
+    } catch (err: any) {
+      console.error('REAL ERROR:', err.response?.data || err.message)
+      if (err.response?.status === 401) {
+        setErrors({ submit: '❌ Not authenticated. Please log in again.' })
+      } else {
+        setErrors({ submit: err.response?.data?.message || 'Error fetching applications' })
+      }
     } finally {
       setLoading(false)
     }
@@ -156,8 +161,13 @@ export default function SendMessagePage() {
         }
       ]
       setTemplates(mockTemplates)
-    } catch (error) {
-      console.error('Error loading templates:', error)
+    } catch (err: any) {
+      console.error('REAL ERROR:', err.response?.data || err.message)
+      if (err.response?.status === 401) {
+        setErrors({ submit: '❌ Not authenticated. Please log in again.' })
+      } else {
+        setErrors({ submit: err.response?.data?.message || 'Error loading templates' })
+      }
     }
   }
 
@@ -183,8 +193,13 @@ export default function SendMessagePage() {
         }
       ]
       setMessageLogs(mockLogs)
-    } catch (error) {
-      console.error('Error loading message logs:', error)
+    } catch (err: any) {
+      console.error('REAL ERROR:', err.response?.data || err.message)
+      if (err.response?.status === 401) {
+        setErrors({ submit: '❌ Not authenticated. Please log in again.' })
+      } else {
+        setErrors({ submit: err.response?.data?.message || 'Error loading message logs' })
+      }
     }
   }
 
@@ -340,7 +355,7 @@ export default function SendMessagePage() {
           data.append('attachment', formData.attachment)
         }
 
-        const response = await API.post('/messages', data)
+        const response = await api.post('/messages', data)
         // ✅ DO NOT set Content-Type - axios handles it automatically for FormData
 
         if (response.data.success) {
@@ -395,10 +410,16 @@ export default function SendMessagePage() {
       // Refresh logs
       loadMessageLogs()
 
-    } catch (error: any) {
-      const message = error.response?.data?.message || 'Error sending message'
-      setErrors({ submit: message })
-      addNotification(message, 'error')
+    } catch (err: any) {
+      console.error('REAL ERROR:', err.response?.data || err.message)
+      if (err.response?.status === 401) {
+        setErrors({ submit: '❌ Not authenticated. Please log in again.' })
+        addNotification('❌ Not authenticated. Please log in again.', 'error')
+      } else {
+        const message = err.response?.data?.message || 'Error sending message'
+        setErrors({ submit: message })
+        addNotification(message, 'error')
+      }
     } finally {
       setSubmitting(false)
     }
