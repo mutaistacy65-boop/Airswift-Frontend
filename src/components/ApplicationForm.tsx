@@ -500,10 +500,26 @@ function Step2({ formData, errors, onNext, onPrev, setFormData }: any) {
 
 function Step3({ formData, jobs, loading, onPrev }: any) {
   return (
-    <>
+    <div>
+      {/* ✅ Button is inside return */}
+      <button
+        type="button"
+        onClick={() => setDebugMode(!debugMode)}
+        className={`px-4 py-2 ${debugMode ? 'bg-red-600' : 'bg-gray-600'}`}
+      >
+        Toggle Debug
+      </button>
+      {/* ✅ Debug toggle button at the top */}
+      <button
+        type="button"
+        onClick={() => setDebugMode(!debugMode)}
+        className={`px-4 py-2 ${debugMode ? 'bg-red-600' : 'bg-gray-600'} text-white rounded-lg mb-4`}
+      >
+        Toggle Debug
+      </button>
+
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Review Your Application</h3>
-        
         <div className="bg-gray-50 p-4 rounded-lg">
           <p><strong>Job:</strong> {formData.jobId || 'N/A'}</p>
           <p><strong>National ID:</strong> {formData.nationalId}</p>
@@ -521,17 +537,6 @@ function Step3({ formData, jobs, loading, onPrev }: any) {
           Back
         </button>
         <button
-          type="button"
-          onClick={() => setDebugMode(!debugMode)}
-          className={`px-4 py-2 rounded-lg text-sm ${
-            debugMode
-              ? 'bg-red-600 text-white hover:bg-red-700'
-              : 'bg-gray-600 text-white hover:bg-gray-700'
-          }`}
-        >
-          {debugMode ? '🚨 DEBUG MODE ON' : '🔧 Debug Mode'}
-        </button>
-        <button
           type="submit"
           disabled={loading}
           className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
@@ -539,6 +544,6 @@ function Step3({ formData, jobs, loading, onPrev }: any) {
           {loading ? 'Submitting...' : 'Submit Application'}
         </button>
       </div>
-    </>
+    </div>
   )
 }
