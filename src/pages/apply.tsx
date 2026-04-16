@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import MainLayout from '@/layouts/MainLayout'
 import ApplicationForm from '@/components/SafeApplicationForm'
-import API from '@/services/apiClient'
+import api from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
 
 export default function ApplicationPage() {
@@ -23,14 +23,17 @@ export default function ApplicationPage() {
 
     const checkStatus = async () => {
       try {
-        const res = await API.get('/users/status')
-
+        const res = await api.get('/users/status')
         if (res.data?.hasApplied) {
           setHasApplied(true)
           setApplication(res.data?.application || null)
         }
-      } catch (err) {
-        console.error("Status check failed:", err)
+      } catch (err: any) {
+        if (err?.response?.status === 401) {
+          console.error('Unauthorized. Please login again.')
+        } else {
+          console.error("Status check failed:", err)
+        }
       } finally {
         setChecking(false)
       }

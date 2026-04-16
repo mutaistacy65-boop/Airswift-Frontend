@@ -76,6 +76,7 @@ export default function Login() {
         return
       }
 
+      // ✅ Save token after login
       localStorage.setItem('token', authToken)
       localStorage.setItem('user', JSON.stringify(user))
       if (user.role) {
@@ -113,15 +114,15 @@ export default function Login() {
       }
     } catch (err: any) {
       let errorMessage = 'Login failed'
-      
-      if (err?.response?.data?.message) {
+      if (err?.response?.status === 401) {
+        errorMessage = 'Unauthorized. Please login again.'
+      } else if (err?.response?.data?.message) {
         errorMessage = err.response.data.message
       } else if (err?.message) {
-        errorMessage = err.message
+        errorMessage = 'Network error. Please try again.'
       } else if (err?.toString) {
         errorMessage = err.toString()
       }
-      
       setError(errorMessage)
       console.error('Login error:', err)
     } finally {

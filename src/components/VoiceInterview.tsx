@@ -46,7 +46,8 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({
   const streamRef = useRef<MediaStream | null>(null)
 
   useEffect(() => {
-    if (isOpen) {
+    // Prevent early socket connection: only connect if token exists
+    if (isOpen && typeof window !== 'undefined' && localStorage.getItem('token')) {
       initializeSocket()
     }
 
