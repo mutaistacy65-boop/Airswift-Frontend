@@ -36,7 +36,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await API.get('/profile')
+        const res = await api.get('/profile')
         setFormData(res.data || {})
       } catch (err) {
         console.error('Failed to load profile:', err)

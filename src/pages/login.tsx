@@ -66,8 +66,50 @@ export default function Login() {
         throw new Error(message || 'Login failed: Invalid response from server')
       }
 
-      // Check if user is verified before allowing login
-      if (!user.isVerified) {
+      // VERIFIED user - normal login flow
+      if (user.isVerified) {
+        // 🟦 STEP 3: Store token and user
+        localStorage.setItem('token', authToken);
+        localStorage.setItem('user', JSON.stringify(user));
+        if (user?.role) {
+          localStorage.setItem('role', user.role);
+        }
+
+        // 🟦 STEP 4: Store permissions
+        if (res.permissions) {
+          localStorage.setItem('permissions', JSON.stringify(res.permissions));
+        } else if (user?.permissions) {
+          localStorage.setItem('permissions', JSON.stringify(user.permissions));
+        } else {
+          localStorage.setItem('permissions', JSON.stringify([]));
+        }
+
+        console.log("✅ Token saved:", authToken);
+        console.log("✅ Permissions saved:", res.permissions || user?.permissions || []);
+
+        // Update AuthContext immediately with both token and user
+        login({ token: authToken, user });
+
+        // Check for drafts
+        try {
+          const draftRes = await api.get('/drafts/check');
+          if (draftRes.data?.hasDraft) {
+            setDraftInfo(draftRes.data || {});
+            setShowModal(true);
+            return;
+          }
+        } catch (err) {
+          console.warn('Draft check failed — ignoring');
+        }
+
+        if (user?.role === 'admin') {
+          router.push('/admin/dashboard');
+        } else if (!user?.has_submitted) {
+          router.push('/apply');
+        } else {
+          router.push('/dashboard');
+        }
+      } else if (!user.isVerified) {
         // Return special response for unverified accounts
         const data = await loginUser(form)
 
@@ -97,15 +139,25 @@ export default function Login() {
           localStorage.setItem('role', data.user.role);
         }
 
+        // 🟦 STEP 4: Store permissions for unverified user
+        if (data.permissions) {
+          localStorage.setItem('permissions', JSON.stringify(data.permissions));
+        } else if (data.user?.permissions) {
+          localStorage.setItem('permissions', JSON.stringify(data.user.permissions));
+        } else {
+          localStorage.setItem('permissions', JSON.stringify([]));
+        }
+
         // Check if this is mock data
         if (token.startsWith('mock-')) {
           alert('Demo login successful. Note: Some features may not work with demo accounts.');
         }
 
         console.log("✅ Token saved:", token);
+        console.log("✅ Permissions saved:", data.permissions || data.user?.permissions || []);
 
-        // Update AuthContext immediately
-        login({ user: data.user });
+        // Update AuthContext immediately with token and user
+        login({ token, user: data.user });
 
         // Check for drafts
         try {
@@ -126,6 +178,17 @@ export default function Login() {
         } else {
           router.push('/dashboard');
         }
+      }
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Login failed'
+      setError(msg)
+      setIsLoading(false)
+    }
+  }
+
+  if (!showModal) {
+    return (
+      <div className="min-h-screen flex">
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary via-primary-dark to-primary-light p-12 flex-col justify-center items-center text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
@@ -265,7 +328,7 @@ export default function Login() {
         }}
         onStartFresh={async () => {
           try {
-            await API.delete('/drafts')
+            await api.delete('/drafts')
           } catch (error) {
             console.log('Draft deletion skipped:', error)
           }
@@ -276,6 +339,29 @@ export default function Login() {
         lastSaved={draftInfo?.updated_at}
       />
     </div>
+  )
+  }
+
+  // Return modal view if showing modal on unverified account
+  return (
+    <ContinueDraftModal
+      open={true}
+      onContinue={() => {
+        setShowModal(false)
+        router.push('/apply')
+      }}
+      onStartFresh={async () => {
+        try {
+          await api.delete('/drafts')
+        } catch (error) {
+          console.log('Draft deletion skipped:', error)
+        }
+        localStorage.removeItem('draft')
+        setShowModal(false)
+        router.push('/apply')
+      }}
+      lastSaved={draftInfo?.updated_at}
+    />
   )
 }
 

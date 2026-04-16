@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react'
-import API from '../../lib/api'
+import api from '../../lib/api'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
 
@@ -100,7 +100,7 @@ export default function EmailTemplatesPage() {
 
       if (selectedTemplate) {
         // Update
-        const response = await API.put(`/email-templates/${selectedTemplate._id}`, data)
+        const response = await api.put(`/email-templates/${selectedTemplate._id}`, data)
         setTemplates(
           templates.map(t => (t._id === selectedTemplate._id ? response.data.template : t))
         )

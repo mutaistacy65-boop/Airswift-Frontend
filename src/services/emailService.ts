@@ -79,7 +79,7 @@ export const emailService = {
       </div>
     `
 
-    return API.post('/admin/email/send', {
+    return api.post('/admin/email/send', {
       to: data.candidateEmail,
       subject: `Application Update - ${data.jobTitle}`,
       html,
@@ -105,7 +105,7 @@ export const emailService = {
       </div>
     `
 
-    return API.post('/admin/email/send', {
+    return api.post('/admin/email/send', {
       to: candidateEmail,
       subject: `You've been shortlisted! - ${jobTitle}`,
       html,
@@ -147,7 +147,7 @@ export const emailService = {
       </div>
     `
 
-    return API.post('/admin/email/send', {
+    return api.post('/admin/email/send', {
       to: candidateEmail,
       subject: `Interview Rescheduled - ${jobTitle}`,
       html,
@@ -158,7 +158,7 @@ export const emailService = {
    * Send general email
    */
   sendEmail: async (payload: EmailPayload) => {
-    return API.post('/admin/email/send', payload)
+    return api.post('/admin/email/send', payload)
   },
 }
 

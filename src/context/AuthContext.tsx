@@ -56,8 +56,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Invalid user data, clean up
             localStorage.removeItem('user')
             localStorage.removeItem('token')
-            localStorage.removeItem('token')
             localStorage.removeItem('role')
+            localStorage.removeItem('permissions')
           }
         }
       } catch (e) {
@@ -105,7 +105,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (data: any) => {
     // Store token and user data
-    localStorage.setItem('token', data.token)
+    if (data.token) {
+      localStorage.setItem('token', data.token)
+    }
     localStorage.setItem('user', JSON.stringify(data.user))
     setUser(data.user)
 
@@ -127,9 +129,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Clear localStorage
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token')
-      localStorage.removeItem('token')
       localStorage.removeItem('user')
       localStorage.removeItem('role')
+      localStorage.removeItem('permissions')
     }
     router.push('/login')
   }

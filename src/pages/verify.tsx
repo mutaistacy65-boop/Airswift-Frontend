@@ -19,7 +19,7 @@ export default function VerifyEmail() {
 
     const verifyEmail = async () => {
       try {
-        const result = await API.get(`/auth/verify?token=${token}`)
+        const result = await api.get(`/auth/verify?token=${token}`)
         const data = result.data
 
         // Auto-login: Store both tokens and user data

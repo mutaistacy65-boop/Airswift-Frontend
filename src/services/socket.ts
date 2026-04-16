@@ -26,8 +26,6 @@ const createSocket = (): Socket | null => {
     auth: {
       token: token // Send token for authentication
     },
-    pingInterval: 25000,
-    pingTimeout: 20000,
     reconnection: true,
     reconnectionAttempts: 5,
     reconnectionDelay: 1000,

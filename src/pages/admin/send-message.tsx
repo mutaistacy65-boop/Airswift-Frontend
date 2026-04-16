@@ -123,7 +123,7 @@ export default function SendMessagePage() {
   const fetchApplications = async () => {
     try {
       setLoading(true)
-      const response = await API.get('/applications')
+      const response = await api.get('/applications')
       // Get only shortlisted applications
       const shortlisted = (response.data?.applications || [])?.filter(
         (app: any) => app.status === 'shortlisted'
@@ -362,7 +362,7 @@ export default function SendMessagePage() {
           // Update application status to shortlisted (if not already)
           if (!isBulkMode && selectedApp && selectedApp.status !== 'shortlisted') {
             try {
-              await API.put(`/applications/${selectedApp._id}`, { status: 'shortlisted' })
+              await api.put(`/applications/${selectedApp._id}`, { status: 'shortlisted' })
             } catch (err) {
               console.warn('Could not update application status:', err)
             }
