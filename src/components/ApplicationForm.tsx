@@ -13,8 +13,8 @@ interface ApplicationFormProps {
 const STORAGE_KEY = 'application_draft'
 
 export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
-    // Debug mode toggle for development
-    const [debugMode, setDebugMode] = useState(false)
+  // Debug mode toggle for development
+  const [debugMode, setDebugMode] = useState(false);
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [jobs, setJobs] = useState<any[]>([])
@@ -531,6 +531,7 @@ function Step3({ formData, jobs, loading, onPrev }: any) {
         </button>
         <button
           type="button"
+          onClick={() => setDebugMode(!debugMode)}
           className={`px-4 py-2 rounded-lg text-sm ${
             debugMode
               ? 'bg-red-600 text-white hover:bg-red-700'
