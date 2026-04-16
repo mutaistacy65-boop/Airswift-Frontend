@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react'
-import api from '@/lib/api'
+import API from '../../lib/api'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
 
