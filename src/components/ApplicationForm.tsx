@@ -13,6 +13,8 @@ interface ApplicationFormProps {
 const STORAGE_KEY = 'application_draft'
 
 export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
+    // Debug mode toggle for development
+    const [debugMode, setDebugMode] = useState(false)
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [jobs, setJobs] = useState<any[]>([])
@@ -28,6 +30,13 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showDraftModal, setShowDraftModal] = useState(false)
   const [draftInfo, setDraftInfo] = useState<{ hasDraft: boolean; updated_at?: string } | null>(null)
+    // Debug toggle button (visible for development)
+    // Remove or hide in production as needed
+    // Place this button in your return JSX where appropriate
+    // Example placement:
+    // <button type="button" onClick={() => setDebugMode(!debugMode)}>
+    //   Toggle Debug
+    // </button>
   const [debugMode, setDebugMode] = useState(false) // HARD FIX: Toggle for force token attachment
 
   // Check for draft on mount
@@ -522,7 +531,6 @@ function Step3({ formData, jobs, loading, onPrev }: any) {
         </button>
         <button
           type="button"
-          onClick={() => setDebugMode(!debugMode)}
           className={`px-4 py-2 rounded-lg text-sm ${
             debugMode
               ? 'bg-red-600 text-white hover:bg-red-700'
