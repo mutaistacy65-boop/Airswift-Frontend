@@ -70,9 +70,14 @@ const Home: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                  <Link href="/login">
+                    <Button variant="outline" size="lg" className="w-full sm:w-auto text-white border-white hover:bg-white/10">
+                      Login
+                    </Button>
+                  </Link>
                   <Link href="/register">
                     <Button variant="primary" size="lg" className="w-full sm:w-auto text-white">
-                      Find Your Job <ArrowRight className="h-5 w-5" />
+                      Register <ArrowRight className="h-5 w-5" />
                     </Button>
                   </Link>
                 </div>
@@ -170,14 +175,14 @@ const Home: React.FC = () => {
               Join thousands of professionals who trust Talex to connect them with top employers and high-growth opportunities.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/register">
-                <Button variant="secondary" size="lg" className="text-gray-900">
-                  Get Started Now
+              <Link href="/login">
+                <Button variant="outline" size="lg" className="text-white border-white hover:bg-white/10">
+                  Login
                 </Button>
               </Link>
-              <Link href="/contact">
-                <Button variant="outline" size="lg" className="text-white border-white">
-                  Contact Us
+              <Link href="/register">
+                <Button variant="secondary" size="lg" className="text-gray-900">
+                  Register Now
                 </Button>
               </Link>
             </div>
