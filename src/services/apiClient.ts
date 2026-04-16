@@ -1,35 +1,20 @@
-import axios, { InternalAxiosRequestConfig, AxiosHeaders } from 'axios';
+import axios, { InternalAxiosRequestConfig } from 'axios';
 
-const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com';
+export const API_URL = 'https://airswift-backend-fjt3.onrender.com/api';
 
-export const API_URL =
-  BACKEND_BASE_URL.replace(/\/+$/, '') +
-  (BACKEND_BASE_URL.endsWith('/api') ? '' : '/api');
-
-const API = axios.create({
+export const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true,
+  withCredentials: false, // true only if using cookie-based auth
 });
 
-API.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    if (typeof window === 'undefined') {
-      return config;
-    }
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  if (token) config.headers.set('Authorization', `Bearer ${token}`);
+  return config;
+});
 
-    const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+// Usage examples (note: no /api prefix here)
+// await api.get('/profile');
+// await api.post('/applications', formData); // do NOT set Content-Type manually
 
-    if (token) {
-      config.headers = new AxiosHeaders({
-        ...config.headers,
-        Authorization: `Bearer ${token}`,
-      });
-    }
-
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-export default API;
-export { API };
+export default api;
