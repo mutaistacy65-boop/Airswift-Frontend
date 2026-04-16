@@ -190,7 +190,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({
       formData.append('audio', audioFile)
 
       // Transcribe audio using API instance for consistent token handling
-      const transcriptionResult = await API.post('/interview/transcribe', formData)
+      const transcriptionResult = await api.post('/interview/transcribe', formData)
 
       const transcriptionData = transcriptionResult.data
 
