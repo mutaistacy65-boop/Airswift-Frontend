@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import API from '@/services/apiClient'
+import api from '@/lib/api'
 import { useRouter } from 'next/router'
 import DocumentUpload from './DocumentUpload'
 import ContinueDraftModal from './ContinueDraftModal'
@@ -34,7 +34,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
   useEffect(() => {
     const checkDraft = async () => {
       try {
-        const response = await API.get('/drafts/check')
+        const response = await api.get('/drafts/check')
         const data = response.data || {}
         setDraftInfo(data)
         if (data.hasDraft) {
@@ -50,7 +50,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     const loadDraft = async () => {
       try {
         // Try local API first
-        const response = await API.get('/drafts')
+        const response = await api.get('/drafts')
         const data = response.data || {}
         if (data.draft?.form_data) {
           setApplicationData(prev => ({
@@ -101,7 +101,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
       // Save to local API
       try {
-        await API.post('/drafts/save', { formData: dataToSave })
+        await api.post('/drafts/save', { formData: dataToSave })
       } catch (error) {
         console.log('Local API save failed, localStorage saved')
       }
@@ -118,7 +118,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
   const fetchJobs = async () => {
     try {
-      const response = await API.get('/jobs')
+      const response = await api.get('/jobs')
       console.log("JOBS RESPONSE:", response.data);
       const jobs = Array.isArray(response.data)
         ? response.data
@@ -142,7 +142,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     setShowDraftModal(false)
     // Load the draft
     try {
-      const response = await API.get('/drafts')
+      const response = await api.get('/drafts')
       const data = response.data || {}
       if (data.draft?.form_data) {
         setApplicationData(prev => ({
@@ -176,7 +176,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     // Clear any existing drafts
     localStorage.removeItem(STORAGE_KEY)
     try {
-      API.delete('/drafts')
+      api.delete('/drafts')
     } catch (error) {
       console.log('Error clearing local draft')
     }
@@ -285,7 +285,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       } else {
         // ✅ NORMAL MODE: Use API instance with interceptor
         console.log('✅ USING NORMAL MODE - API instance with interceptor');
-        response = await API.post('/applications', formData);
+        response = await api.post('/applications', formData);
       }
 
       const result = response.data
@@ -295,7 +295,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
         // Clear drafts after successful submission
         localStorage.removeItem(STORAGE_KEY)
         try {
-          await API.delete('/drafts')
+          await api.delete('/drafts')
         } catch (error) {
           console.log('Backend draft cleanup failed')
         }

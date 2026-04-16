@@ -2,8 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import socket from '@/services/socket'
-import API from '@/services/apiClient'
+import socket, { reconnectSocket } from '@/services/socket'
+import api from '@/lib/api'
 
 interface User {
   id?: string
@@ -111,11 +111,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // 🔥 Fetch profile after login
     try {
-      const res = await API.get('/profile')
+      const res = await api.get('/profile')
       setProfile(res.data)
     } catch (err) {
       console.error('Failed to fetch profile after login:', err)
     }
+
+    // 🔥 Reconnect socket with new token
+    reconnectSocket()
   }
 
   const logout = () => {

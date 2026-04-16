@@ -3,7 +3,7 @@
 
 import { io, Socket } from 'socket.io-client'
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'https://airswift-backend-fjt3.onrender.com'
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com'
 
 // Create authenticated socket connection
 const createSocket = (): Socket | null => {
@@ -18,7 +18,7 @@ const createSocket = (): Socket | null => {
 
   console.log('🔌 Connecting to Socket.IO...')
   console.log('   URL:', SOCKET_URL)
-  console.log('   Token:', token ? `${token.substring(0, 20)}...` : 'NONE')
+  console.log('   Token:', token ? `✓ ${token.substring(0, 20)}...` : '✗ MISSING')
 
   const socket = io(SOCKET_URL, {
     path: '/socket.io',
@@ -43,7 +43,7 @@ const createSocket = (): Socket | null => {
 
   socket.on('connect_error', (error: any) => {
     console.error('❌ Socket.IO connection error:', error.message)
-    
+
     if (!token) {
       console.error('   Reason: No authentication token')
     }
@@ -63,11 +63,11 @@ const createSocket = (): Socket | null => {
 // Export socket instance
 export const socket = createSocket()
 
-// Export createSocket function for manual reconnection
+// Export reconnect function
 export const reconnectSocket = () => {
   if (socket) {
     const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
-    console.log('🔄 Reconnecting socket with token:', token ? `${token.substring(0, 20)}...` : 'NONE')
+    console.log('🔄 Reconnecting socket with token:', token ? `✓ ${token.substring(0, 20)}...` : '✗ MISSING')
     socket.auth = { token }
     socket.disconnect()
     socket.connect()
