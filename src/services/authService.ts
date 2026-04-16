@@ -66,6 +66,7 @@ const AuthService = {
         localStorage.setItem('token', token);
         localStorage.setItem('accessToken', token);
         console.log('✅ Token saved to localStorage');
+        console.log('   Verify with: localStorage.getItem("token")');
       } else {
         console.error('❌ NO TOKEN FOUND IN RESPONSE!');
         console.error('   Possible locations checked:');
@@ -89,6 +90,7 @@ const AuthService = {
       }
 
       // Reconnect socket with new token
+      console.log('🔌 Reconnecting socket with new token...');
       reconnectSocket();
 
       return data;

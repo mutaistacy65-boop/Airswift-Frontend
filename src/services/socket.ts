@@ -43,8 +43,14 @@ if (socket) {
   socket.on('connect_error', (error) => {
     console.error('🚨 Socket connection error:', error.message)
     console.error('   This usually means authentication failed')
-    console.error('   Check that localStorage has a valid token')
-    console.log('   Current token:', getCurrentToken() ? 'PRESENT' : 'MISSING')
+    
+    const token = getCurrentToken();
+    if (!token) {
+      console.error('   ❌ TOKEN MISSING! Check localStorage.getItem("token")');
+    } else {
+      console.error('   ⚠️ Token present but backend rejected it');
+      console.error('   Token preview:', `${token.substring(0, 20)}...`);
+    }
   })
 
   socket.on('authenticated', () => {
