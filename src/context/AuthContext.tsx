@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
-import socket, { reconnectSocket } from '@/services/socket'
+import { initSocket, reconnectSocket, disconnectSocket, getSocket } from '@/services/socket'
 import api from '@/lib/api'
 
 interface User {
@@ -87,30 +87,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const userId = user?.id || user?._id
-    if (!userId || !socket) return
+    if (!userId) return
 
-    if (socket.connected) {
-      socket.emit('join_user', userId)
+    // 🔒 Get socket - only available after login
+    const currentSocket = getSocket()
+    if (!currentSocket) return
+
+    if (currentSocket.connected) {
+      currentSocket.emit('join_user', userId)
       if (user?.role === 'admin') {
-        socket.emit('join_admin')
+        currentSocket.emit('join_admin')
       }
     } else {
-      socket.once('connect', () => {
-        socket.emit('join_user', userId)
+      currentSocket.once('connect', () => {
+        currentSocket.emit('join_user', userId)
         if (user?.role === 'admin') {
-          socket.emit('join_admin')
+          currentSocket.emit('join_admin')
         }
       })
     }
   }, [user])
 
   const login = async (data: any) => {
-    // Store token and user data
-    if (data.token) {
-      localStorage.setItem('token', data.token)
+    // 🔒 Step 1: Validate token exists
+    if (!data.token) {
+      console.error('❌ Login failed: No token in response')
+      throw new Error('Login failed: No token received')
     }
+
+    // 🔒 Step 2: Store token in localStorage FIRST
+    localStorage.setItem('token', data.token)
+    console.log('✅ Token saved to localStorage')
+
+    // 🔒 Step 3: Store user data
     localStorage.setItem('user', JSON.stringify(data.user))
     setUser(data.user)
+
+    // 🔒 Step 4: Initialize socket with token
+    const socketInstance = initSocket(data.token)
+    if (!socketInstance) {
+      console.warn('⚠️ Socket initialization failed, continuing without real-time updates')
+    } else {
+      console.log('✅ Socket initialized after login')
+    }
 
     // � Toast notification
     const roleEmoji = {
@@ -131,16 +150,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.error('Failed to fetch profile after login:', err)
     }
-
-    // 🔥 Reconnect socket with new token
-    console.log('🔌 Reconnecting socket after login...')
-    reconnectSocket()
   }
 
   const logout = () => {
     const userName = user?.name || 'User'
     setUser(null)
     setProfile(null)
+    
+    // 🔌 Disconnect socket
+    disconnectSocket()
+
     // Clear localStorage
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token')
