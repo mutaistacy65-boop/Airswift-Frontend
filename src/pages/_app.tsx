@@ -5,6 +5,7 @@ import { AuthProvider } from '@/context/AuthContext'
 import { NotificationProvider } from '@/context/NotificationContext'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import UserLocationEmitter from '@/components/UserLocationEmitter'
+import { Toaster } from 'react-hot-toast'
 // @ts-ignore
 import 'leaflet/dist/leaflet.css'
 // @ts-ignore
@@ -46,6 +47,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <NotificationProvider>
         <AuthProvider>
           <UserLocationEmitter />
+          <Toaster position="top-right" toastOptions={{ duration: 3500 }} />
           <Component {...pageProps} />
         </AuthProvider>
       </NotificationProvider>
