@@ -23,7 +23,13 @@ export default function ApplicationPage() {
 
     const checkStatus = async () => {
       try {
-        const res = await api.get('/users/status')
+        // FORCE attach token for debug
+        const token = localStorage.getItem('token');
+        const res = await api.get('/users/status', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (res.data?.hasApplied) {
           setHasApplied(true)
           setApplication(res.data?.application || null)

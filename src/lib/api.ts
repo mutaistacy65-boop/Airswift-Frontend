@@ -11,17 +11,14 @@ const api = axios.create({
 // 🔥 Attach token to EVERY request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-
   console.log('🔥 INTERCEPTOR - REQUEST:', config.url);
-  console.log('   Token:', token ? `✓ ${token.substring(0, 20)}...` : '✗ MISSING');
-
+  console.log('   Sending token:', token);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
     console.log('   ✅ Authorization header set');
   } else {
     console.warn('   ❌ NO TOKEN FOUND - Request may fail with 401');
   }
-
   return config;
 });
 

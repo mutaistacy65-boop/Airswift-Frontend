@@ -77,7 +77,7 @@ export default function Login() {
       }
 
       // ✅ Save token after login
-      localStorage.setItem('token', authToken)
+      localStorage.setItem('token', data.accessToken || data.token)
       localStorage.setItem('user', JSON.stringify(user))
       if (user.role) {
         localStorage.setItem('role', user.role)
