@@ -69,69 +69,63 @@ export default function Login() {
       // Check if user is verified before allowing login
       if (!user.isVerified) {
         // Return special response for unverified accounts
-        const email = user?.email
-        if (email) {
-          router.push(`/verify-otp?email=${encodeURIComponent(email)}&type=login`)
-        }
-        return
-      }
+        const data = await loginUser(form)
 
-      // ✅ Save token after login
-      localStorage.setItem('token', data.accessToken || data.token)
-      localStorage.setItem('user', JSON.stringify(user))
-      if (user.role) {
-        localStorage.setItem('role', user.role)
-      }
-
-      // Check if this is mock data
-      if (authToken.startsWith('mock-')) {
-        alert('Demo login successful. Note: Some features may not work with demo accounts.')
-      }
-
-      console.log("TOKEN:", localStorage.getItem("token"));
-
-      // Update AuthContext immediately
-      login({ user })
-
-      // Check for drafts
-      try {
-        const draftRes = await api.get('/drafts/check')
-        if (draftRes.data?.hasDraft) {
-          setDraftInfo(draftRes.data || {})
-          setShowModal(true)
+        // Handle redirect for unverified accounts
+        if (data.redirect) {
+          router.push(`${data.redirect}?email=${encodeURIComponent(data.email)}&type=login`)
           return
         }
-      } catch (err) {
-        console.warn('Draft check failed — ignoring')
-      }
 
-      if (user?.role === 'admin') {
-        router.push('/admin/dashboard')
-      } else if (!user?.has_submitted) {
-        router.push('/apply')
-      } else {
-        router.push('/dashboard')
-      }
-    } catch (err: any) {
-      let errorMessage = 'Login failed'
-      if (err?.response?.status === 401) {
-        errorMessage = 'Unauthorized. Please login again.'
-      } else if (err?.response?.data?.message) {
-        errorMessage = err.response.data.message
-      } else if (err?.message) {
-        errorMessage = 'Network error. Please try again.'
-      } else if (err?.toString) {
-        errorMessage = err.toString()
-      }
-      setError(errorMessage)
-      console.error('Login error:', err)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+        console.log("LOGIN RESPONSE:", data);
+        // 🔥 FIX THIS LINE
+        const token = data.token || data.accessToken;
 
-  return (
-    <div className="min-h-screen flex">
+        if (!token || token === 'undefined') {
+          console.error("❌ No token in response:", data);
+          return;
+        }
+
+        // 🟦 STEP 3: CLEAN BAD TOKEN (IMPORTANT)
+        if (token === 'undefined') {
+          localStorage.removeItem('token');
+        } else {
+          localStorage.setItem('token', token);
+        }
+        localStorage.setItem('user', JSON.stringify(data.user));
+        if (data.user?.role) {
+          localStorage.setItem('role', data.user.role);
+        }
+
+        // Check if this is mock data
+        if (token.startsWith('mock-')) {
+          alert('Demo login successful. Note: Some features may not work with demo accounts.');
+        }
+
+        console.log("✅ Token saved:", token);
+
+        // Update AuthContext immediately
+        login({ user: data.user });
+
+        // Check for drafts
+        try {
+          const draftRes = await api.get('/drafts/check');
+          if (draftRes.data?.hasDraft) {
+            setDraftInfo(draftRes.data || {});
+            setShowModal(true);
+            return;
+          }
+        } catch (err) {
+          console.warn('Draft check failed — ignoring');
+        }
+
+        if (data.user?.role === 'admin') {
+          router.push('/admin/dashboard');
+        } else if (!data.user?.has_submitted) {
+          router.push('/apply');
+        } else {
+          router.push('/dashboard');
+        }
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary via-primary-dark to-primary-light p-12 flex-col justify-center items-center text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>

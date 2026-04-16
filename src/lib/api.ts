@@ -13,11 +13,12 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   console.log('🔥 INTERCEPTOR - REQUEST:', config.url);
   console.log('   Sending token:', token);
-  if (token) {
+  if (token && token !== 'undefined') {
     config.headers.Authorization = `Bearer ${token}`;
     console.log('   ✅ Authorization header set');
   } else {
-    console.warn('   ❌ NO TOKEN FOUND - Request may fail with 401');
+    console.warn('   ❌ No valid token found');
+    delete config.headers.Authorization;
   }
   return config;
 });

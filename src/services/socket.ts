@@ -11,8 +11,8 @@ const createSocket = (): Socket | null => {
 
   const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
 
-  if (!token) {
-    console.warn('⚠️ No token found for Socket.IO connection')
+  if (!token || token === 'undefined') {
+    console.error('❌ Invalid token for socket:', token)
     return null
   }
 
@@ -67,6 +67,10 @@ export const socket = createSocket()
 export const reconnectSocket = () => {
   if (socket) {
     const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
+    if (!token || token === 'undefined') {
+      console.error('❌ Invalid token for socket reconnect:', token)
+      return
+    }
     console.log('🔄 Reconnecting socket with token:', token ? `✓ ${token.substring(0, 20)}...` : '✗ MISSING')
     socket.auth = { token }
     socket.disconnect()
