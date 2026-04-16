@@ -501,18 +501,12 @@ function Step2({ formData, errors, onNext, onPrev, setFormData }: any) {
 function Step3({ formData, jobs, loading, onPrev }: any) {
   return (
     <div>
-      {/* ✅ Button is inside return */}
       <div>
-        {/* ...existing code for Step3, but NO debugMode or setDebugMode here... */}
+        <p><strong>National ID:</strong> {formData.nationalId}</p>
+        <p><strong>Phone:</strong> {formData.phone}</p>
+        <p><strong>Passport:</strong> {formData.passport?.name || 'Not uploaded'}</p>
+        <p><strong>CV:</strong> {formData.cv?.name || 'Not uploaded'}</p>
       </div>
-    )
-          <p><strong>National ID:</strong> {formData.nationalId}</p>
-          <p><strong>Phone:</strong> {formData.phone}</p>
-          <p><strong>Passport:</strong> {formData.passport?.name || 'Not uploaded'}</p>
-          <p><strong>CV:</strong> {formData.cv?.name || 'Not uploaded'}</p>
-        </div>
-      </div>
-
       <div className="flex justify-between">
         <button
           onClick={onPrev}
