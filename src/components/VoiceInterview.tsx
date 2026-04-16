@@ -68,7 +68,7 @@ const VoiceInterview: React.FC<VoiceInterviewProps> = ({
       transports: ["websocket"],
       auth: {
         token: typeof window !== 'undefined'
-          ? localStorage.getItem('token') || localStorage.getItem('accessToken') || undefined
+          ? localStorage.getItem('token') || undefined
           : undefined,
       },
     })
