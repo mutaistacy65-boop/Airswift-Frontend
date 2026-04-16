@@ -30,7 +30,7 @@ export default function ForgotPassword() {
     setMessage('')
 
     try {
-      const result = await api.post('/auth/forgot-password', {
+      const result = await api.post('/api/auth/forgot-password', {
         email
       })
 

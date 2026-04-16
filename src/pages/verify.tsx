@@ -53,7 +53,7 @@ export default function VerifyEmail() {
 
     setIsResending(true)
     try {
-      const result = await api.post('/auth/resend-verification', {
+      const result = await api.post('/api/auth/resend-verification', {
         email
       })
 

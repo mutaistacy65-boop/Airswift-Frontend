@@ -6,7 +6,7 @@ const AuthService = {
   // Registration with email verification
   register: async (name: string, email: string, password: string, role?: string) => {
     try {
-      const result = await API.post('/auth/register', {
+      const result = await API.post('/api/auth/register', {
         name,
         email,
         password,
@@ -25,7 +25,7 @@ const AuthService = {
   // Login
   login: async (email: string, password: string) => {
     try {
-      const result = await API.post('/auth/login', {
+      const result = await API.post('/api/auth/login', {
         email,
         password
       });
@@ -114,7 +114,7 @@ const AuthService = {
   // Logout
   logout: async () => {
     try {
-      await API.post('/auth/logout');
+      await API.post('/api/auth/logout');
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -174,7 +174,7 @@ const AuthService = {
   // Resend verification email
   resendVerificationEmail: async (email: string) => {
     try {
-      const result = await API.post('/auth/resend-verification', {
+      const result = await API.post('/api/auth/resend-verification', {
         email
       });
 
