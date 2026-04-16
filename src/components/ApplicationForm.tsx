@@ -37,7 +37,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     // <button type="button" onClick={() => setDebugMode(!debugMode)}>
     //   Toggle Debug
     // </button>
-  const [debugMode, setDebugMode] = useState(false) // HARD FIX: Toggle for force token attachment
+  // (duplicate removed)
 
   // Check for draft on mount
   useEffect(() => {
