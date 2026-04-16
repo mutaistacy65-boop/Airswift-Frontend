@@ -1,17 +1,122 @@
 import React, { useState, useEffect } from 'react'
 import API from '@/services/apiClient'
+import { socket } from '@/services/socket'
+
+interface Application {
+  _id: string
+  user_id?: { _id?: string; name: string; email: string }
+  job_id?: { _id?: string; title: string }
+  status: string
+  cvUrl?: string
+  passportUrl?: string
+  notes?: string
+  created_at?: string
+  createdAt?: string
+}
+
+interface Job {
+  _id: string
+  title: string
+  status: 'pending' | 'published' | 'closed'
+}
 
 export default function AdminDashboard() {
-  const [applications, setApplications] = useState<any[]>([])
+  const [applications, setApplications] = useState<Application[]>([])
+  const [pendingJobs, setPendingJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedUser, setSelectedUser] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ subject: '', message: '', date: '', time: '' })
   const [notes, setNotes] = useState<{ [key: string]: string }>({})
+  const [user, setUser] = useState<any>(null)
 
+  // Check user role and auth
   useEffect(() => {
-    fetchApplications()
+    const storedUser = JSON.parse(localStorage.getItem('user') || 'null')
+    if (!storedUser || storedUser.role !== 'admin') {
+      window.location.href = '/unauthorized'
+      return
+    }
+    setUser(storedUser)
   }, [])
+
+  // Initial data fetch
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      fetchApplications()
+      fetchPendingJobs()
+    }
+  }, [user])
+
+  // 🛡️ ROLE-AWARE SOCKET HANDLING
+  // Only listen to socket events if user is admin
+  useEffect(() => {
+    if (!user || user.role !== 'admin') return
+
+    // Guard against socket not being ready
+    if (!socket || !socket.connected) {
+      console.log('🔌 Waiting for socket connection...')
+      return
+    }
+
+    console.log('📡 Setting up admin socket listeners...')
+
+    // 🟡 Listen for new applications
+    const handleNewApplication = (data: Application) => {
+      console.log('🔥 New application received:', data)
+      setApplications((prev) => {
+        // Avoid duplicates
+        if (prev.find((app) => app._id === data._id)) return prev
+        return [data, ...prev]
+      })
+    }
+
+    // 🟡 Listen for application status updates
+    const handleApplicationStatusUpdate = (updatedApp: Application) => {
+      console.log('🔥 Application status updated:', updatedApp)
+      setApplications((prev) =>
+        prev.map((app) =>
+          app._id === updatedApp._id ? updatedApp : app
+        )
+      )
+    }
+
+    // 🟡 Listen for new jobs created
+    const handleJobCreated = (job: Job) => {
+      if (job.status === 'pending') {
+        console.log('🔥 New pending job:', job)
+        setPendingJobs((prev) => {
+          if (prev.find((j) => j._id === job._id)) return prev
+          return [job, ...prev]
+        })
+      }
+    }
+
+    // 🟡 Listen for job updates
+    const handleJobUpdated = (updatedJob: Job) => {
+      console.log('🔥 Job updated:', updatedJob)
+      setPendingJobs((prev) =>
+        prev
+          .map((job) => (job._id === updatedJob._id ? updatedJob : job))
+          .filter((job) => job.status === 'pending') // Remove non-pending jobs
+      )
+    }
+
+    // Register event listeners
+    socket.on('admin:new-application', handleNewApplication)
+    socket.on('application:status', handleApplicationStatusUpdate)
+    socket.on('job:created', handleJobCreated)
+    socket.on('job:updated', handleJobUpdated)
+
+    // 🛡️ CLEANUP - Prevent memory leaks (CRITICAL)
+    return () => {
+      console.log('🧹 Cleaning up admin socket listeners...')
+      socket.off('admin:new-application', handleNewApplication)
+      socket.off('application:status', handleApplicationStatusUpdate)
+      socket.off('job:created', handleJobCreated)
+      socket.off('job:updated', handleJobUpdated)
+    }
+  }, [user, socket])
 
   const fetchApplications = async () => {
     try {
@@ -20,16 +125,25 @@ export default function AdminDashboard() {
       setApplications(apps)
       // Load notes into local state
       const notesMap: { [key: string]: string } = {}
-      apps.forEach((app: any) => {
+      apps.forEach((app: Application) => {
         if (app.notes) {
           notesMap[app._id] = app.notes
         }
       })
       setNotes(notesMap)
     } catch (err) {
-      console.error(err)
+      console.error('❌ Failed to fetch applications:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchPendingJobs = async () => {
+    try {
+      const res = await API.get('/jobs?status=pending')
+      setPendingJobs(res.data?.jobs || [])
+    } catch (err) {
+      console.error('❌ Failed to fetch pending jobs:', err)
     }
   }
 
@@ -89,13 +203,62 @@ export default function AdminDashboard() {
     }
   }
 
-  if (loading) return <div className="p-6">Loading...</div>
+  if (loading) return <div className="p-6 text-gray-600">Loading admin dashboard...</div>
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <span className={`px-4 py-2 rounded-full text-sm font-medium ${
+          socket?.connected 
+            ? 'bg-green-100 text-green-800' 
+            : 'bg-red-100 text-red-800'
+        }`}>
+          {socket?.connected ? '🟢 Live' : '⚫ Offline'}
+        </span>
+      </div>
 
-      {/* Table */}
+      {/* 🟡 PENDING JOBS SECTION (UPDATES INSTANTLY) */}
+      <div className="grid grid-cols-1 gap-4">
+        <div className="bg-white shadow-lg rounded-xl p-6 border-l-4 border-yellow-500">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <span className="text-2xl">⏳</span>
+              Pending Jobs
+            </h2>
+            <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+              {pendingJobs.length} pending
+            </span>
+          </div>
+
+          {pendingJobs.length === 0 ? (
+            <p className="text-gray-500">No pending jobs</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {pendingJobs.map((job) => (
+                <div
+                  key={job._id}
+                  className="p-4 border-2 border-yellow-200 rounded-lg hover:shadow-md transition-shadow bg-yellow-50"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-800">{job.title}</h3>
+                      <p className="text-sm text-gray-600 mt-2">
+                        <span className="inline-block bg-yellow-200 px-2 py-1 rounded text-xs font-medium">
+                          {job.status}
+                        </span>
+                      </p>
+                    </div>
+                    <span className="text-2xl animate-bounce">🔔</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* APPLICATIONS TABLE */}
       <div className="bg-white shadow rounded-xl overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-100">
@@ -185,7 +348,7 @@ export default function AdminDashboard() {
                 </td>
 
                 <td className="p-4">
-                  {new Date(app.created_at).toLocaleDateString()}
+                  {new Date(app.created_at || app.createdAt || '').toLocaleDateString()}
                 </td>
 
                 <td className="p-4 space-x-2">
