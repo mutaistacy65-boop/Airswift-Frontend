@@ -56,11 +56,9 @@ export default function ProfilePage() {
       const formData = new FormData();
       formData.append("cv", file);
 
-      const res = await API.post('/users/parse-cv', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // ✅ DO NOT set Content-Type - axios handles it automatically for FormData
+      // ✅ Authorization header added by interceptor
+      const res = await API.post('/users/parse-cv', formData);
 
       // 🔥 AUTO-FILL FORM
       setFormData((prev) => ({

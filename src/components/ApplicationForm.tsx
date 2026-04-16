@@ -271,20 +271,9 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
         console.log(`   ${pair[0]}:`, pair[1] instanceof File ? `File(${pair[1].name}, ${pair[1].size} bytes)` : pair[1]);
       }
 
-      const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
-      if (!token) {
-        console.error('No authentication token found!');
-        alert('Authentication required. Please log in and try again.');
-        setLoading(false);
-        return;
-      }
-
-      const response = await API.post('/applications', formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // ✅ DO NOT manually set Authorization header - interceptor handles it
+      // ✅ DO NOT set Content-Type for FormData - axios handles it automatically
+      const response = await API.post('/applications', formData);
 
       const result = response.data
 
