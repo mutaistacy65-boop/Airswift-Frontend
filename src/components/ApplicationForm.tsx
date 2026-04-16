@@ -502,26 +502,10 @@ function Step3({ formData, jobs, loading, onPrev }: any) {
   return (
     <div>
       {/* ✅ Button is inside return */}
-      <button
-        type="button"
-        onClick={() => setDebugMode(!debugMode)}
-        className={`px-4 py-2 ${debugMode ? 'bg-red-600' : 'bg-gray-600'}`}
-      >
-        Toggle Debug
-      </button>
-      {/* ✅ Debug toggle button at the top */}
-      <button
-        type="button"
-        onClick={() => setDebugMode(!debugMode)}
-        className={`px-4 py-2 ${debugMode ? 'bg-red-600' : 'bg-gray-600'} text-white rounded-lg mb-4`}
-      >
-        Toggle Debug
-      </button>
-
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Review Your Application</h3>
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <p><strong>Job:</strong> {formData.jobId || 'N/A'}</p>
+      <div>
+        {/* ...existing code for Step3, but NO debugMode or setDebugMode here... */}
+      </div>
+    )
           <p><strong>National ID:</strong> {formData.nationalId}</p>
           <p><strong>Phone:</strong> {formData.phone}</p>
           <p><strong>Passport:</strong> {formData.passport?.name || 'Not uploaded'}</p>
