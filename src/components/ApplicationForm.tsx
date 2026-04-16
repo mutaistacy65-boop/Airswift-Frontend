@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import DocumentUpload from './DocumentUpload'
 import ContinueDraftModal from './ContinueDraftModal'
 import JobSearchDropdown from './JobSearchDropdown'
+import { debugToken, forcePostWithToken } from '@/utils/authDebug'
 
 interface ApplicationFormProps {
   onSuccess?: () => void
@@ -27,6 +28,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showDraftModal, setShowDraftModal] = useState(false)
   const [draftInfo, setDraftInfo] = useState<{ hasDraft: boolean; updated_at?: string } | null>(null)
+  const [debugMode, setDebugMode] = useState(false) // HARD FIX: Toggle for force token attachment
 
   // Check for draft on mount
   useEffect(() => {
@@ -273,7 +275,18 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
       // ✅ DO NOT manually set Authorization header - interceptor handles it
       // ✅ DO NOT set Content-Type for FormData - axios handles it automatically
-      const response = await API.post('/applications', formData);
+
+      let response;
+
+      if (debugMode) {
+        // 🚨 HARD FIX: Force attach token manually (bypass interceptor)
+        console.log('🚨 USING HARD FIX MODE - Force attaching token manually');
+        response = await forcePostWithToken('/applications', formData);
+      } else {
+        // ✅ NORMAL MODE: Use API instance with interceptor
+        console.log('✅ USING NORMAL MODE - API instance with interceptor');
+        response = await API.post('/applications', formData);
+      }
 
       const result = response.data
 
@@ -506,6 +519,17 @@ function Step3({ formData, jobs, loading, onPrev }: any) {
           className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
         >
           Back
+        </button>
+        <button
+          type="button"
+          onClick={() => setDebugMode(!debugMode)}
+          className={`px-4 py-2 rounded-lg text-sm ${
+            debugMode
+              ? 'bg-red-600 text-white hover:bg-red-700'
+              : 'bg-gray-600 text-white hover:bg-gray-700'
+          }`}
+        >
+          {debugMode ? '🚨 DEBUG MODE ON' : '🔧 Debug Mode'}
         </button>
         <button
           type="submit"
