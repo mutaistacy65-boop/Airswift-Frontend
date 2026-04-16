@@ -1,72 +1,74 @@
+// ✅ FIXED: Socket.IO Client Configuration with Authentication
+// This file provides authenticated Socket.IO connections
+
 import { io, Socket } from 'socket.io-client'
 
-const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'https://airswift-backend-fjt3.onrender.com'
-const socketPath = process.env.NEXT_PUBLIC_SOCKET_PATH || undefined
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'https://airswift-backend-fjt3.onrender.com'
 
-// Function to get current token (handles both token keys)
-const getCurrentToken = () => {
-  return localStorage.getItem('token') || localStorage.getItem('accessToken') || undefined
-}
-
-// Create socket with current token
+// Create authenticated socket connection
 const createSocket = (): Socket | null => {
   if (typeof window === 'undefined') return null
 
-  const token = getCurrentToken()
+  const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
 
-  console.log('🔌 Creating socket with token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN')
+  if (!token) {
+    console.warn('⚠️ No token found for Socket.IO connection')
+    return null
+  }
 
-  return io(socketUrl, {
-    ...(socketPath ? { path: socketPath } : {}),
+  console.log('🔌 Connecting to Socket.IO...')
+  console.log('   URL:', SOCKET_URL)
+  console.log('   Token:', token ? `${token.substring(0, 20)}...` : 'NONE')
+
+  const socket = io(SOCKET_URL, {
+    path: '/socket.io',
     transports: ['websocket', 'polling'],
     auth: {
-      token: token,
+      token: token // Send token for authentication
     },
+    pingInterval: 25000,
+    pingTimeout: 20000,
     reconnection: true,
     reconnectionAttempts: 5,
     reconnectionDelay: 1000,
-    autoConnect: true,
   })
-}
 
-const socket: Socket | null = createSocket()
-
-if (socket) {
   socket.on('connect', () => {
-    console.log('✅ Socket connected:', socket.id)
+    console.log('✅ Socket.IO connected:', socket.id)
   })
 
   socket.on('disconnect', (reason) => {
-    console.log('❌ Socket disconnected:', reason)
+    console.log('❌ Socket.IO disconnected:', reason)
   })
 
-  socket.on('connect_error', (error) => {
-    console.error('🚨 Socket connection error:', error.message)
-    console.error('   This usually means authentication failed')
+  socket.on('connect_error', (error: any) => {
+    console.error('❌ Socket.IO connection error:', error.message)
     
-    const token = getCurrentToken();
     if (!token) {
-      console.error('   ❌ TOKEN MISSING! Check localStorage.getItem("token")');
-    } else {
-      console.error('   ⚠️ Token present but backend rejected it');
-      console.error('   Token preview:', `${token.substring(0, 20)}...`);
+      console.error('   Reason: No authentication token')
     }
   })
 
   socket.on('authenticated', () => {
-    console.log('🔐 Socket authenticated successfully')
+    console.log('🔐 Socket.IO authenticated successfully')
   })
 
   socket.on('unauthorized', () => {
-    console.log('🚫 Socket authentication failed')
+    console.error('🚫 Socket.IO authentication failed')
   })
+
+  return socket
 }
 
-// Export function to reconnect with new token (call after login)
+// Export socket instance
+export const socket = createSocket()
+
+// Export createSocket function for manual reconnection
 export const reconnectSocket = () => {
   if (socket) {
-    console.log('🔄 Reconnecting socket with new token...')
-    socket.auth = { token: getCurrentToken() }
+    const token = localStorage.getItem('token') || localStorage.getItem('accessToken')
+    console.log('🔄 Reconnecting socket with token:', token ? `${token.substring(0, 20)}...` : 'NONE')
+    socket.auth = { token }
     socket.disconnect()
     socket.connect()
   }
