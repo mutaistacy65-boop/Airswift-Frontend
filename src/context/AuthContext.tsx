@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import toast from 'react-hot-toast'
 import socket, { reconnectSocket } from '@/services/socket'
 import api from '@/lib/api'
 
@@ -111,6 +112,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('user', JSON.stringify(data.user))
     setUser(data.user)
 
+    // � Toast notification
+    const roleEmoji = {
+      admin: '👑',
+      recruiter: '💼',
+      user: '👤',
+    }[data.user.role] || '✅'
+
+    toast.success(`Welcome back, ${data.user.name || 'User'}!`, {
+      icon: roleEmoji,
+      duration: 4000,
+    })
+
     // 🔥 Fetch profile after login
     try {
       const res = await api.get('/profile')
@@ -120,10 +133,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // 🔥 Reconnect socket with new token
+    console.log('🔌 Reconnecting socket after login...')
     reconnectSocket()
   }
 
   const logout = () => {
+    const userName = user?.name || 'User'
     setUser(null)
     setProfile(null)
     // Clear localStorage
@@ -133,6 +148,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('role')
       localStorage.removeItem('permissions')
     }
+
+    // 🟤 Toast notification
+    toast.success(`Goodbye, ${userName}! See you soon 👋`, {
+      duration: 3000,
+    })
+
     router.push('/login')
   }
 
