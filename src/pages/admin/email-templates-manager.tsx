@@ -43,7 +43,7 @@ export default function EmailTemplatesPage() {
 
   const fetchTemplates = async () => {
     try {
-      const response = await API.get('/email-templates')
+      const response = await api.get('/email-templates')
       setTemplates(response.data.templates || [])
     } catch (error) {
       console.error('Error fetching templates:', error)
@@ -67,7 +67,7 @@ export default function EmailTemplatesPage() {
     if (!confirm('Are you sure you want to delete this template?')) return
 
     try {
-      await API.delete(`/email-templates/${id}`)
+      await api.delete(`/email-templates/${id}`)
       setTemplates(templates.filter(t => t._id !== id))
       alert('Template deleted successfully!')
     } catch (error: any) {

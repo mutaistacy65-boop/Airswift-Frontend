@@ -3,28 +3,26 @@
 
 import axios, { AxiosError } from 'axios';
 
-const api = axios.create({
-  baseURL: 'https://airswift-backend-fjt3.onrender.com/api',
+const API = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10000/api',
   withCredentials: true,
 });
 
 // 🔥 Attach token to EVERY request
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  console.log('🔥 INTERCEPTOR - REQUEST:', config.url);
-  console.log('   Sending token:', token);
-  if (token && token !== 'undefined') {
-    config.headers.Authorization = `Bearer ${token}`;
-    console.log('   ✅ Authorization header set');
-  } else {
-    console.warn('   ❌ No valid token found');
-    delete config.headers.Authorization;
+API.interceptors.request.use((config) => {
+  const token = typeof window !== 'undefined'
+    ? localStorage.getItem('token')
+    : null
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
   }
-  return config;
-});
+
+  return config
+})
 
 // 🔥 Handle responses and errors
-api.interceptors.response.use(
+API.interceptors.response.use(
   (response) => {
     console.log('✅ RESPONSE:', response.status, response.config.url);
     return response;
@@ -53,5 +51,6 @@ api.interceptors.response.use(
   }
 );
 
-export default api;
+export default API;
+export { API };
 
