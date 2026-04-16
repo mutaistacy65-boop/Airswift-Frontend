@@ -1,4 +1,4 @@
-import API from './apiClient'
+import api from '@/lib/api'
 
 export interface CVScore {
   overallScore: number
@@ -28,7 +28,7 @@ export const cvService = {
     requirements: string[]
   ): Promise<CVScore> => {
     try {
-      const response = await API.post('/admin/ai/cv-analysis', {
+      const response = await api.post('/admin/ai/cv-analysis', {
         cvText,
         jobDescription,
         requirements,
@@ -51,7 +51,7 @@ export const cvService = {
     jobDescription: string
   ): Promise<{ candidateName: string; score: number; analysis: CVScore }> => {
     try {
-      const response = await API.post('/admin/candidates/score', {
+      const response = await api.post('/admin/candidates/score', {
         candidateName,
         email,
         cv,
@@ -74,7 +74,7 @@ export const cvService = {
     requirements: string[]
   ): Promise<Array<{ id: string; name: string; score: number }>> => {
     try {
-      const response = await API.post('/admin/candidates/batch-score', {
+      const response = await api.post('/admin/candidates/batch-score', {
         candidates,
         jobDescription,
         requirements,
@@ -91,7 +91,7 @@ export const cvService = {
    */
   getCandidateScore: async (candidateId: string): Promise<CVScore> => {
     try {
-      const response = await API.get(`/admin/candidates/${candidateId}/score`)
+      const response = await api.get(`/admin/candidates/${candidateId}/score`)
       return response.data
     } catch (error: any) {
       console.error('Get Score Error:', error)

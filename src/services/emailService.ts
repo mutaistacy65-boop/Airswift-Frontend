@@ -1,4 +1,4 @@
-import API from './apiClient'
+import api from '@/lib/api'
 
 interface EmailPayload {
   to: string
@@ -53,7 +53,7 @@ export const emailService = {
       </div>
     `
 
-    return API.post('/admin/email/send', {
+    return api.post('/admin/email/send', {
       to: data.candidateEmail,
       subject: `Interview Invitation - ${data.jobTitle}`,
       html,
