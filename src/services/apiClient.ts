@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { InternalAxiosRequestConfig, AxiosHeaders } from 'axios';
 
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com';
 
@@ -12,7 +12,7 @@ const API = axios.create({
 });
 
 API.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     if (typeof window === 'undefined') {
       return config;
     }
@@ -20,10 +20,10 @@ API.interceptors.request.use(
     const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
 
     if (token) {
-      config.headers = {
-        ...(config.headers || {}),
+      config.headers = new AxiosHeaders({
+        ...config.headers,
         Authorization: `Bearer ${token}`,
-      };
+      });
     }
 
     return config;
