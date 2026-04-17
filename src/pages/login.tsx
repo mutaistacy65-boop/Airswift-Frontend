@@ -91,6 +91,8 @@ export default function Login() {
           localStorage.setItem('permissions', JSON.stringify([]));
         }
 
+        // 🟦 FIX 2: Add Debug - confirm user was saved
+        console.log("USER SAVED:", user);
         console.log("✅ Token stored successfully:", authToken.substring(0, 20) + '...');
         console.log("✅ Permissions saved:", res.permissions || user?.permissions || []);
 

@@ -144,16 +144,6 @@ export default function JobSearchDropdown({
         ))}
       </datalist>
 
-      {/* Debug Info */}
-      <div
-        className="mt-2 text-xs text-gray-500"
-        style={{ fontSize: '11px', opacity: 0.7 }}
-      >
-        <p>📊 Jobs loaded: {safeJobs.length}</p>
-        <p>📝 Selected: {jobText || 'None'}</p>
-        <p>🔑 Job ID: {selectedJobId || 'None'}</p>
-      </div>
-
       {/* Error Message */}
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </div>

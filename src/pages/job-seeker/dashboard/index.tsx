@@ -13,6 +13,7 @@ import API from '@/services/apiClient'
 import ApplicationTimeline from '@/components/ApplicationTimeline'
 import { getStatusColor, getStatusLabel } from '@/utils/statusColors'
 import { getStoredUser, hasSubmittedApplication } from '@/utils/authUtils'
+import { formatDateTime } from '@/utils/helpers'
 
 const JobSeekerDashboard: React.FC = () => {
   const { isAuthorized, isLoading } = useProtectedRoute('user')
@@ -33,35 +34,34 @@ const JobSeekerDashboard: React.FC = () => {
   const [application, setApplication] = useState(null)
   const [hasApplied, setHasApplied] = useState<boolean | null>(null)
 
-  // 🔐 Wait for auth state, then check permissions
+  // 🔐 FIX 3: Prevent Premature Redirect - Wait instead of redirecting immediately
   useEffect(() => {
-    const checkAuth = () => {
-      const storedUser = getStoredUser();
-      
-      console.log("🔐 Dashboard checking auth...", { storedUser });
+    const storedUser = getStoredUser();
 
-      if (!storedUser) {
-        console.log("🔄 No user found, redirecting to /login");
-        router.push("/login");
-        return;
-      }
+    console.log("🔐 Dashboard checking auth...", { storedUser });
 
-      if (storedUser.role === "admin") {
-        console.log("🔄 User is admin, redirecting to /admin/dashboard");
-        router.push("/admin/dashboard");
-        return;
-      }
+    // ✅ WAIT instead of redirecting if no user
+    if (!storedUser) {
+      console.log("⏳ No user found yet - waiting...");
+      return;
+    }
 
-      if (!storedUser.hasSubmittedApplication) {
-        console.log("🔄 User hasn't submitted application, redirecting to /apply");
-        router.push("/apply");
-        return;
-      }
+    // ✅ Only redirect if there's an actual issue
+    if (storedUser.role === "admin") {
+      console.log("🔄 User is admin, redirecting to /admin/dashboard");
+      router.replace("/admin/dashboard");
+      return;
+    }
 
-      setAuthLoading(false);
-    };
+    if (!storedUser.hasSubmittedApplication) {
+      console.log("🔄 User hasn't submitted application, redirecting to /apply");
+      router.replace("/apply");
+      return;
+    }
 
-    checkAuth();
+    // ✅ Auth is valid, stop loading and render dashboard
+    console.log("USER IN DASHBOARD:", storedUser);
+    setAuthLoading(false);
   }, [router]);
 
   // 🔒 Don't render until auth is loaded
@@ -353,19 +353,20 @@ const JobSeekerDashboard: React.FC = () => {
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Application Status</h3>
                 <div className={`p-4 rounded-lg border-2 ${getStatusColor(application.applicationStatus || 'pending').border}`}>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-4">
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Current Status</p>
                       <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(application.applicationStatus || 'pending').badge}`}>
                         {getStatusLabel(application.applicationStatus || 'pending')}
                       </span>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500 mb-1">Applied on</p>
-                      <p className="text-sm font-medium text-gray-900">
-                        {new Date(application.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
+                  </div>
+                  {/* 🔥 Display Submission Date with Proper Formatting */}
+                  <div className="border-t pt-4">
+                    <p className="text-xs text-gray-500 mb-1">Submitted on</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {formatDateTime(application.submittedAt || application.createdAt)}
+                    </p>
                   </div>
                 </div>
               </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/router';
 import API from '@/services/apiClient'; // Centralized API client with auth interceptor
 import JobSearchDropdown from './JobSearchDropdown';
 
@@ -7,6 +8,7 @@ interface SafeApplicationFormProps {
 }
 
 export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormProps) {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     jobId: '',
     phone: '',
@@ -174,10 +176,43 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
         // Save application data to localStorage
         localStorage.setItem("latestApplication", JSON.stringify(response.data));
 
+        // 📝 IMPORTANT: Fetch fresh user profile after submission
+        try {
+          const profileRes = await API.get('/users/profile');
+          const updatedUser = profileRes.data?.user || profileRes.data;
+          
+          if (updatedUser) {
+            console.log("🔄 Updating user state with fresh profile:", updatedUser);
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+            
+            // 🔄 Update AuthContext if available
+            const storedToken = localStorage.getItem('token') || localStorage.getItem('accessToken');
+            if (storedToken && window.dispatchEvent) {
+              // Dispatch custom event that AuthContext can listen to
+              window.dispatchEvent(new CustomEvent('userUpdated', { detail: updatedUser }));
+            }
+          }
+        } catch (profileErr) {
+          console.warn("⚠️ Could not fetch fresh profile, using submitted data");
+          // Fallback: manually update user state with submission response
+          const currentUser = JSON.parse(localStorage.getItem("user") || '{}');
+          const updatedUser = {
+            ...currentUser,
+            hasSubmittedApplication: true
+          };
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+        }
+
         // Call onSuccess callback if provided
         if (onSuccess) {
           onSuccess();
         }
+
+        // ✅ Redirect to dashboard after successful submission
+        console.log("🔄 Redirecting to /dashboard");
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1000);
       } catch (err) {
         console.error("❌ Submission error:", err);
         setError("❌ Network error. Please try again.");

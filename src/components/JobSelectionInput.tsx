@@ -93,12 +93,6 @@ const JobSelectionInput = () => {
           <option key={job._id} value={job.title} />
         ))}
       </datalist>
-
-      <div className="debug-info" style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
-        <p>Jobs loaded: {safeJobs.length}</p>
-        <p>Job title: {jobText || 'None'}</p>
-        <p>Matched job ID: {selectedJobId || 'None'}</p>
-      </div>
     </div>
   );
 };

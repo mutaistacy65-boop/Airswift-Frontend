@@ -4,6 +4,8 @@ import MainLayout from '@/layouts/MainLayout'
 import ApplicationForm from '@/components/SafeApplicationForm'
 import API from '@/services/apiClient'
 import { useAuth } from '@/context/AuthContext'
+import { getStoredUser } from '@/utils/authUtils'
+import Loader from '@/components/Loader'
 
 export default function ApplicationPage() {
   const router = useRouter()
@@ -14,14 +16,35 @@ export default function ApplicationPage() {
   const [application, setApplication] = useState<any>(null)
 
   // 🔒 Route Protection Guard - Redirect if user has already submitted application
+  // IMPORTANT: Check both AuthContext and localStorage to prevent redirect loops
   useEffect(() => {
-    if (!user) return;
+    const checkAndRedirect = () => {
+      console.log("🔒 Apply page guard checking...");
+      
+      // First check localStorage for immediate response
+      const storedUser = getStoredUser();
+      
+      if (storedUser?.hasSubmittedApplication) {
+        console.log("🔄 User has submitted application, redirecting to /dashboard");
+        router.push("/dashboard");
+        return;
+      }
 
-    if (user.hasSubmittedApplication) {
-      console.log("🔄 Redirecting to:", "/dashboard");
-      router.push("/dashboard");
+      // Also check AuthContext if user exists
+      if (user?.hasSubmittedApplication) {
+        console.log("🔄 AuthContext shows submitted application, redirecting to /dashboard");
+        router.push("/dashboard");
+        return;
+      }
+
+      setChecking(false);
+    };
+
+    // Wait for auth to load, then check
+    if (!authLoading) {
+      checkAndRedirect();
     }
-  }, [user]);
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     if (authLoading) return
