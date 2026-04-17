@@ -31,8 +31,9 @@ API.interceptors.response.use(
       originalRequest._retry = true
 
       try {
+        // Use baseURL for refresh endpoint
         const res = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'https://airswift-backend-fjt3.onrender.com/api'}/auth/refresh`,
+          `${baseURL}/auth/refresh`,
           {},
           { withCredentials: true }
         )
