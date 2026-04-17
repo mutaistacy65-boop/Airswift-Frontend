@@ -121,13 +121,15 @@ export default function Login() {
         // 🔑 Role-based redirect (admin takes priority)
         if (user.role === "admin") {
           console.log("🔄 Redirecting to:", "/admin/dashboard");
-          router.push("/admin/dashboard");
+          setTimeout(() => {
+            router.replace("/admin/dashboard");
+          }, 100);
         } else if (user.hasSubmittedApplication) {
           console.log("🔄 Redirecting to:", "/dashboard");
-          router.push("/dashboard");
+          router.replace("/dashboard");
         } else {
           console.log("🔄 Redirecting to:", "/apply");
-          router.push("/apply");
+          router.replace("/apply");
         }
       } else if (!user.isVerified) {
         // Return special response for unverified accounts
@@ -196,13 +198,15 @@ export default function Login() {
         // 🔑 Role-based redirect (admin takes priority)
         if (data.user.role === "admin") {
           console.log("🔄 Redirecting to:", "/admin/dashboard");
-          router.push("/admin/dashboard");
+          setTimeout(() => {
+            router.replace("/admin/dashboard");
+          }, 100);
         } else if (data.user.hasSubmittedApplication) {
           console.log("🔄 Redirecting to:", "/dashboard");
-          router.push("/dashboard");
+          router.replace("/dashboard");
         } else {
           console.log("🔄 Redirecting to:", "/apply");
-          router.push("/apply");
+          router.replace("/apply");
         }
       }
     } catch (error) {

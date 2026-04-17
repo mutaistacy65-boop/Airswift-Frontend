@@ -52,13 +52,13 @@ export default function AdminDashboard() {
 
       if (!token || !storedUser) {
         console.log('🔄 No token/user found, redirecting to /login')
-        router.push('/login')
+        router.replace('/login')
         return
       }
 
       if (storedUser.role !== 'admin') {
-        console.log('🔄 User is not admin, redirecting to /')
-        router.push('/')
+        console.log('🔄 User is not admin, redirecting to /dashboard')
+        router.replace('/dashboard')
         return
       }
 
