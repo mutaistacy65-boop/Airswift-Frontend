@@ -32,7 +32,7 @@ const JobSeekerDashboard: React.FC = () => {
   const [notifications, setNotifications] = useState<any[]>([])
   const [profileCompletion, setProfileCompletion] = useState(75)
   const [application, setApplication] = useState(null)
-  const [hasApplied, setHasApplied] = useState<boolean | null>(null)
+  const [dataLoading, setDataLoading] = useState(true)
 
   // 🔐 FIX 3: Prevent Premature Redirect - Wait instead of redirecting immediately
   useEffect(() => {
@@ -81,15 +81,19 @@ const JobSeekerDashboard: React.FC = () => {
     try {
       const res = await API.get('/users/status')
       const applied = res.data?.hasApplied || false
-      setHasApplied(applied)
 
       if (!applied) {
+        console.log('📍 No application found, redirecting to /apply')
         router.push('/apply')
+        return
       }
+
+      console.log('✅ Application found, proceeding to dashboard')
     } catch (err) {
       console.error('Failed to check application status:', err)
-      // On error, assume they haven't applied and redirect
-      router.push('/apply')
+      // On error, default to show dashboard and let application fetch handle it
+    } finally {
+      setDataLoading(false)
     }
   }
 
@@ -121,14 +125,24 @@ const JobSeekerDashboard: React.FC = () => {
     const fetchApplication = async () => {
       try {
         const res = await API.get("/applications/my");
-        setApplication(res.data);
-      } catch (err) {
+        if (res.data) {
+          console.log('✅ Application fetched successfully:', res.data);
+          setApplication(res.data);
+        } else {
+          console.warn('⚠️ No application data returned from API');
+        }
+      } catch (err: any) {
         console.error("Error fetching application:", err);
+        if (err?.response?.status === 404) {
+          console.log('📍 Application not found (404), user should be redirected to /apply');
+        }
       }
     };
 
-    fetchApplication();
-  }, []);
+    if (!authLoading) {
+      fetchApplication();
+    }
+  }, [authLoading]);
 
   async function fetchDashboardData() {
     try {
@@ -219,12 +233,30 @@ const JobSeekerDashboard: React.FC = () => {
     addNotification('Logged out successfully', 'success')
   }
 
-  if (isLoading || hasApplied === null) {
+  if (isLoading || authLoading || dataLoading) {
     return <Loader fullScreen />
   }
 
-  if (!isAuthorized || hasApplied === false) {
+  if (!isAuthorized) {
     return null // Will redirect in useEffect
+  }
+
+  // If no application data after loading, show message
+  if (!application) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">No Application Found</h2>
+          <p className="text-gray-600 mb-6">It looks like you haven't submitted an application yet.</p>
+          <button
+            onClick={() => router.push('/apply')}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            Start Application
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
