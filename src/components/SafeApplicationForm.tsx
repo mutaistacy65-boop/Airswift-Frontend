@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import API from '@/services/apiClient'; // Centralized API client with auth interceptor
 import JobSearchDropdown from './JobSearchDropdown';
+import { getStoredUser } from '@/utils/authUtils';
 
 interface SafeApplicationFormProps {
   onSuccess?: () => void;
@@ -126,6 +127,13 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
 
     console.log('CV at submit:', cvFile);
 
+    // 🚫 Check if user is admin - admins cannot submit applications
+    const storedUser = getStoredUser()
+    if (storedUser?.role === 'admin') {
+      setError('❌ Admin users cannot submit applications. Please login as a job seeker.');
+      return;
+    }
+
     try {
       setError(null);
       setSuccess(null);
@@ -209,9 +217,9 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
         }
 
         // ✅ Redirect to dashboard after successful submission
-        console.log("🔄 Redirecting to /dashboard");
+        console.log("🔄 Redirecting to /job-seeker/dashboard");
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push('/job-seeker/dashboard');
         }, 1000);
       } catch (err) {
         console.error("❌ Submission error:", err);

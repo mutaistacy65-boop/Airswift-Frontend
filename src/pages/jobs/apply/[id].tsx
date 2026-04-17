@@ -49,10 +49,16 @@ const JobApplicationPage: React.FC = () => {
       return
     }
 
+    // 🚫 Admin users should not access application forms
+    if (user?.role === 'admin') {
+      router.push('/admin/dashboard')
+      return
+    }
+
     if (id) {
       fetchJob()
     }
-  }, [id, isAuthenticated, authLoading, router])
+  }, [id, isAuthenticated, authLoading, router, user])
 
   if (authLoading) return null
   if (!isAuthenticated) {
@@ -125,7 +131,7 @@ const JobApplicationPage: React.FC = () => {
 
       // 🔍 Debug: Log all FormData entries before sending
       console.log('🔍 FormData entries debug:');
-      for (let pair of formData.entries()) {
+      for (const pair of formData.entries()) {
         console.log(`   ${pair[0]}:`, pair[1] instanceof File ? `File(${(pair[1] as File).name}, ${(pair[1] as File).size} bytes)` : pair[1]);
       }
 

@@ -44,7 +44,7 @@ const JobSelector: React.FC<JobSelectorProps> = ({ onSelect, selectedJobId = nul
       console.log('Has jobs property:', payload && 'jobs' in payload)
 
       // 🔍 STEP 2: Handle different response formats (safe version)
-      let jobsData = Array.isArray(payload)
+      const jobsData = Array.isArray(payload)
         ? payload
         : payload?.jobs || {}
 

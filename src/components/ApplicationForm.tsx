@@ -5,6 +5,7 @@ import DocumentUpload from './DocumentUpload'
 import ContinueDraftModal from './ContinueDraftModal'
 import JobSearchDropdown from './JobSearchDropdown'
 import { debugToken, forcePostWithToken } from '@/utils/authDebug'
+import { getStoredUser } from '@/utils/authUtils'
 
 interface ApplicationFormProps {
   onSuccess?: () => void
@@ -235,6 +236,13 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
     if (!validateStep(3)) return
 
+    // 🚫 Check if user is admin - admins cannot submit applications
+    const storedUser = getStoredUser()
+    if (storedUser?.role === 'admin') {
+      alert('Admin users cannot submit applications. Please login as a job seeker.')
+      return
+    }
+
     // Check if using mock token
     const token = localStorage.getItem('token')
     if (token && token.startsWith('mock-')) {
@@ -269,7 +277,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
       // 🔍 Debug: Log all FormData entries before sending
       console.log('🔍 FormData entries debug:');
-      for (let pair of formData.entries()) {
+      for (const pair of formData.entries()) {
         console.log(`   ${pair[0]}:`, pair[1] instanceof File ? `File(${pair[1].name}, ${pair[1].size} bytes)` : pair[1]);
       }
 
@@ -300,7 +308,7 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
           console.log('Backend draft cleanup failed')
         }
         if (onSuccess) onSuccess()
-        router.push('/dashboard')
+        router.push('/job-seeker/dashboard')
       }
     } catch (error: any) {
       console.error('Application submission error:', error)

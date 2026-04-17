@@ -24,16 +24,29 @@ export default function ApplicationPage() {
       // First check localStorage for immediate response
       const storedUser = getStoredUser();
       
+      // 🚫 Admin users should not access application forms
+      if (storedUser?.role === 'admin') {
+        console.log("🚫 Admin user detected, redirecting to /admin/dashboard");
+        router.push("/admin/dashboard");
+        return;
+      }
+
       if (storedUser?.hasSubmittedApplication) {
-        console.log("🔄 User has submitted application, redirecting to /dashboard");
-        router.push("/dashboard");
+        console.log("🔄 User has submitted application, redirecting to /job-seeker/dashboard");
+        router.push("/job-seeker/dashboard");
         return;
       }
 
       // Also check AuthContext if user exists
+      if (user?.role === 'admin') {
+        console.log("🚫 AuthContext shows admin role, redirecting to /admin/dashboard");
+        router.push("/admin/dashboard");
+        return;
+      }
+
       if (user?.hasSubmittedApplication) {
-        console.log("🔄 AuthContext shows submitted application, redirecting to /dashboard");
-        router.push("/dashboard");
+        console.log("🔄 AuthContext shows submitted application, redirecting to /job-seeker/dashboard");
+        router.push("/job-seeker/dashboard");
         return;
       }
 
