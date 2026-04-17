@@ -19,7 +19,7 @@ const AdminRealtimeMap = dynamic(() => import('@/components/AdminRealtimeMap'), 
 })
 
 export default function AdminDashboard() {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { isAuthorized, isLoading: protectedLoading } = useProtectedRoute('admin')
   const [summary, setSummary] = useState<any>(null)
   const [trends, setTrends] = useState<any[]>([])
@@ -34,7 +34,18 @@ export default function AdminDashboard() {
   const [trendRange, setTrendRange] = useState('7d')
   const [statsLoading, setStatsLoading] = useState(true)
 
+  const router = useRouter()
+
   const { subscribe } = useSocket()
+
+  // 🔒 Admin Page Protection - Redirect non-admin users
+  useEffect(() => {
+    if (!user) return;
+
+    if (user.role !== "admin") {
+      router.push("/");
+    }
+  }, [user]);
 
   const fetchDashboardData = useCallback(async () => {
     try {

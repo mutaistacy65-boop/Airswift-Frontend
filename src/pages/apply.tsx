@@ -13,6 +13,15 @@ export default function ApplicationPage() {
   const [hasApplied, setHasApplied] = useState(false)
   const [application, setApplication] = useState<any>(null)
 
+  // 🔒 Route Protection Guard - Redirect if user has already submitted application
+  useEffect(() => {
+    if (!user) return;
+
+    if (user.hasSubmittedApplication) {
+      router.push("/dashboard");
+    }
+  }, [user]);
+
   useEffect(() => {
     if (authLoading) return
 

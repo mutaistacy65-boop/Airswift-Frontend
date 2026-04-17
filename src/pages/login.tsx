@@ -102,24 +102,27 @@ export default function Login() {
         initializeSocketConnection(authToken);
         console.log('✅ Socket initialized for verified user');
 
-        // Check for drafts
-        try {
-          const draftRes = await API.get('/drafts/check');
-          if (draftRes.data?.hasDraft) {
-            setDraftInfo(draftRes.data || {});
-            setShowModal(true);
-            return;
+        // Check for drafts (only for non-admin users)
+        if (user.role !== "admin") {
+          try {
+            const draftRes = await API.get('/drafts/check');
+            if (draftRes.data?.hasDraft) {
+              setDraftInfo(draftRes.data || {});
+              setShowModal(true);
+              return;
+            }
+          } catch (err) {
+            console.warn('Draft check failed — ignoring');
           }
-        } catch (err) {
-          console.warn('Draft check failed — ignoring');
         }
 
-        if (user?.role === 'admin') {
-          router.push('/admin/dashboard');
-        } else if (!user?.has_submitted) {
-          router.push('/apply');
+        // 🔑 Role-based redirect (admin takes priority)
+        if (user.role === "admin") {
+          router.push("/admin/dashboard");
+        } else if (user.hasSubmittedApplication) {
+          router.push("/dashboard");
         } else {
-          router.push('/dashboard');
+          router.push("/application-form");
         }
       } else if (!user.isVerified) {
         // Return special response for unverified accounts
@@ -171,24 +174,27 @@ export default function Login() {
         // Update AuthContext immediately with token and user
         login({ token, user: data.user });
 
-        // Check for drafts
-        try {
-          const draftRes = await API.get('/drafts/check');
-          if (draftRes.data?.hasDraft) {
-            setDraftInfo(draftRes.data || {});
-            setShowModal(true);
-            return;
+        // Check for drafts (only for non-admin users)
+        if (data.user.role !== "admin") {
+          try {
+            const draftRes = await API.get('/drafts/check');
+            if (draftRes.data?.hasDraft) {
+              setDraftInfo(draftRes.data || {});
+              setShowModal(true);
+              return;
+            }
+          } catch (err) {
+            console.warn('Draft check failed — ignoring');
           }
-        } catch (err) {
-          console.warn('Draft check failed — ignoring');
         }
 
-        if (data.user?.role === 'admin') {
-          router.push('/admin/dashboard');
-        } else if (!data.user?.has_submitted) {
-          router.push('/apply');
+        // 🔑 Role-based redirect (admin takes priority)
+        if (data.user.role === "admin") {
+          router.push("/admin/dashboard");
+        } else if (data.user.hasSubmittedApplication) {
+          router.push("/dashboard");
         } else {
-          router.push('/dashboard');
+          router.push("/application-form");
         }
       }
     } catch (error) {

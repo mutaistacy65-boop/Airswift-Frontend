@@ -19,6 +19,7 @@ interface User {
   experience?: string
   education?: string
   location?: string
+  hasSubmittedApplication?: boolean
 }
 
 interface Profile {

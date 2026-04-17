@@ -28,6 +28,24 @@ const JobSeekerDashboard: React.FC = () => {
 
   const [hasApplied, setHasApplied] = useState<boolean | null>(null)
 
+  // 🔒 Route Protection Guard - Redirect if user hasn't submitted application
+  useEffect(() => {
+    if (!user) return;
+
+    if (!user.hasSubmittedApplication) {
+      router.push("/application-form");
+    }
+  }, [user]);
+
+  // 🔒 Admin Redirect - Send admins to admin dashboard
+  useEffect(() => {
+    if (!user) return;
+
+    if (user.role === "admin") {
+      router.push("/admin/dashboard");
+    }
+  }, [user]);
+
   useEffect(() => {
     if (isAuthorized) {
       checkApplicationStatus()
