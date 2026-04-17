@@ -3,8 +3,7 @@
  * Use this to verify token attachment to requests
  */
 
-import { api } from '@/services/apiClient';
-import axios from 'axios';
+import API from '@/lib/api';
 
 /**
  * Test if token is being attached to requests
@@ -26,7 +25,7 @@ export const testTokenAttachment = async () => {
   // Step 2: Test API instance with interceptor
   console.log('\n📍 Step 2: Test API instance (WITH interceptor)');
   try {
-    const response = await api.get('/debug/headers');
+    const response = await API.get('/debug/headers');
     const receivedAuth = response.data?.Authorization;
     
     if (receivedAuth) {
@@ -46,10 +45,10 @@ export const testTokenAttachment = async () => {
 };
 
 /**
- * Test WITHOUT interceptor (direct axios)
+ * Test WITHOUT interceptor (direct API client)
  */
 export const testDirectAxios = async () => {
-  console.log('\n🧪 TESTING DIRECT AXIOS (NO interceptor)...\n');
+  console.log('\n🧪 TESTING DIRECT API CLIENT (WITH interceptor)...\n');
 
   const token = localStorage.getItem('token');
   if (!token) {
@@ -58,20 +57,15 @@ export const testDirectAxios = async () => {
   }
 
   try {
-    const response = await axios.get(
-      'https://airswift-backend-fjt3.onrender.com/api/debug/headers',
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+    const response = await API.get(
+      '/debug/headers'
     );
 
-    console.log('✅ Direct axios request succeeded');
+    console.log('✅ API client request succeeded');
     console.log('   Backend received:', response.data?.Authorization?.substring(0, 30));
     return true;
   } catch (error: any) {
-    console.error('❌ Direct axios failed:', error.response?.status);
+    console.error('❌ API client request failed:', error.response?.status);
     return false;
   }
 };

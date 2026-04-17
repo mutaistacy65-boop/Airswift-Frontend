@@ -9,7 +9,7 @@ import { useSocket } from '@/hooks/useSocket';
 import MetricCard from '@/components/MetricCard';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, FunnelChart, Funnel, LabelList } from "recharts";
 import { TrendingUp, Users, Briefcase, Calendar, AlertTriangle, CheckCircle, Clock, DollarSign, Mail, Bell, Settings, Download, FileText, User } from 'lucide-react';
-import api from '@/services/apiClient'
+import API from '@/services/apiClient'
 import { adminService } from '@/services/adminService'
 import AdminPayments from '@/components/AdminPayments'
 import { AdminLogs } from '@/components/AdminLogs'
@@ -39,10 +39,10 @@ export default function AdminDashboard() {
   const fetchDashboardData = useCallback(async () => {
     try {
       const [summaryRes, funnelRes, activitiesRes, healthRes] = await Promise.all([
-        api.get('/admin/dashboard/summary'),
-        api.get('/admin/dashboard/funnel'),
-        api.get('/admin/dashboard/activities'),
-        api.get('/admin/system/health')
+        API.get('/admin/dashboard/summary'),
+        API.get('/admin/dashboard/funnel'),
+        API.get('/admin/dashboard/activities'),
+        API.get('/admin/system/health')
       ])
 
       setSummary(summaryRes.data || {})
@@ -63,7 +63,7 @@ export default function AdminDashboard() {
 
   const fetchTrends = async (range: string) => {
     try {
-      const response = await api.get(`/admin/dashboard/trends?range=${range}`)
+      const response = await API.get(`/admin/dashboard/trends?range=${range}`)
       setTrends(Array.isArray(response.data) ? response.data : [])
     } catch (error) {
       console.error('Error fetching trends:', error)

@@ -145,7 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // 🔥 Fetch profile after login
     try {
-      const res = await api.get('/profile')
+      const res = await API.get('/profile')
       setProfile(res.data)
     } catch (err) {
       console.error('Failed to fetch profile after login:', err)

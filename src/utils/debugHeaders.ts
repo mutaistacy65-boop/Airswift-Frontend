@@ -1,4 +1,4 @@
-import { api } from '@/services/apiClient';
+import API from '@/services/apiClient';
 
 /**
  * Debug utility to verify Authorization headers are being sent correctly
@@ -6,7 +6,7 @@ import { api } from '@/services/apiClient';
  */
 export async function debugHeaders() {
   try {
-    const response = await api.get('/debug/headers');
+    const response = await API.get('/debug/headers');
     console.log('✅ Headers received by backend:', response.data);
     return response.data;
   } catch (error) {
@@ -17,7 +17,7 @@ export async function debugHeaders() {
 
 /**
  * Development-only: Check header before sending request
- * Usage: await api.get('/profile', { transformRequest: [logHeaders] });
+ * Usage: await API.get('/profile', { transformRequest: [logHeaders] });
  */
 export const logHeaders = (data: any, headers: any) => {
   console.log('📋 Auth header:', headers?.Authorization);

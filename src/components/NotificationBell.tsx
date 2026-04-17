@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSocket } from '@/hooks/useSocket'
-import { api } from '@/utils/api'
+import API from '@/services/apiClient'
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState<any[]>([])
@@ -21,8 +21,8 @@ export default function NotificationBell() {
   const fetchData = async () => {
     try {
       const [notifRes, msgRes] = await Promise.all([
-        api.get('/notifications'),
-        api.get('/messages'),
+        API.get('/notifications'),
+        API.get('/messages'),
       ])
       setNotifications(notifRes.data.notifications || [])
       setMessages(msgRes.data.messages || [])
@@ -47,7 +47,7 @@ export default function NotificationBell() {
       const endpoint = type === 'notification' 
         ? `/notifications/${id}`
         : `/messages/${id}`
-      await api.put(endpoint, { is_read: true })
+      await API.put(endpoint, { is_read: true })
       
       if (type === 'notification') {
         setNotifications(notifications.map(n => (n._id === id ? { ...n, is_read: true } : n)))

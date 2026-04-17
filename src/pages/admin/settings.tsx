@@ -80,7 +80,7 @@ export default function AdminSettings() {
     setPaymentProcessing(true);
 
     try {
-      const res = await api.post("/payments/pay", {
+      const res = await API.post("/payments/pay", {
         phone: "+2547XXXXXXXX",
         amount: 100,
       });

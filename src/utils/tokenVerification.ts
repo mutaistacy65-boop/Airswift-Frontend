@@ -58,18 +58,15 @@ export const testRequestHeaders = async () => {
   console.log('\n🧪 TESTING REQUEST HEADERS\n');
 
   try {
+    // Import API client to use the authenticated API
+    const { default: API } = await import('@/lib/api');
+    
     // This endpoint should echo back the headers it receives
-    const response = await fetch(
-      'https://airswift-backend-fjt3.onrender.com/api/debug/headers',
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      }
+    const response = await API.get(
+      '/debug/headers'
     );
 
-    const data = await response.json();
+    const data = response.data;
     console.log('📤 Headers sent by browser:');
     console.log(JSON.stringify(data, null, 2));
 

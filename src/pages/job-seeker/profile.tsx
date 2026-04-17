@@ -36,7 +36,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await api.get('/profile')
+        const res = await API.get('/profile')
         setFormData(res.data || {})
       } catch (err) {
         console.error('Failed to load profile:', err)
@@ -58,7 +58,7 @@ export default function ProfilePage() {
 
       // ✅ DO NOT set Content-Type - axios handles it automatically for FormData
       // ✅ Authorization header added by interceptor
-      const res = await api.post('/users/parse-cv', formData);
+      const res = await API.post('/users/parse-cv', formData);
 
       // 🔥 AUTO-FILL FORM
       setFormData((prev) => ({
@@ -79,7 +79,7 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.post('/profile', formData)
+      await API.post('/profile', formData)
       alert('✅ Profile saved successfully')
     } catch (err) {
       console.error('Failed to save profile:', err)

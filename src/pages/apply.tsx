@@ -25,7 +25,7 @@ export default function ApplicationPage() {
       try {
         // FORCE attach token for debug
         const token = localStorage.getItem('token');
-        const res = await api.get('/users/status', {
+        const res = await API.get('/users/status', {
           headers: {
             Authorization: `Bearer ${token}`,
           },

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Head from 'next/head'
-import { api } from '@/utils/api'
+import API from '@/lib/api'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -30,7 +30,7 @@ export default function ForgotPassword() {
     setMessage('')
 
     try {
-      const result = await api.post('/auth/forgot-password', {
+      const result = await API.post('/auth/forgot-password', {
         email
       })
 

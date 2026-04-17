@@ -1,7 +1,12 @@
 import axios from 'axios'
 
+const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com/api'
+
+// ✅ Log API Configuration
+console.log('🌍 API BASE URL:', baseURL)
+
 const API = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'https://airswift-backend-fjt3.onrender.com/api',
+  baseURL: baseURL,
   withCredentials: true, // needed for cookies
 })
 

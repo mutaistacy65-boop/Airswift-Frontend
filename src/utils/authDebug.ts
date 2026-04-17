@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { api } from '@/services/apiClient';
+import API from '@/lib/api';
 
 /**
  * HARD FIX: Manual token verification and forced request
@@ -32,8 +31,9 @@ export const forcePostWithToken = async (url: string, data: any, token?: string)
   console.log('  Data type:', data instanceof FormData ? 'FormData' : typeof data);
 
   try {
-    const response = await axios.post(
-      `https://airswift-backend-fjt3.onrender.com/api${url}`,
+    // Use API client which automatically handles authentication
+    const response = await API.post(
+      url,
       data,
       {
         headers: {
@@ -61,7 +61,7 @@ export const testApiInstance = async (url: string = '/profile') => {
   console.log('  URL:', url);
 
   try {
-    const response = await api.get(url);
+    const response = await API.get(url);
     console.log('✅ API INSTANCE WORKS:', response.data);
     return response;
   } catch (error: any) {
@@ -103,8 +103,8 @@ export const testLoginStructure = async (email: string, password: string) => {
   console.log('  Password:', password ? '***provided***' : 'missing');
 
   try {
-    const response = await axios.post(
-      'https://airswift-backend-fjt3.onrender.com/api/auth/login',
+    const response = await API.post(
+      '/auth/login',
       { email, password }
     );
 

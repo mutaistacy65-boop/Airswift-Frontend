@@ -123,7 +123,7 @@ export default function SendMessagePage() {
   const fetchApplications = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/applications')
+      const response = await API.get('/applications')
       // Get only shortlisted applications
       const shortlisted = (response.data?.applications || [])?.filter(
         (app: any) => app.status === 'shortlisted'
@@ -355,14 +355,14 @@ export default function SendMessagePage() {
           data.append('attachment', formData.attachment)
         }
 
-        const response = await api.post('/messages', data)
+        const response = await API.post('/messages', data)
         // ✅ DO NOT set Content-Type - axios handles it automatically for FormData
 
         if (response.data.success) {
           // Update application status to shortlisted (if not already)
           if (!isBulkMode && selectedApp && selectedApp.status !== 'shortlisted') {
             try {
-              await api.put(`/applications/${selectedApp._id}`, { status: 'shortlisted' })
+              await API.put(`/applications/${selectedApp._id}`, { status: 'shortlisted' })
             } catch (err) {
               console.warn('Could not update application status:', err)
             }

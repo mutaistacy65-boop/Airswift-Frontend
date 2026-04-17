@@ -3,8 +3,7 @@
  * Use this to verify the frontend can connect to the backend API
  */
 
-import API from '@/services/apiClient'
-import axios from 'axios'
+import API from '@/lib/api'
 
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com'
 export const API_URL =
@@ -16,19 +15,13 @@ export const testBackendConnection = async () => {
     console.log('🔄 Testing backend connection...')
     console.log(`📍 Backend URL: ${process.env.NEXT_PUBLIC_API_URL}`)
 
-    // Test 1: Direct axios to backend API
-    console.log('\n📡 Test 1: Direct axios request')
-    const axiosResult = await axios.get(API_URL)
-    const axiosData = axiosResult.data
-    console.log('✅ Direct axios response:', axiosData)
-
-    // Test 2: Using axios API client
-    console.log('\n📡 Test 2: Axios API client request')
+    // Test 1: Using centralized API client
+    console.log('\n📡 Test 1: Centralized API client request')
     const axiosResponse = await API.get('/')
-    console.log('✅ Axios response:', axiosResponse.data)
+    console.log('✅ Centralized API response:', axiosResponse.data)
 
-    // Test 3: Check API health endpoint (if available)
-    console.log('\n📡 Test 3: Health check endpoint')
+    // Test 2: Check API health endpoint (if available)
+    console.log('\n📡 Test 2: Health check endpoint')
     try {
       const healthResponse = await API.get('/health')
       console.log('✅ Health check:', healthResponse.data)
@@ -40,7 +33,6 @@ export const testBackendConnection = async () => {
     return {
       success: true,
       backendUrl: process.env.NEXT_PUBLIC_API_URL,
-      axiosData,
       axiosClientData: axiosResponse.data,
       message: 'Backend is reachable and responding'
     }
@@ -55,10 +47,10 @@ export const testBackendConnection = async () => {
   }
 }
 
-// Alternative simple test function
+// Alternative simple test function (using centralized API client)
 export const simpleBackendTest = async () => {
   try {
-    const result = await axios.get(API_URL)
+    const result = await API.get('/')
     const data = result.data
     console.log('Backend Status:', data)
     return data

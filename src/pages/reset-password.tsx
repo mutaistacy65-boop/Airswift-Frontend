@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Head from 'next/head'
-import { api } from '@/utils/api'
+import API from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
 
 export default function ResetPassword() {
@@ -61,7 +61,7 @@ export default function ResetPassword() {
     try {
       console.log('Reset request token:', token)
 
-      const result = await api.post(`/auth/reset-password/${token}`, {
+      const result = await API.post(`/auth/reset-password/${token}`, {
         token,
         password,
       })

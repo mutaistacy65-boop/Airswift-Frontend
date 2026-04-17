@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from '@/services/apiClient'; // Your axios instance
+import API from '@/services/apiClient'; // Centralized API client with auth interceptor
 import JobSearchDropdown from './JobSearchDropdown';
 
 interface SafeApplicationFormProps {

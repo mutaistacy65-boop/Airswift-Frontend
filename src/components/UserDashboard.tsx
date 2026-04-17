@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { api } from '@/utils/api'
+import API from '@/lib/api'
 import Link from 'next/link'
 
 export default function UserDashboard() {
@@ -17,9 +17,9 @@ export default function UserDashboard() {
   const fetchData = async () => {
     try {
       const [applicationsRes, notificationsRes, messagesRes] = await Promise.all([
-        api.get('/applications'),
-        api.get('/notifications'),
-        api.get('/messages'),
+        API.get('/applications'),
+        API.get('/notifications'),
+        API.get('/messages'),
       ])
 
       setApplications(applicationsRes.data.applications || [])

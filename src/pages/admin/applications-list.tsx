@@ -40,7 +40,7 @@ export default function AdminApplicationsPage() {
 
   const fetchApplications = async () => {
     try {
-      const response = await api.get('/applications')
+      const response = await API.get('/applications')
       setApplications(response.data.applications || [])
     } catch (error) {
       console.error('Error fetching applications:', error)
@@ -52,7 +52,7 @@ export default function AdminApplicationsPage() {
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
-      await api.put(`/applications/${id}`, { status: newStatus })
+      await API.put(`/applications/${id}`, { status: newStatus })
       setApplications(
         applications.map(app =>
           app._id === id ? { ...app, status: newStatus as any } : app
