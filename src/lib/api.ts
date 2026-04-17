@@ -1,60 +1,70 @@
 import axios from 'axios'
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com/api'
+// ✅ FIXED: API Configuration with Axios Interceptors
+// This file provides automatic Authorization header handling
 
-// ✅ Log API Configuration
-console.log('🌍 API BASE URL:', baseURL)
+const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'https://airswift-backend-fjt3.onrender.com/api'
+const normalizedBaseUrl = rawApiUrl.replace(/\/+$/, '')
+const baseURL = normalizedBaseUrl.endsWith('/api')
+  ? normalizedBaseUrl
+  : `${normalizedBaseUrl}/api`
 
-const API = axios.create({
-  baseURL: baseURL,
-  withCredentials: true, // needed for cookies
+// Create axios instance with base configuration
+const api = axios.create({
+  baseURL,
+  withCredentials: true, // Include cookies for authentication
 })
 
-// ✅ Request interceptor
-API.interceptors.request.use((config) => {
+console.log('📡 API baseURL set to:', baseURL)
+
+// ✅ REQUEST INTERCEPTOR: Add Authorization header with Bearer token
+api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
 
+  console.log('📤 API REQUEST INTERCEPTOR:')
+  console.log('   URL:', config.url)
+  console.log('   Method:', config.method?.toUpperCase())
+  console.log('   Token in localStorage:', token ? '✓ EXISTS' : '✗ MISSING')
+
+  // ✅ FIX: Add Authorization header if token exists
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
+    console.log('   ✅ Authorization header set: Bearer [token]')
+  } else {
+    console.warn('   ⚠️ No token found - request may fail with 401')
   }
 
   return config
 })
 
-// ✅ Response interceptor (AUTO REFRESH)
-API.interceptors.response.use(
-  (res) => res,
-  async (error) => {
-    const originalRequest = error.config
+// ✅ RESPONSE INTERCEPTOR: Handle authentication errors
+api.interceptors.response.use(
+  (response) => {
+    console.log('✅ API RESPONSE:', response.status, response.config.url)
+    return response
+  },
+  (error) => {
+    console.error('❌ API ERROR:', {
+      status: error.response?.status,
+      url: error.config?.url,
+      message: error.response?.data?.message || error.message
+    })
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true
-
-      try {
-        // Use baseURL for refresh endpoint
-        const res = await axios.post(
-          `${baseURL}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        )
-
-        const newToken = res.data.accessToken
-
-        localStorage.setItem('token', newToken)
-
-        // retry original request
-        originalRequest.headers.Authorization = `Bearer ${newToken}`
-
-        return API(originalRequest)
-      } catch (err) {
-        localStorage.removeItem('token')
-        window.location.href = '/login'
-      }
+    // Handle different error types
+    if (error.response?.status === 401) {
+      console.warn('🔐 UNAUTHORIZED - Clearing token and redirecting to login')
+      localStorage.removeItem('token')
+      localStorage.removeItem('adminToken')
+      localStorage.removeItem('user')
+      alert("Session expired. Please login again.")
+      window.location.href = '/login'
+    } else if (!error.response) {
+      console.error('🌐 NETWORK ERROR - No response from server')
     }
 
     return Promise.reject(error)
   }
 )
 
-export default API
+export default api
 
