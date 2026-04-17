@@ -122,7 +122,7 @@ export default function Login() {
         } else if (user.hasSubmittedApplication) {
           router.push("/dashboard");
         } else {
-          router.push("/application-form");
+          router.push("/apply");
         }
       } else if (!user.isVerified) {
         // Return special response for unverified accounts
@@ -194,7 +194,7 @@ export default function Login() {
         } else if (data.user.hasSubmittedApplication) {
           router.push("/dashboard");
         } else {
-          router.push("/application-form");
+          router.push("/apply");
         }
       }
     } catch (error) {

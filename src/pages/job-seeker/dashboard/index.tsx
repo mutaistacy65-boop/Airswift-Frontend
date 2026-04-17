@@ -33,7 +33,7 @@ const JobSeekerDashboard: React.FC = () => {
     if (!user) return;
 
     if (!user.hasSubmittedApplication) {
-      router.push("/application-form");
+      router.push("/apply");
     }
   }, [user]);
 
