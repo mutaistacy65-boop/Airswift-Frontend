@@ -10,6 +10,8 @@ import { jobService } from '@/services/jobService'
 import { useNotification } from '@/context/NotificationContext'
 import { useSocket } from '@/hooks/useSocket'
 import API from '@/services/apiClient'
+import ApplicationTimeline from '@/components/ApplicationTimeline'
+import { getStatusColor, getStatusLabel } from '@/utils/statusColors'
 
 const JobSeekerDashboard: React.FC = () => {
   const { isAuthorized, isLoading } = useProtectedRoute('user')
@@ -325,28 +327,79 @@ const JobSeekerDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Application Display */}
-          {application ? (
-            <div className="bg-white shadow p-6 rounded-lg mb-8">
-              <h2 className="text-xl font-bold mb-4">Your Application</h2>
-
-              <p><strong>Job:</strong> {application.jobId?.title}</p>
-              <p><strong>Status:</strong> {application.status}</p>
-              <p><strong>Phone:</strong> {application.phone}</p>
-              <p><strong>National ID:</strong> {application.nationalId}</p>
-
-              <p className="mt-2 text-sm text-gray-500">
-                Applied on: {new Date(application.createdAt).toLocaleDateString()}
-              </p>
-
-              {/* Files */}
-              <div className="mt-4">
-                <a href={application.cv} target="_blank">📄 View CV</a>
+          {/* Application Status & Interview Section */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            {/* Status Card */}
+            {application && (
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Application Status</h3>
+                <div className={`p-4 rounded-lg border-2 ${getStatusColor(application.applicationStatus || 'pending').border}`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Current Status</p>
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(application.applicationStatus || 'pending').badge}`}>
+                        {getStatusLabel(application.applicationStatus || 'pending')}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500 mb-1">Applied on</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {new Date(application.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="bg-white shadow p-6 rounded-lg mb-8">
-              <p>No application submitted yet.</p>
+            )}
+
+            {/* Interview Section */}
+            {application?.interview?.scheduled ? (
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Interview Scheduled</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Date & Time</p>
+                      <p className="font-medium text-gray-900">
+                        {new Date(application.interview.date).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Phone className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Mode</p>
+                      <p className="font-medium text-gray-900 capitalize">{application.interview.mode || 'Online'}</p>
+                    </div>
+                  </div>
+                  {application.interview.location && (
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-blue-600" />
+                      <div>
+                        <p className="text-sm text-gray-600">Location</p>
+                        <p className="font-medium text-gray-900">{application.interview.location}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Interview Status</h3>
+                <div className="text-center py-8">
+                  <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-600 mb-1">No Interview Scheduled Yet</p>
+                  <p className="text-sm text-gray-500">You will be notified once an interview is scheduled</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Application Timeline */}
+          {application && (
+            <div className="mb-8">
+              <ApplicationTimeline currentStatus={application.applicationStatus || 'pending'} />
             </div>
           )}
 
