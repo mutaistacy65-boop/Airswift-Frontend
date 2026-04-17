@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
 import { initSocket, reconnectSocket, disconnectSocket, getSocket } from '@/services/socket'
-import api from '@/lib/api'
+import API from '@/services/apiClient'
 
 interface User {
   id?: string

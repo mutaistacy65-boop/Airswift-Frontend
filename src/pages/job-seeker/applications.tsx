@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSocket } from "@/hooks/useSocket";
 import { useNotification } from "@/context/NotificationContext";
 import StatusTimeline from "@/components/StatusTimeline";
-import API from "@/lib/api";
+import API from '@/services/apiClient';
 
 export default function MyApplications() {
   const [apps, setApps] = useState([]);

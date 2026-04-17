@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import OTPInput from "../components/OTPInput";
-import api from '@/lib/api';
+import API from '@/services/apiClient';
 
 export default function VerifyOTP() {
   const router = useRouter();

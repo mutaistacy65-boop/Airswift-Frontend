@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import socket from '@/services/socket'
 import { useNotification } from '@/context/NotificationContext'
 import { adminService } from '@/services/adminService'
-import api from "@/lib/api";
+import API from '@/services/apiClient';
 
 export default function AdminSettings() {
   const [form, setForm] = useState({

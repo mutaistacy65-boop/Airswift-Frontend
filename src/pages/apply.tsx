@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import MainLayout from '@/layouts/MainLayout'
 import ApplicationForm from '@/components/SafeApplicationForm'
-import api from '@/lib/api'
+import API from '@/services/apiClient'
 import { useAuth } from '@/context/AuthContext'
 
 export default function ApplicationPage() {

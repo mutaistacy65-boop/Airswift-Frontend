@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import api from '@/services/apiClient'
+import API from '@/services/apiClient'
 
 interface JobDropdownProps {
   onSelect: (job: any) => void
@@ -33,7 +33,7 @@ const JobDropdown: React.FC<JobDropdownProps> = ({ onSelect, defaultValue = '' }
       setError(null)
 
       console.log('📡 Fetching jobs from API...')
-      const response = await api.get('/applications/job-options')
+      const response = await API.get('/applications/job-options')
 
       // 🔍 STEP 1: Inspect the actual response
       console.log('JOBS RAW:', response.data)

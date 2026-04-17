@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import api from '@/services/apiClient'
+import API from '@/services/apiClient'
 
 interface JobSelectorProps {
   onSelect: (job: any) => void
@@ -34,7 +34,7 @@ const JobSelector: React.FC<JobSelectorProps> = ({ onSelect, selectedJobId = nul
 
       // 🔍 STEP 1: Fetch and inspect the actual response
       console.log('📡 Fetching jobs from API...')
-      const response = await api.get('/applications/job-options')
+      const response = await API.get('/applications/job-options')
 
       console.log('JOBS RAW:', response.data)
       console.log('TYPE:', typeof response.data)

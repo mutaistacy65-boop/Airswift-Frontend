@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from '@/lib/api';
+import API from '@/services/apiClient';
 
 export default function ProfilePage() {
   const [formData, setFormData] = useState({

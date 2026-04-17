@@ -1,4 +1,4 @@
-import api from '@/lib/api'
+import API from '@/services/apiClient'
 
 export interface CVScore {
   overallScore: number

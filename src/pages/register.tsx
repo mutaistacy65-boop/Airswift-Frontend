@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Button from "../components/Button";
-import api from "@/lib/api";
+import API from '@/services/apiClient';
 
 export default function Register() {
   const router = useRouter()

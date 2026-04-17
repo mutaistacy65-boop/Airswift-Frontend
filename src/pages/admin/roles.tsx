@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import API from '@/lib/api'
+import API from '@/services/apiClient'
 import RoleEditModal from '@/components/RoleEditModal'
 
 export default function RolesPage() {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import API from "@/lib/api";
+import API from '@/services/apiClient';
 import socket from '@/services/socket';
 import StatusTimeline from "@/components/StatusTimeline";
 

@@ -1,4 +1,4 @@
-import api from '@/lib/api'
+import API from '@/services/apiClient'
 import { JobCategory, JobCategoryStats, EmailTemplate, InterviewPipelineItem } from '@/types/jobCategories'
 
 export const jobCategoryService = {

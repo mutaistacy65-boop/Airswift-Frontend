@@ -165,7 +165,7 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
       }
 
       try {
-        const response = await api.post("/applications", formDataToSend);
+        const response = await API.post("/applications", formDataToSend);
 
         console.log("✅ Application submitted successfully");
 

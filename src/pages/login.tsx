@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import api from '@/lib/api'
+import API from '@/services/apiClient'
 import { loginUser } from '@/api/auth'
 import Button from '../components/Button'
 import ContinueDraftModal from '@/components/ContinueDraftModal'
@@ -92,7 +92,7 @@ export default function Login() {
 
         // Check for drafts
         try {
-          const draftRes = await api.get('/drafts/check');
+          const draftRes = await API.get('/drafts/check');
           if (draftRes.data?.hasDraft) {
             setDraftInfo(draftRes.data || {});
             setShowModal(true);
@@ -161,7 +161,7 @@ export default function Login() {
 
         // Check for drafts
         try {
-          const draftRes = await api.get('/drafts/check');
+          const draftRes = await API.get('/drafts/check');
           if (draftRes.data?.hasDraft) {
             setDraftInfo(draftRes.data || {});
             setShowModal(true);
@@ -328,7 +328,7 @@ export default function Login() {
         }}
         onStartFresh={async () => {
           try {
-            await api.delete('/drafts')
+            await API.delete('/drafts')
           } catch (error) {
             console.log('Draft deletion skipped:', error)
           }
@@ -352,7 +352,7 @@ export default function Login() {
       }}
       onStartFresh={async () => {
         try {
-          await api.delete('/drafts')
+          await API.delete('/drafts')
         } catch (error) {
           console.log('Draft deletion skipped:', error)
         }
