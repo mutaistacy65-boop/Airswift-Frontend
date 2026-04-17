@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
+import api from '@/lib/api'
 import API from '@/services/apiClient'
 import { loginUser } from '@/api/auth'
 import Button from '../components/Button'
 import ContinueDraftModal from '@/components/ContinueDraftModal'
 import { useAuth } from '@/context/AuthContext'
+import { initializeSocketConnection } from '@/lib/socketIntegration'
 
 /**
  * 🍪 IMPORTANT: Backend Cookie Requirements
@@ -75,6 +77,11 @@ export default function Login() {
           localStorage.setItem('role', user.role);
         }
 
+        // For admin users, also store as adminToken for admin pages
+        if (user && user.role === 'admin') {
+          localStorage.setItem('adminToken', authToken);
+        }
+
         // 🟦 STEP 4: Store permissions
         if (res.permissions) {
           localStorage.setItem('permissions', JSON.stringify(res.permissions));
@@ -84,11 +91,16 @@ export default function Login() {
           localStorage.setItem('permissions', JSON.stringify([]));
         }
 
-        console.log("✅ Token saved:", authToken);
+        console.log("✅ Token stored successfully:", authToken.substring(0, 20) + '...');
         console.log("✅ Permissions saved:", res.permissions || user?.permissions || []);
 
         // Update AuthContext immediately with both token and user
         login({ token: authToken, user });
+
+        // 🔌 Initialize socket after login with auth token
+        console.log('🔌 Initializing socket with token...');
+        initializeSocketConnection(authToken);
+        console.log('✅ Socket initialized for verified user');
 
         // Check for drafts
         try {
