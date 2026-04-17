@@ -45,27 +45,28 @@ export default function AdminDashboard() {
   // 🔐 Wait for auth state, then check permissions
   useEffect(() => {
     const checkAuth = () => {
-      const storedUser = getStoredUser();
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const storedUser = getStoredUser()
       
-      console.log("🔐 Admin dashboard checking auth...", { storedUser });
+      console.log('🔐 Admin dashboard checking auth...', { token, storedUser })
 
-      if (!storedUser) {
-        console.log("🔄 No user found, redirecting to /login");
-        router.push("/login");
-        return;
+      if (!token || !storedUser) {
+        console.log('🔄 No token/user found, redirecting to /login')
+        router.push('/login')
+        return
       }
 
-      if (storedUser.role !== "admin") {
-        console.log("🔄 User is not admin, redirecting to /");
-        router.push("/");
-        return;
+      if (storedUser.role !== 'admin') {
+        console.log('🔄 User is not admin, redirecting to /')
+        router.push('/')
+        return
       }
 
-      setAuthLoading(false);
-    };
+      setAuthLoading(false)
+    }
 
-    checkAuth();
-  }, [router]);
+    checkAuth()
+  }, [router])
 
   // 🔐 Don't render until auth is loaded
   if (authLoading) {
@@ -134,8 +135,10 @@ export default function AdminDashboard() {
   }, [])
 
   useEffect(() => {
-    fetchDashboardData()
-  }, [fetchDashboardData])
+    if (!authLoading) {
+      fetchDashboardData()
+    }
+  }, [authLoading, fetchDashboardData])
 
   useEffect(() => {
     if (isAuthorized) {
@@ -171,8 +174,10 @@ export default function AdminDashboard() {
   }, [subscribe, fetchDashboardData, fetchAdminActions, fetchEmailLogs])
 
   useEffect(() => {
-    fetchTrends(trendRange)
-  }, [trendRange])
+    if (!authLoading) {
+      fetchTrends(trendRange)
+    }
+  }, [authLoading, trendRange])
 
   // Protect route
   if (protectedLoading) {
