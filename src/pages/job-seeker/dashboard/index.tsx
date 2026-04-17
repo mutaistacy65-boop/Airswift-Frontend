@@ -12,12 +12,18 @@ import { useSocket } from '@/hooks/useSocket'
 import API from '@/services/apiClient'
 import ApplicationTimeline from '@/components/ApplicationTimeline'
 import { getStatusColor, getStatusLabel } from '@/utils/statusColors'
+import { getStoredUser, hasSubmittedApplication } from '@/utils/authUtils'
 
 const JobSeekerDashboard: React.FC = () => {
   const { isAuthorized, isLoading } = useProtectedRoute('user')
   const { user, logout } = useAuth()
   const { addNotification } = useNotification()
   const router = useRouter()
+  const { subscribe } = useSocket()
+  
+  // 🔐 Auth state loading
+  const [authLoading, setAuthLoading] = useState(true)
+  
   const [stats, setStats] = useState({ applications: 0, interviews: 0, offers: 0 })
   const [recentApplications, setRecentApplications] = useState<any[]>([])
   const [upcomingInterviews, setUpcomingInterviews] = useState<any[]>([])
@@ -25,30 +31,43 @@ const JobSeekerDashboard: React.FC = () => {
   const [notifications, setNotifications] = useState<any[]>([])
   const [profileCompletion, setProfileCompletion] = useState(75)
   const [application, setApplication] = useState(null)
-
-  const { subscribe } = useSocket()
-
   const [hasApplied, setHasApplied] = useState<boolean | null>(null)
 
-  // 🔒 Route Protection Guard - Redirect if user hasn't submitted application
+  // 🔐 Wait for auth state, then check permissions
   useEffect(() => {
-    if (!user) return;
+    const checkAuth = () => {
+      const storedUser = getStoredUser();
+      
+      console.log("🔐 Dashboard checking auth...", { storedUser });
 
-    if (!user.hasSubmittedApplication) {
-      console.log("🔄 Redirecting to:", "/apply");
-      router.push("/apply");
-    }
-  }, [user]);
+      if (!storedUser) {
+        console.log("🔄 No user found, redirecting to /login");
+        router.push("/login");
+        return;
+      }
 
-  // 🔒 Admin Redirect - Send admins to admin dashboard
-  useEffect(() => {
-    if (!user) return;
+      if (storedUser.role === "admin") {
+        console.log("🔄 User is admin, redirecting to /admin/dashboard");
+        router.push("/admin/dashboard");
+        return;
+      }
 
-    if (user.role === "admin") {
-      console.log("🔄 Redirecting to:", "/admin/dashboard");
-      router.push("/admin/dashboard");
-    }
-  }, [user]);
+      if (!storedUser.hasSubmittedApplication) {
+        console.log("🔄 User hasn't submitted application, redirecting to /apply");
+        router.push("/apply");
+        return;
+      }
+
+      setAuthLoading(false);
+    };
+
+    checkAuth();
+  }, [router]);
+
+  // 🔒 Don't render until auth is loaded
+  if (authLoading) {
+    return <Loader fullScreen />
+  }
 
   useEffect(() => {
     if (isAuthorized) {

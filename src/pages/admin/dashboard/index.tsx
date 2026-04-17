@@ -13,6 +13,8 @@ import API from '@/services/apiClient'
 import { adminService } from '@/services/adminService'
 import AdminPayments from '@/components/AdminPayments'
 import { AdminLogs } from '@/components/AdminLogs'
+import { getStoredUser, isAdmin } from '@/utils/authUtils'
+import Loader from '@/components/Loader'
 
 const AdminRealtimeMap = dynamic(() => import('@/components/AdminRealtimeMap'), {
   ssr: false,
@@ -21,6 +23,12 @@ const AdminRealtimeMap = dynamic(() => import('@/components/AdminRealtimeMap'), 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const { isAuthorized, isLoading: protectedLoading } = useProtectedRoute('admin')
+  const router = useRouter()
+  const { subscribe } = useSocket()
+  
+  // 🔐 Auth state loading
+  const [authLoading, setAuthLoading] = useState(true)
+  
   const [summary, setSummary] = useState<any>(null)
   const [trends, setTrends] = useState<any[]>([])
   const [funnel, setFunnel] = useState<any[]>([])
@@ -34,19 +42,35 @@ export default function AdminDashboard() {
   const [trendRange, setTrendRange] = useState('7d')
   const [statsLoading, setStatsLoading] = useState(true)
 
-  const router = useRouter()
-
-  const { subscribe } = useSocket()
-
-  // 🔒 Admin Page Protection - Redirect non-admin users
+  // 🔐 Wait for auth state, then check permissions
   useEffect(() => {
-    if (!user) return;
+    const checkAuth = () => {
+      const storedUser = getStoredUser();
+      
+      console.log("🔐 Admin dashboard checking auth...", { storedUser });
 
-    if (user.role !== "admin") {
-      console.log("🔄 Redirecting to:", "/");
-      router.push("/");
-    }
-  }, [user]);
+      if (!storedUser) {
+        console.log("🔄 No user found, redirecting to /login");
+        router.push("/login");
+        return;
+      }
+
+      if (storedUser.role !== "admin") {
+        console.log("🔄 User is not admin, redirecting to /");
+        router.push("/");
+        return;
+      }
+
+      setAuthLoading(false);
+    };
+
+    checkAuth();
+  }, [router]);
+
+  // 🔐 Don't render until auth is loaded
+  if (authLoading) {
+    return <Loader fullScreen />
+  }
 
   const fetchDashboardData = useCallback(async () => {
     try {
