@@ -18,6 +18,7 @@ export default function ApplicationPage() {
     if (!user) return;
 
     if (user.hasSubmittedApplication) {
+      console.log("🔄 Redirecting to:", "/dashboard");
       router.push("/dashboard");
     }
   }, [user]);
@@ -26,6 +27,7 @@ export default function ApplicationPage() {
     if (authLoading) return
 
     if (!user) {
+      console.log("🔄 Redirecting to:", "/login");
       router.push('/login')
       return
     }

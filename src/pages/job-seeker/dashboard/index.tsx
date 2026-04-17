@@ -33,6 +33,7 @@ const JobSeekerDashboard: React.FC = () => {
     if (!user) return;
 
     if (!user.hasSubmittedApplication) {
+      console.log("🔄 Redirecting to:", "/apply");
       router.push("/apply");
     }
   }, [user]);
@@ -42,6 +43,7 @@ const JobSeekerDashboard: React.FC = () => {
     if (!user) return;
 
     if (user.role === "admin") {
+      console.log("🔄 Redirecting to:", "/admin/dashboard");
       router.push("/admin/dashboard");
     }
   }, [user]);

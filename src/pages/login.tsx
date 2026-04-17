@@ -118,10 +118,13 @@ export default function Login() {
 
         // 🔑 Role-based redirect (admin takes priority)
         if (user.role === "admin") {
+          console.log("🔄 Redirecting to:", "/admin/dashboard");
           router.push("/admin/dashboard");
         } else if (user.hasSubmittedApplication) {
+          console.log("🔄 Redirecting to:", "/dashboard");
           router.push("/dashboard");
         } else {
+          console.log("🔄 Redirecting to:", "/apply");
           router.push("/apply");
         }
       } else if (!user.isVerified) {
@@ -190,10 +193,13 @@ export default function Login() {
 
         // 🔑 Role-based redirect (admin takes priority)
         if (data.user.role === "admin") {
+          console.log("🔄 Redirecting to:", "/admin/dashboard");
           router.push("/admin/dashboard");
         } else if (data.user.hasSubmittedApplication) {
+          console.log("🔄 Redirecting to:", "/dashboard");
           router.push("/dashboard");
         } else {
+          console.log("🔄 Redirecting to:", "/apply");
           router.push("/apply");
         }
       }

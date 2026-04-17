@@ -43,6 +43,7 @@ export default function AdminDashboard() {
     if (!user) return;
 
     if (user.role !== "admin") {
+      console.log("🔄 Redirecting to:", "/");
       router.push("/");
     }
   }, [user]);
