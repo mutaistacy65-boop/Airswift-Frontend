@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const API = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'https://airswift-backend-fjt3.onrender.com/api',
   withCredentials: true, // needed for cookies
 })
 
@@ -27,7 +27,7 @@ API.interceptors.response.use(
 
       try {
         const res = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+          `${process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'https://airswift-backend-fjt3.onrender.com/api'}/auth/refresh`,
           {},
           { withCredentials: true }
         )
