@@ -1,28 +1,23 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { getUserFromToken } from '../utils/auth'
+import { useAuth } from '@/context/AuthContext'
+import Loader from '@/components/Loader'
 
 export default function AdminRoute({ children }) {
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
+  const { user, isLoading } = useAuth()
 
-  useEffect(() => {
-    const user = getUserFromToken()
+  if (isLoading) return <Loader />;
 
-    if (!user) {
-      router.push('/login')
-      return
-    }
+  if (!user) {
+    router.push('/login');
+    return null;
+  }
 
-    if (user.role !== 'admin') {
-      router.push('/unauthorized')
-      return
-    }
-
-    setLoading(false)
-  }, [router])
-
-  if (loading) return <p>Loading...</p>
+  if (user.role.toLowerCase() !== 'admin') {
+    router.push('/unauthorized');
+    return null;
+  }
 
   return children
 }

@@ -11,7 +11,7 @@ export const useProtectedRoute = (requiredRole?: 'admin' | 'user') => {
     if (!isLoading) {
       if (!isAuthenticated) {
         router.push('/login')
-      } else if (requiredRole === 'admin' && user?.role !== 'admin') {
+      } else if (requiredRole === 'admin' && user?.role?.toLowerCase() !== 'admin') {
         router.push('/unauthorized')
       } else if (requiredRole === 'user' && user?.role !== 'user') {
         if (user?.role === 'admin') {
@@ -26,8 +26,8 @@ export const useProtectedRoute = (requiredRole?: 'admin' | 'user') => {
   return {
     isAuthorized: !isLoading && isAuthenticated && (
       !requiredRole ||
-      (requiredRole === 'admin' && user?.role === 'admin') ||
-      (requiredRole === 'user' && user?.role === 'user')
+      (requiredRole === 'admin' && user?.role?.toLowerCase() === 'admin') ||
+      (requiredRole === 'user' && user?.role?.toLowerCase() === 'user')
     ),
     isLoading
   }

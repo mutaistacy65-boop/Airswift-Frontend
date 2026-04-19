@@ -29,7 +29,7 @@ export const getRedirectPath = (user: User | null | undefined): string => {
   }
 
   // ✅ 1. Admin users always go to admin dashboard
-  if (user.role === 'admin') {
+  if (user.role.toLowerCase() === 'admin') {
     console.log('👨‍💼 Admin user detected, redirecting to /admin/dashboard');
     return '/admin/dashboard';
   }

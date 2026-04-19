@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null
   })
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [isLoading, setIsLoading] = useState(!user) // Only loading if no user in localStorage
+  const [isLoading, setIsLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
 
@@ -86,6 +86,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [mounted])
 
+  // const fetchUser = async () => {
+  //   try {
+  //     const response = await API.get('/profile');
+  //     const userData = response.data;
+  //     setUser(userData);
+  //     setIsLoading(false);
+  //   } catch (error) {
+  //     console.error('Failed to fetch user:', error);
+  //     localStorage.removeItem('token');
+  //     localStorage.removeItem('user');
+  //     setUser(null);
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   const token = localStorage.getItem("token");
+  //   if (token) {
+  //     fetchUser();
+  //   } else {
+  //     setIsLoading(false);
+  //   }
+  // }, [])
+
   useEffect(() => {
     const userId = user?.id || user?._id
     if (!userId) return
@@ -96,13 +120,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (currentSocket.connected) {
       currentSocket.emit('join_user', userId)
-      if (user?.role === 'admin') {
+      if (user?.role?.toLowerCase() === 'admin') {
         currentSocket.emit('join_admin')
       }
     } else {
       currentSocket.once('connect', () => {
         currentSocket.emit('join_user', userId)
-        if (user?.role === 'admin') {
+        if (user?.role?.toLowerCase() === 'admin') {
           currentSocket.emit('join_admin')
         }
       })

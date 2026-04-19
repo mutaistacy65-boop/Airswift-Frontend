@@ -25,7 +25,7 @@ export const useSocketEvents = (
   // Only set up listeners if user has the required role
   useEffect(() => {
     // Guard: Check user role
-    if (!user || user.role !== requiredRole) {
+    if (!user || user.role.toLowerCase() !== requiredRole.toLowerCase()) {
       console.log(`⚠️ Socket events require '${requiredRole}' role, user has '${user?.role}'`)
       return
     }

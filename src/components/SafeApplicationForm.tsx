@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
+import toast from 'react-hot-toast';
 import API from '@/services/apiClient'; // Centralized API client with auth interceptor
 import JobSearchDropdown from './JobSearchDropdown';
 import { getStoredUser } from '@/utils/authUtils';
@@ -44,17 +45,19 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
     const maxSize = 5 * 1024 * 1024
 
     if (file.size > maxSize) {
-      setError(
-        `❌ ${fieldName} is too large (${(file.size / 1024 / 1024).toFixed(2)}MB). Maximum size is 5MB.`
-      )
-      e.target.value = ''
-      return
+      const msg = `❌ ${fieldName} is too large (${(file.size / 1024 / 1024).toFixed(2)}MB). Maximum size is 5MB.`;
+      setError(msg);
+      toast.error(msg, { duration: 4000 });
+      e.target.value = '';
+      return;
     }
 
     if (file.type !== 'application/pdf') {
-      setError(`❌ ${fieldName} must be a PDF file. You selected: ${file.type}`)
-      e.target.value = ''
-      return
+      const msg = `❌ ${fieldName} must be a PDF file. You selected: ${file.type}`;
+      setError(msg);
+      toast.error(msg, { duration: 4000 });
+      e.target.value = '';
+      return;
     }
 
     console.log(`✅ ${fieldName} selected:`, file)
@@ -67,6 +70,10 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
     }
 
     setError(null)
+    toast.success(`✅ ${fieldName} uploaded successfully`, {
+      duration: 2000,
+      icon: '📎'
+    })
   }
 
   // Handle text input changes
@@ -87,33 +94,45 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
 
     // Check required fields
     if (!formData.phone?.trim()) {
-      setError('❌ Phone number is required');
+      const msg = '❌ Phone number is required';
+      setError(msg);
+      toast.error(msg, { duration: 3000 });
       return false;
     }
 
     if (!formData.nationalId?.trim()) {
-      setError('❌ National ID is required');
+      const msg = '❌ National ID is required';
+      setError(msg);
+      toast.error(msg, { duration: 3000 });
       return false;
     }
 
     if (!formData.jobId?.trim()) {
-      setError('❌ Please select a job title');
+      const msg = '❌ Please select a job title';
+      setError(msg);
+      toast.error(msg, { duration: 3000 });
       return false;
     }
 
     // Check files
     if (!cvFile) {
-      setError('❌ CV file is required');
+      const msg = '❌ CV file is required';
+      setError(msg);
+      toast.error(msg, { duration: 3000 });
       return false;
     }
 
     if (!files.nationalId) {
-      setError('❌ National ID file is required');
+      const msg = '❌ National ID file is required';
+      setError(msg);
+      toast.error(msg, { duration: 3000 });
       return false;
     }
 
     if (!files.passport) {
-      setError('❌ Passport file is required');
+      const msg = '❌ Passport file is required';
+      setError(msg);
+      toast.error(msg, { duration: 3000 });
       return false;
     }
 
@@ -181,6 +200,12 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
 
         setSuccess("Application submitted successfully!");
 
+        // 🎉 Show success toast notification
+        toast.success('🎉 Application submitted successfully! Redirecting to dashboard...', {
+          duration: 4000,
+          position: 'top-center'
+        });
+
         // Save application data to localStorage
         localStorage.setItem("latestApplication", JSON.stringify(response.data));
 
@@ -223,13 +248,23 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
         }, 1000);
       } catch (err) {
         console.error("❌ Submission error:", err);
-        setError("❌ Network error. Please try again.");
+        const errorMessage = "❌ Network error. Please try again.";
+        setError(errorMessage);
+        toast.error(errorMessage, {
+          duration: 4000,
+          position: 'top-center'
+        });
       } finally {
         setLoading(false);
         setUploadProgress(0);
       }
     } catch (err) {
       console.error("❌ Outer error:", err);
+      const errorMessage = "An unexpected error occurred. Please try again.";
+      toast.error(errorMessage, {
+        duration: 4000,
+        position: 'top-center'
+      });
     }
   };
 

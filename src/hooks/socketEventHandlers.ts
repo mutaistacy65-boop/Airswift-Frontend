@@ -16,7 +16,7 @@ export const useAdminSocketEvents = () => {
   const [adminUpdate, setAdminUpdate] = useState<any>(null)
 
   useEffect(() => {
-    if (!user || user.role !== 'admin' || !socket?.connected) return
+    if (!user || user.role.toLowerCase() !== 'admin' || !socket?.connected) return
 
     const handleNewApplication = (data: any) => {
       console.log('👑 [ADMIN] New application:', data)
@@ -63,7 +63,7 @@ export const useUserSocketEvents = () => {
   const [userUpdate, setUserUpdate] = useState<any>(null)
 
   useEffect(() => {
-    if (!user || user.role !== 'user' || !socket?.connected) return
+    if (!user || user.role.toLowerCase() !== 'user' || !socket?.connected) return
 
     const handleApplicationStatusChange = (data: any) => {
       console.log('👤 [USER] Your application status changed:', data)
@@ -110,7 +110,7 @@ export const useRecruiterSocketEvents = () => {
   const [recruiterUpdate, setRecruiterUpdate] = useState<any>(null)
 
   useEffect(() => {
-    if (!user || user.role !== 'recruiter' || !socket?.connected) return
+    if (!user || user.role.toLowerCase() !== 'recruiter' || !socket?.connected) return
 
     const handleCandidateApplication = (data: any) => {
       console.log('💼 [RECRUITER] New candidate application:', data)

@@ -13,7 +13,6 @@ import API from '@/services/apiClient'
 import { adminService } from '@/services/adminService'
 import AdminPayments from '@/components/AdminPayments'
 import { AdminLogs } from '@/components/AdminLogs'
-import { getStoredUser, isAdmin } from '@/utils/authUtils'
 import Loader from '@/components/Loader'
 
 const AdminRealtimeMap = dynamic(() => import('@/components/AdminRealtimeMap'), {
@@ -21,13 +20,26 @@ const AdminRealtimeMap = dynamic(() => import('@/components/AdminRealtimeMap'), 
 })
 
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
-  const { isAuthorized, isLoading: protectedLoading } = useProtectedRoute('admin')
+  const { user, isLoading } = useAuth();
   const router = useRouter()
   const { subscribe } = useSocket()
-  
-  // 🔐 Auth state loading
-  const [authLoading, setAuthLoading] = useState(true)
+
+  console.log("USER:", user);
+  console.log("ROLE:", user?.role);
+  console.log("LOADING:", isLoading);
+
+  useEffect(() => {
+    if (isLoading) return; // ⛔ wait until auth is ready
+
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    if (user.role.toLowerCase() !== "admin") {
+      router.push("/unauthorized");
+    }
+  }, [user, isLoading]);
   
   const [summary, setSummary] = useState<any>(null)
   const [trends, setTrends] = useState<any[]>([])
@@ -41,37 +53,6 @@ export default function AdminDashboard() {
   const [emailLogsLoading, setEmailLogsLoading] = useState(true)
   const [trendRange, setTrendRange] = useState('7d')
   const [statsLoading, setStatsLoading] = useState(true)
-
-  // 🔐 Wait for auth state, then check permissions
-  useEffect(() => {
-    const checkAuth = () => {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const storedUser = getStoredUser()
-      
-      console.log('🔐 Admin dashboard checking auth...', { token, storedUser })
-
-      if (!token || !storedUser) {
-        console.log('🔄 No token/user found, redirecting to /login')
-        router.replace('/login')
-        return
-      }
-
-      if (storedUser.role !== 'admin') {
-        console.log('🔄 User is not admin, redirecting to /dashboard')
-        router.replace('/dashboard')
-        return
-      }
-
-      setAuthLoading(false)
-    }
-
-    checkAuth()
-  }, [router])
-
-  // 🔐 Don't render until auth is loaded
-  if (authLoading) {
-    return <Loader fullScreen />
-  }
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -135,17 +116,17 @@ export default function AdminDashboard() {
   }, [])
 
   useEffect(() => {
-    if (!authLoading) {
+    if (!isLoading) {
       fetchDashboardData()
     }
-  }, [authLoading, fetchDashboardData])
+  }, [isLoading, fetchDashboardData])
 
   useEffect(() => {
-    if (isAuthorized) {
+    if (!isLoading) {
       fetchAdminActions()
       fetchEmailLogs()
     }
-  }, [isAuthorized, fetchAdminActions, fetchEmailLogs])
+  }, [isLoading, fetchAdminActions, fetchEmailLogs])
 
   useEffect(() => {
     const unsubscribeUserUpdated = subscribe('user:updated', () => {
@@ -174,13 +155,13 @@ export default function AdminDashboard() {
   }, [subscribe, fetchDashboardData, fetchAdminActions, fetchEmailLogs])
 
   useEffect(() => {
-    if (!authLoading) {
+    if (!isLoading) {
       fetchTrends(trendRange)
     }
-  }, [authLoading, trendRange])
+  }, [isLoading, trendRange])
 
   // Protect route
-  if (protectedLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -188,10 +169,6 @@ export default function AdminDashboard() {
         </div>
       </div>
     )
-  }
-
-  if (!isAuthorized) {
-    return null
   }
 
   const sidebarItems = [

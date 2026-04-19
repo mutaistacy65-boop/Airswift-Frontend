@@ -113,7 +113,7 @@ const AdminApplicationsPage = () => {
   ]
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'admin')) {
+    if (!authLoading && (!user || user.role.toLowerCase() !== 'admin')) {
       router.push('/unauthorized')
     }
   }, [authLoading, user, router])

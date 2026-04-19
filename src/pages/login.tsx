@@ -1,397 +1,114 @@
-import React, { useState } from 'react'
-import { useRouter } from 'next/router'
-import Link from 'next/link'
-import api from '@/lib/api'
-import API from '@/services/apiClient'
-import { loginUser } from '@/api/auth'
-import Button from '../components/Button'
-import ContinueDraftModal from '@/components/ContinueDraftModal'
-import { useAuth } from '@/context/AuthContext'
-import { initializeSocketConnection } from '@/lib/socketIntegration'
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import api from '@/lib/api'; // Your API configuration
+import { initializeSocketConnection } from '@/lib/socketIntegration';
 
-/**
- * 🍪 IMPORTANT: Backend Cookie Requirements
- * 
- * After successful login, the backend MUST set an httpOnly cookie:
- * 
- * res.cookie('accessToken', token, {
- *   httpOnly: true,
- *   secure: true,      // on HTTPS
- *   sameSite: "none",  // for cross-origin
- * });
- * 
- * The frontend will:
- * 1. Store token in localStorage (Client-side)
- * 2. Browser automatically sends httpOnly cookie (Server-side)
- * 3. API calls include both for maximum security
- * 
- * See COOKIE_CONFIGURATION.md
- */
+const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const router = useRouter();
 
-export default function Login() {
-  const router = useRouter()
-  const { login } = useAuth()
-  const [form, setForm] = useState({ email: '', password: '' })
-  const [error, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [showModal, setShowModal] = useState(false)
-  const [draftInfo, setDraftInfo] = useState<any>(null)
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    if (!storedUser) return;
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-
-    // Validate form
-    if (!form.email || !form.password) {
-      setError('Please fill in all fields')
-      return
+    if (storedUser.role.toLowerCase() === 'admin') {
+      router.push('/admin/dashboard');
+      return;
     }
+
+    if (storedUser.hasSubmittedApplication) {
+      router.push('/dashboard');
+      return;
+    }
+
+    router.push('/apply');
+  }, []);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
     try {
-      setIsLoading(true)
-      console.log('Login attempt with:', { email: form.email, password: '[HIDDEN]' })
-      const res = await loginUser(form)
-      
-      // Handle redirect for unverified accounts
-      if (res.redirect) {
-        router.push(`${res.redirect}?email=${encodeURIComponent(res.email)}&type=login`)
-        return
-      }
-      
-      console.log("LOGIN RESPONSE:", res);
+      const response = await api.post('/auth/login', {
+        email,
+        password,
+      });
 
-      // Validate response data
-      const { token, accessToken, user, message } = res
+      console.log('LOGIN RESPONSE:', response.data);
 
-      const authToken = token || accessToken
-      if (!authToken || !user) {
-        throw new Error(message || 'Login failed: Invalid response from server')
+      if (!response.data.token || !response.data.user) {
+        throw new Error('Login response missing required authentication data');
       }
 
-      // VERIFIED user - normal login flow
-      if (user.isVerified) {
-        // 🟦 STEP 3: Store token and user
-        localStorage.setItem('token', authToken);
-        localStorage.setItem('user', JSON.stringify(user));
-        if (user?.role) {
-          localStorage.setItem('role', user.role);
-        }
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
 
-        // For admin users, also store as adminToken for admin pages
-        if (user && user.role === 'admin') {
-          localStorage.setItem('adminToken', authToken);
-        }
+      console.log("Saved user:", response.data.user);
 
-        // 🟦 STEP 4: Store permissions
-        if (res.permissions) {
-          localStorage.setItem('permissions', JSON.stringify(res.permissions));
-        } else if (user?.permissions) {
-          localStorage.setItem('permissions', JSON.stringify(user.permissions));
-        } else {
-          localStorage.setItem('permissions', JSON.stringify([]));
-        }
-
-        // 🟦 FIX 2: Add Debug - confirm user was saved
-        console.log("USER SAVED:", user);
-        console.log("✅ Token stored successfully:", authToken.substring(0, 20) + '...');
-        console.log("✅ Permissions saved:", res.permissions || user?.permissions || []);
-
-        // Update AuthContext immediately with both token and user
-        login({ token: authToken, user });
-
-        // 🔌 Initialize socket after login with auth token
-        console.log('🔌 Initializing socket with token...');
-        initializeSocketConnection(authToken);
-        console.log('✅ Socket initialized for verified user');
-
-        // Check for drafts (only for non-admin users)
-        if (user.role !== "admin") {
-          try {
-            const draftRes = await API.get('/drafts/check');
-            if (draftRes.data?.hasDraft) {
-              setDraftInfo(draftRes.data || {});
-              setShowModal(true);
-              return;
-            }
-          } catch (err) {
-            console.warn('Draft check failed — ignoring');
-          }
-        }
-
-        // 🔑 Role-based redirect (admin takes priority)
-        if (user.role === "admin") {
-          console.log("🔄 Redirecting to:", "/admin/dashboard");
-          setTimeout(() => {
-            router.replace("/admin/dashboard");
-          }, 100);
-        } else if (user.hasSubmittedApplication) {
-          console.log("🔄 Redirecting to:", "/dashboard");
-          router.replace("/dashboard");
-        } else {
-          console.log("🔄 Redirecting to:", "/apply");
-          router.replace("/apply");
-        }
-      } else if (!user.isVerified) {
-        // Return special response for unverified accounts
-        const data = await loginUser(form)
-
-        // Handle redirect for unverified accounts
-        if (data.redirect) {
-          router.push(`${data.redirect}?email=${encodeURIComponent(data.email)}&type=login`)
-          return
-        }
-
-        console.log("LOGIN RESPONSE:", data);
-        // 🔥 FIX THIS LINE
-        const token = data.token || data.accessToken;
-
-        if (!token || token === 'undefined') {
-          console.error("❌ No token in response:", data);
-          return;
-        }
-
-        // 🟦 STEP 3: CLEAN BAD TOKEN (IMPORTANT)
-        if (token === 'undefined') {
-          localStorage.removeItem('token');
-        } else {
-          localStorage.setItem('token', token);
-        }
-        localStorage.setItem('user', JSON.stringify(data.user));
-        if (data.user?.role) {
-          localStorage.setItem('role', data.user.role);
-        }
-
-        // 🟦 STEP 4: Store permissions for unverified user
-        if (data.permissions) {
-          localStorage.setItem('permissions', JSON.stringify(data.permissions));
-        } else if (data.user?.permissions) {
-          localStorage.setItem('permissions', JSON.stringify(data.user.permissions));
-        } else {
-          localStorage.setItem('permissions', JSON.stringify([]));
-        }
-
-        // Check if this is mock data
-        if (token.startsWith('mock-')) {
-          alert('Demo login successful. Note: Some features may not work with demo accounts.');
-        }
-
-        console.log("✅ Token saved:", token);
-        console.log("✅ Permissions saved:", data.permissions || data.user?.permissions || []);
-
-        // Update AuthContext immediately with token and user
-        login({ token, user: data.user });
-
-        // Check for drafts (only for non-admin users)
-        if (data.user.role !== "admin") {
-          try {
-            const draftRes = await API.get('/drafts/check');
-            if (draftRes.data?.hasDraft) {
-              setDraftInfo(draftRes.data || {});
-              setShowModal(true);
-              return;
-            }
-          } catch (err) {
-            console.warn('Draft check failed — ignoring');
-          }
-        }
-
-        // 🔑 Role-based redirect (admin takes priority)
-        if (data.user.role === "admin") {
-          console.log("🔄 Redirecting to:", "/admin/dashboard");
-          setTimeout(() => {
-            router.replace("/admin/dashboard");
-          }, 100);
-        } else if (data.user.hasSubmittedApplication) {
-          console.log("🔄 Redirecting to:", "/dashboard");
-          router.replace("/dashboard");
-        } else {
-          console.log("🔄 Redirecting to:", "/apply");
-          router.replace("/apply");
-        }
+      if (response.data.user.role.toLowerCase() === 'admin') {
+        localStorage.setItem('adminToken', response.data.token);
       }
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Login failed'
-      setError(msg)
-      setIsLoading(false)
+
+      console.log('🔌 Initializing socket with token...');
+      initializeSocketConnection(response.data.token);
+      console.log('✅ Socket initialization attempted');
+
+      const user = response.data.user;
+      if (user.role.toLowerCase() === 'admin') {
+        console.log('🔄 Redirecting to:', '/admin/dashboard');
+        router.replace('/admin/dashboard');
+      } else if (user.hasSubmittedApplication) {
+        console.log('🔄 Redirecting to:', '/dashboard');
+        router.replace('/dashboard');
+      } else {
+        console.log('🔄 Redirecting to:', '/apply');
+        router.replace('/apply');
+      }
+    } catch (err) {
+      console.error('❌ Login failed:', err);
+      setError(err.response?.data?.message || err.message || 'Login failed');
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-  if (!showModal) {
-    return (
-      <div className="min-h-screen flex">
-      {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary via-primary-dark to-primary-light p-12 flex-col justify-center items-center text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative z-10 text-center max-w-md">
-          <div className="mb-8">
-            <div className="text-6xl mb-4">💼</div>
-          </div>
-          <h1 className="text-4xl font-bold mb-4">Welcome Back</h1>
-          <p className="text-lg opacity-90 mb-8">
-            Continue your journey to find the perfect job opportunity with TALEX
-          </p>
-          <div className="flex items-center justify-center space-x-4 text-sm">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              Secure Login
-            </div>
-            <div className="flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              Fast Access
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Right side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
-        <div className="w-full max-w-md space-y-8">
-          {/* Mobile logo */}
-          <div className="lg:hidden text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary">TALEX</h1>
-            <p className="text-gray-600 mt-2">Your Career Journey Starts Here</p>
-          </div>
-
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Sign In</h2>
-            <p className="text-gray-600">Access your account to continue</p>
-          </div>
-
-          {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600 text-sm font-medium">{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  required
-                />
-                <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                </svg>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  required
-                />
-                <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                  Remember me
-                </label>
-              </div>
-
-              <div className="text-sm">
-                <Link href="/forgot-password" className="font-medium text-primary hover:text-secondary transition-colors">
-                  Forgot password?
-                </Link>
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={isLoading}
-              fullWidth
-              size="lg"
-              className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-semibold py-3"
-            >
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </Button>
-          </form>
-
-          <div className="text-center">
-            <p className="text-gray-600">
-              Don't have an account?{' '}
-              <Link href="/register" className="font-medium text-primary hover:text-secondary transition-colors">
-                Create one here
-              </Link>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <ContinueDraftModal
-        open={showModal}
-        onContinue={() => {
-          setShowModal(false)
-          router.push('/apply')
-        }}
-        onStartFresh={async () => {
-          try {
-            await API.delete('/drafts')
-          } catch (error) {
-            console.log('Draft deletion skipped:', error)
-          }
-          localStorage.removeItem('draft')
-          setShowModal(false)
-          router.push('/apply')
-        }}
-        lastSaved={draftInfo?.updated_at}
-      />
-    </div>
-  )
-  }
-
-  // Return modal view if showing modal on unverified account
   return (
-    <ContinueDraftModal
-      open={true}
-      onContinue={() => {
-        setShowModal(false)
-        router.push('/apply')
-      }}
-      onStartFresh={async () => {
-        try {
-          await API.delete('/drafts')
-        } catch (error) {
-          console.log('Draft deletion skipped:', error)
-        }
-        localStorage.removeItem('draft')
-        setShowModal(false)
-        router.push('/apply')
-      }}
-      lastSaved={draftInfo?.updated_at}
-    />
-  )
-}
+    <div className="login-container">
+      <h2>Login</h2>
+      <form onSubmit={handleLogin}>
+        <div>
+          <label>Email:</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label>Password:</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        {error && <div className="error">{error}</div>}
+        <button type="submit" disabled={loading}>
+          {loading ? 'Logging in...' : 'Login'}
+        </button>
+      </form>
 
+      <div className="login-links">
+        <a href="/forgot-password">Forgot Password?</a>
+      </div>
+    </div>
+  );
+};
+
+export default Login;

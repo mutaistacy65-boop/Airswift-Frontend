@@ -12,7 +12,7 @@ export default function AdminIndex() {
     if (!isLoading) {
       if (!isAuthenticated) {
         router.push('/login')
-      } else if (user && user.role === 'admin') {
+      } else if (user && user.role.toLowerCase() === 'admin') {
         router.push('/admin/dashboard')
       } else {
         router.push('/unauthorized')

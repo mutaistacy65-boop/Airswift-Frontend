@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { motion } from 'framer-motion'
+import toast from 'react-hot-toast'
 import { LayoutDashboard, FileText, Phone, User, LogOut, Bell, Bookmark, TrendingUp, CheckCircle, Clock, Calendar, Star, Target } from 'lucide-react'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useAuth } from '@/context/AuthContext'
@@ -14,6 +15,8 @@ import ApplicationTimeline from '@/components/ApplicationTimeline'
 import { getStatusColor, getStatusLabel } from '@/utils/statusColors'
 import { getStoredUser, hasSubmittedApplication } from '@/utils/authUtils'
 import { formatDateTime } from '@/utils/helpers'
+import { socket } from '@/services/socket'
+import { setupUserSocketListeners, cleanupUserSocketListeners } from '@/lib/userSocketIntegration'
 
 const JobSeekerDashboard: React.FC = () => {
   const { isAuthorized, isLoading } = useProtectedRoute('user')
@@ -47,7 +50,7 @@ const JobSeekerDashboard: React.FC = () => {
     }
 
     // ✅ Only redirect if there's an actual issue
-    if (storedUser.role === "admin") {
+    if (storedUser.role.toLowerCase() === "admin") {
       console.log("🔄 User is admin, redirecting to /admin/dashboard");
       router.replace("/admin/dashboard");
       return;
@@ -63,6 +66,40 @@ const JobSeekerDashboard: React.FC = () => {
     console.log("USER IN DASHBOARD:", storedUser);
     setAuthLoading(false);
   }, [router]);
+
+  // 🔌 Setup socket listeners for real-time updates
+  useEffect(() => {
+    if (!socket?.connected || authLoading) {
+      console.log('⏳ Socket not ready or auth still loading')
+      return
+    }
+
+    console.log('🔌 Setting up user socket listeners...')
+
+    setupUserSocketListeners({
+      onApplicationUpdated: (data) => {
+        console.log('📩 Application updated:', data)
+        fetchDashboardData()
+      },
+      onInterviewScheduled: (data) => {
+        console.log('📅 Interview scheduled:', data)
+        fetchDashboardData()
+      },
+      onPaymentSuccess: (data) => {
+        console.log('💰 Payment successful:', data)
+        fetchDashboardData()
+      },
+      onStatusChanged: (data) => {
+        console.log('🎯 Status changed:', data)
+        fetchDashboardData()
+      },
+    })
+
+    // Cleanup on unmount
+    return () => {
+      cleanupUserSocketListeners()
+    }
+  }, [socket?.connected, authLoading])
 
   // 🔒 Don't render until auth is loaded
   if (authLoading) {
@@ -100,25 +137,48 @@ const JobSeekerDashboard: React.FC = () => {
   // Real-time listener for application updates
   useEffect(() => {
     const unsubscribe = subscribe('applicationUpdated', (data) => {
-      console.log('Application updated:', data)
+      console.log('🔥 Application updated in real-time:', data)
       // Refresh dashboard data when application status changes
       fetchDashboardData()
-      // Show notification to user
+      // Show toast notification to user
+      toast.success(`Your application status updated to: ${getStatusLabel(data.status || 'pending')}`, {
+        duration: 5000,
+        icon: '📩'
+      })
+      // Show in notification context as well
       addNotification(`Your application status has been updated to ${data.status}`, 'success')
     })
 
     return unsubscribe
-  }, [subscribe, addNotification, fetchDashboardData])
+  }, [subscribe, addNotification])
 
   useEffect(() => {
-    const unsubscribe = subscribe('payment_success', (data: any) => {
-      console.log('Payment success event received:', data)
+    const unsubscribe = subscribe('interviewScheduled', (data) => {
+      console.log('🔥 Interview scheduled in real-time:', data)
       fetchDashboardData()
-      addNotification('💰 Payment successful!', 'success')
+      toast.success(`Interview scheduled for ${formatDateTime(data.interviewDate)}`, {
+        duration: 5000,
+        icon: '📅'
+      })
+      addNotification(`Interview scheduled for ${formatDateTime(data.interviewDate)}`, 'success')
     })
 
     return unsubscribe
-  }, [subscribe, addNotification, fetchDashboardData])
+  }, [subscribe, addNotification])
+
+  useEffect(() => {
+    const unsubscribe = subscribe('payment_success', (data: any) => {
+      console.log('🔥 Payment success event received:', data)
+      fetchDashboardData()
+      toast.success('💰 Payment successful! Your visa processing has started.', {
+        duration: 5000,
+        icon: '✅'
+      })
+      addNotification('Payment successful! Your visa processing has started.', 'success')
+    })
+
+    return unsubscribe
+  }, [subscribe, addNotification])
 
   // Fetch user's application
   useEffect(() => {

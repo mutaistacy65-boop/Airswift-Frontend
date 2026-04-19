@@ -85,7 +85,7 @@ export default function VerifyOTP() {
           localStorage.setItem('role', user.role);
           
           // Redirect based on role
-          if (user.role === 'admin') {
+          if (user.role.toLowerCase() === 'admin') {
             router.push('/admin/dashboard');
           } else {
             router.push('/dashboard');

@@ -12,7 +12,7 @@ export default function ApplicationFormRedirect() {
 
   useEffect(() => {
     console.log("🔄 Backward compatibility redirect: /application-form → /apply");
-    router.push('/apply')
+    router.replace('/apply')
   }, [router])
 
   return <Loader fullScreen />

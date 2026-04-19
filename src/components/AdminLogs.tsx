@@ -130,7 +130,7 @@ export const AdminLogs = ({ limit = 20, compact = false }: AdminLogsProps) => {
     }
   }
 
-  if (!user || user.role !== 'admin') {
+  if (!user || user.role.toLowerCase() !== 'admin') {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
         <p className="text-red-700 font-medium">Admin access required to view audit logs</p>

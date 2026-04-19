@@ -33,7 +33,7 @@ export default function AdminDashboard() {
   // Check user role and auth
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user') || 'null')
-    if (!storedUser || storedUser.role !== 'admin') {
+    if (!storedUser || storedUser.role.toLowerCase() !== 'admin') {
       window.location.href = '/unauthorized'
       return
     }
@@ -51,7 +51,7 @@ export default function AdminDashboard() {
   // 🛡️ ROLE-AWARE SOCKET HANDLING
   // Only listen to socket events if user is admin
   useEffect(() => {
-    if (!user || user.role !== 'admin') return
+    if (!user || user.role.toLowerCase() !== 'admin') return
 
     // Guard against socket not being ready
     if (!socket || !socket.connected) {

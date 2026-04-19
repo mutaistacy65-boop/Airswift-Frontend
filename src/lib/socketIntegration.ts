@@ -37,7 +37,7 @@ export const useAdminSocketNotifications = () => {
   const { user } = useAuth()
 
   useEffect(() => {
-    if (!user || user.role !== 'admin' || !socket?.connected) return
+    if (!user || user.role.toLowerCase() !== 'admin' || !socket?.connected) return
 
     console.log('📡 Setting up admin socket notifications...')
 
@@ -94,7 +94,7 @@ export const useUserSocketNotifications = () => {
   const { user } = useAuth()
 
   useEffect(() => {
-    if (!user || user.role !== 'user' || !socket?.connected) return
+    if (!user || user.role.toLowerCase() !== 'user' || !socket?.connected) return
 
     console.log('📡 Setting up user socket notifications...')
 
@@ -156,7 +156,7 @@ export const useRecruiterSocketNotifications = () => {
   const { user } = useAuth()
 
   useEffect(() => {
-    if (!user || user.role !== 'recruiter' || !socket?.connected) return
+    if (!user || user.role.toLowerCase() !== 'recruiter' || !socket?.connected) return
 
     console.log('📡 Setting up recruiter socket notifications...')
 
