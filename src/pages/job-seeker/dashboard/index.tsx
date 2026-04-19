@@ -1,664 +1,101 @@
-import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/router'
-import { motion } from 'framer-motion'
-import toast from 'react-hot-toast'
-import { LayoutDashboard, FileText, Phone, User, LogOut, Bell, Bookmark, TrendingUp, CheckCircle, Clock, Calendar, Star, Target } from 'lucide-react'
-import { useProtectedRoute } from '@/hooks/useProtectedRoute'
-import { useAuth } from '@/context/AuthContext'
-import Loader from '@/components/Loader'
-import { jobService } from '@/services/jobService'
-import { useNotification } from '@/context/NotificationContext'
-import { useSocket } from '@/hooks/useSocket'
-import API from '@/services/apiClient'
-import ApplicationTimeline from '@/components/ApplicationTimeline'
-import { getStatusColor, getStatusLabel } from '@/utils/statusColors'
-import { getStoredUser, hasSubmittedApplication } from '@/utils/authUtils'
-import { formatDateTime } from '@/utils/helpers'
-import { socket } from '@/services/socket'
-import { setupUserSocketListeners, cleanupUserSocketListeners } from '@/lib/userSocketIntegration'
+"use client";
 
-const JobSeekerDashboard: React.FC = () => {
-  const { isAuthorized, isLoading } = useProtectedRoute('user')
-  const { user, logout } = useAuth()
-  const { addNotification } = useNotification()
-  const router = useRouter()
-  const { subscribe } = useSocket()
-  
-  // 🔐 Auth state loading
-  const [authLoading, setAuthLoading] = useState(true)
-  
-  const [stats, setStats] = useState({ applications: 0, interviews: 0, offers: 0 })
-  const [recentApplications, setRecentApplications] = useState<any[]>([])
-  const [upcomingInterviews, setUpcomingInterviews] = useState<any[]>([])
-  const [savedJobs, setSavedJobs] = useState<any[]>([])
-  const [notifications, setNotifications] = useState<any[]>([])
-  const [profileCompletion, setProfileCompletion] = useState(75)
-  const [application, setApplication] = useState(null)
-  const [dataLoading, setDataLoading] = useState(true)
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { getSocket } from "@/services/socket";
+import { useAuth } from "@/context/AuthContext";
 
-  // 🔐 FIX 3: Prevent Premature Redirect - Wait instead of redirecting immediately
+export default function UserDashboard() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  const [application, setApplication] = useState({
+    status: "pending",
+    interviewDate: null,
+  });
+
+  // 🔒 Guard
   useEffect(() => {
-    const storedUser = getStoredUser();
+    if (isLoading) return;
 
-    console.log("🔐 Dashboard checking auth...", { storedUser });
+    if (!user) router.push("/login");
+    if (user?.role !== "user") router.push("/unauthorized");
+  }, [user, isLoading]);
 
-    // ✅ WAIT instead of redirecting if no user
-    if (!storedUser) {
-      console.log("⏳ No user found yet - waiting...");
-      return;
-    }
-
-    // ✅ Only redirect if there's an actual issue
-    if (storedUser.role.toLowerCase() === "admin") {
-      console.log("🔄 User is admin, redirecting to /admin/dashboard");
-      router.replace("/admin/dashboard");
-      return;
-    }
-
-    if (!storedUser.hasSubmittedApplication) {
-      console.log("🔄 User hasn't submitted application, redirecting to /apply");
-      router.replace("/apply");
-      return;
-    }
-
-    // ✅ Auth is valid, stop loading and render dashboard
-    console.log("USER IN DASHBOARD:", storedUser);
-    setAuthLoading(false);
-  }, [router]);
-
-  // 🔌 Setup socket listeners for real-time updates
+  // 🔥 Real-time updates
   useEffect(() => {
-    if (!socket?.connected || authLoading) {
-      console.log('⏳ Socket not ready or auth still loading')
-      return
-    }
+    const socket = getSocket();
+    if (!socket) return;
 
-    console.log('🔌 Setting up user socket listeners...')
+    socket.on("applicationUpdated", (data) => {
+      console.log("REAL-TIME:", data);
 
-    setupUserSocketListeners({
-      onApplicationUpdated: (data) => {
-        console.log('📩 Application updated:', data)
-        fetchDashboardData()
-      },
-      onInterviewScheduled: (data) => {
-        console.log('📅 Interview scheduled:', data)
-        fetchDashboardData()
-      },
-      onPaymentSuccess: (data) => {
-        console.log('💰 Payment successful:', data)
-        fetchDashboardData()
-      },
-      onStatusChanged: (data) => {
-        console.log('🎯 Status changed:', data)
-        fetchDashboardData()
-      },
-    })
+      setApplication({
+        status: data.status,
+        interviewDate: data.interviewDate,
+      });
+    });
 
-    // Cleanup on unmount
     return () => {
-      cleanupUserSocketListeners()
-    }
-  }, [socket?.connected, authLoading])
-
-  // 🔒 Don't render until auth is loaded
-  if (authLoading) {
-    return <Loader fullScreen />
-  }
-
-  useEffect(() => {
-    if (isAuthorized) {
-      checkApplicationStatus()
-      fetchDashboardData()
-    }
-  }, [isAuthorized])
-
-  // Check if user has applied - redirect to apply if not
-  const checkApplicationStatus = async () => {
-    try {
-      const res = await API.get('/users/status')
-      const applied = res.data?.hasApplied || false
-
-      if (!applied) {
-        console.log('📍 No application found, redirecting to /apply')
-        router.push('/apply')
-        return
-      }
-
-      console.log('✅ Application found, proceeding to dashboard')
-    } catch (err) {
-      console.error('Failed to check application status:', err)
-      // On error, default to show dashboard and let application fetch handle it
-    } finally {
-      setDataLoading(false)
-    }
-  }
-
-  // Real-time listener for application updates
-  useEffect(() => {
-    const unsubscribe = subscribe('applicationUpdated', (data) => {
-      console.log('🔥 Application updated in real-time:', data)
-      // Refresh dashboard data when application status changes
-      fetchDashboardData()
-      // Show toast notification to user
-      toast.success(`Your application status updated to: ${getStatusLabel(data.status || 'pending')}`, {
-        duration: 5000,
-        icon: '📩'
-      })
-      // Show in notification context as well
-      addNotification(`Your application status has been updated to ${data.status}`, 'success')
-    })
-
-    return unsubscribe
-  }, [subscribe, addNotification])
-
-  useEffect(() => {
-    const unsubscribe = subscribe('interviewScheduled', (data) => {
-      console.log('🔥 Interview scheduled in real-time:', data)
-      fetchDashboardData()
-      toast.success(`Interview scheduled for ${formatDateTime(data.interviewDate)}`, {
-        duration: 5000,
-        icon: '📅'
-      })
-      addNotification(`Interview scheduled for ${formatDateTime(data.interviewDate)}`, 'success')
-    })
-
-    return unsubscribe
-  }, [subscribe, addNotification])
-
-  useEffect(() => {
-    const unsubscribe = subscribe('payment_success', (data: any) => {
-      console.log('🔥 Payment success event received:', data)
-      fetchDashboardData()
-      toast.success('💰 Payment successful! Your visa processing has started.', {
-        duration: 5000,
-        icon: '✅'
-      })
-      addNotification('Payment successful! Your visa processing has started.', 'success')
-    })
-
-    return unsubscribe
-  }, [subscribe, addNotification])
-
-  // Fetch user's application
-  useEffect(() => {
-    const fetchApplication = async () => {
-      try {
-        const res = await API.get("/applications/my");
-        if (res.data) {
-          console.log('✅ Application fetched successfully:', res.data);
-          setApplication(res.data);
-        } else {
-          console.warn('⚠️ No application data returned from API');
-        }
-      } catch (err: any) {
-        console.error("Error fetching application:", err);
-        if (err?.response?.status === 404) {
-          console.log('📍 Application not found (404), user should be redirected to /apply');
-        }
-      }
+      socket.off("applicationUpdated");
     };
+  }, []);
 
-    if (!authLoading) {
-      fetchApplication();
+  if (isLoading) return <p>Loading...</p>;
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending": return "text-yellow-600";
+      case "shortlisted": return "text-blue-600";
+      case "rejected": return "text-red-600";
+      case "accepted": return "text-green-600";
+      default: return "text-gray-500";
     }
-  }, [authLoading]);
-
-  async function fetchDashboardData() {
-    try {
-      const applicationsData = await jobService.getMyApplications()
-      setStats({
-        applications: applicationsData.length,
-        interviews: applicationsData.filter((app: any) => ['interview_scheduled', 'interview_completed'].includes(app.status)).length,
-        offers: applicationsData.filter((app: any) => app.status === 'visa_ready').length,
-      })
-
-      // Set recent applications (last 3)
-      setRecentApplications(applicationsData.slice(0, 3))
-
-      // Mock upcoming interviews
-      setUpcomingInterviews([
-        {
-          id: '1',
-          jobTitle: 'Senior Software Engineer',
-          company: 'TechCorp',
-          date: '2026-04-10',
-          time: '14:00',
-          type: 'Video Call',
-          status: 'scheduled'
-        },
-        {
-          id: '2',
-          jobTitle: 'Full Stack Developer',
-          company: 'StartupXYZ',
-          date: '2026-04-12',
-          time: '10:30',
-          type: 'Phone Interview',
-          status: 'scheduled'
-        }
-      ])
-
-      // Mock saved jobs
-      setSavedJobs([
-        {
-          id: '1',
-          title: 'React Developer',
-          company: 'InnovateLabs',
-          location: 'Vancouver, BC',
-          salary: '$80K - $100K',
-          savedDate: '2026-04-05'
-        },
-        {
-          id: '2',
-          title: 'DevOps Engineer',
-          company: 'CloudTech',
-          location: 'Toronto, ON',
-          salary: '$90K - $120K',
-          savedDate: '2026-04-03'
-        }
-      ])
-
-      // Mock notifications
-      setNotifications([
-        {
-          id: '1',
-          type: 'application_update',
-          message: 'Your application for Senior Developer at TechCorp has been reviewed',
-          timestamp: '2026-04-06T10:30:00Z',
-          read: false
-        },
-        {
-          id: '2',
-          type: 'new_jobs',
-          message: '3 new jobs match your profile',
-          timestamp: '2026-04-05T15:45:00Z',
-          read: false
-        },
-        {
-          id: '3',
-          type: 'interview_reminder',
-          message: 'Interview reminder: TechCorp interview tomorrow at 2:00 PM',
-          timestamp: '2026-04-05T09:00:00Z',
-          read: true
-        }
-      ])
-
-    } catch (error) {
-      console.error('Failed to load dashboard data', error)
-    }
-  }
-
-  const handleLogout = async () => {
-    await logout()
-    addNotification('Logged out successfully', 'success')
-  }
-
-  if (isLoading || authLoading || dataLoading) {
-    return <Loader fullScreen />
-  }
-
-  if (!isAuthorized) {
-    return null // Will redirect in useEffect
-  }
-
-  // If no application data after loading, show message
-  if (!application) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">No Application Found</h2>
-          <p className="text-gray-600 mb-6">It looks like you haven't submitted an application yet.</p>
-          <button
-            onClick={() => router.push('/apply')}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            Start Application
-          </button>
-        </div>
-      </div>
-    )
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <aside className="w-64 bg-gray-900 p-6 hidden md:block">
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-white">
-          <LayoutDashboard /> Dashboard
-        </h2>
-        <nav className="space-y-2">
-          <Link href="/job-seeker/dashboard" className="flex items-center gap-2 p-2 rounded hover:bg-gray-800 text-gray-300 hover:text-white transition">
-            <LayoutDashboard size={18} /> Dashboard
-          </Link>
-          <Link href="/job-seeker/applications" className="flex items-center gap-2 p-2 rounded hover:bg-gray-800 text-gray-300 hover:text-white transition">
-            <FileText size={18} /> My Applications
-          </Link>
-          <Link href="/job-seeker/interviews" className="flex items-center gap-2 p-2 rounded hover:bg-gray-800 text-gray-300 hover:text-white transition">
-            <Phone size={18} /> Interviews
-          </Link>
-          <Link href="/job-seeker/profile" className="flex items-center gap-2 p-2 rounded hover:bg-gray-800 text-gray-300 hover:text-white transition">
-            <User size={18} /> Profile
-          </Link>
-          <button onClick={handleLogout} className="flex items-center gap-2 p-2 rounded hover:bg-gray-800 text-danger w-full text-left transition">
-            <LogOut size={18} /> Logout
-          </button>
-        </nav>
-      </aside>
+    <div className="p-6 max-w-4xl mx-auto">
 
-      <main className="flex-1 p-6 md:p-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-7xl"
-        >
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">Welcome back, {user?.name}!</h1>
-                <p className="text-gray-600">Track your applications, interviews, and offers in one place</p>
-              </div>
-              <div className="flex items-center gap-4">
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 relative">
-                  <Bell className="w-5 h-5" />
-                  {notifications.filter(n => !n.read).length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {notifications.filter(n => !n.read).length}
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
+      <h1 className="text-2xl font-bold">
+        Welcome, {user?.name}
+      </h1>
 
-          {/* Enhanced Stats Cards */}
-          <div className="grid md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Applications</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.applications}</p>
-                </div>
-                <div className="bg-blue-100 p-3 rounded-lg">
-                  <FileText className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-              <div className="mt-4 flex items-center text-sm">
-                <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                <span className="text-green-600">Active applications</span>
-              </div>
-            </div>
+      {/* STATUS CARD */}
+      <div className="mt-6 bg-white shadow rounded p-6">
+        <h2 className="text-lg font-semibold">Application Status</h2>
 
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Interviews Scheduled</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.interviews}</p>
-                </div>
-                <div className="bg-purple-100 p-3 rounded-lg">
-                  <Calendar className="w-6 h-6 text-purple-600" />
-                </div>
-              </div>
-              <div className="mt-4 flex items-center text-sm">
-                <Clock className="w-4 h-4 text-blue-500 mr-1" />
-                <span className="text-blue-600">Next: Tomorrow 2:00 PM</span>
-              </div>
-            </div>
+        <p className={`mt-2 font-bold ${getStatusColor(application.status)}`}>
+          {application.status.toUpperCase()}
+        </p>
+      </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Job Offers</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.offers}</p>
-                </div>
-                <div className="bg-green-100 p-3 rounded-lg">
-                  <Star className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-              <div className="mt-4 flex items-center text-sm">
-                <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
-                <span className="text-green-600">Ready for visa process</span>
-              </div>
-            </div>
+      {/* INTERVIEW CARD */}
+      <div className="mt-4 bg-white shadow rounded p-6">
+        <h2 className="text-lg font-semibold">Interview</h2>
 
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Profile Strength</p>
-                  <p className="text-2xl font-bold text-gray-900">{profileCompletion}%</p>
-                </div>
-                <div className="bg-orange-100 p-3 rounded-lg">
-                  <Target className="w-6 h-6 text-orange-600" />
-                </div>
-              </div>
-              <div className="mt-4">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-orange-500 h-2 rounded-full" style={{width: `${profileCompletion}%`}}></div>
-                </div>
-              </div>
-            </div>
-          </div>
+        {application.interviewDate ? (
+          <p className="text-green-600">
+            Scheduled on{" "}
+            {new Date(application.interviewDate).toLocaleString()}
+          </p>
+        ) : (
+          <p className="text-gray-500">Not scheduled yet</p>
+        )}
+      </div>
 
-          {/* Application Status & Interview Section */}
-          <div className="grid md:grid-cols-2 gap-6 mb-8">
-            {/* Status Card */}
-            {application && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Application Status</h3>
-                <div className={`p-4 rounded-lg border-2 ${getStatusColor(application.applicationStatus || 'pending').border}`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Current Status</p>
-                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(application.applicationStatus || 'pending').badge}`}>
-                        {getStatusLabel(application.applicationStatus || 'pending')}
-                      </span>
-                    </div>
-                  </div>
-                  {/* 🔥 Display Submission Date with Proper Formatting */}
-                  <div className="border-t pt-4">
-                    <p className="text-xs text-gray-500 mb-1">Submitted on</p>
-                    <p className="text-sm font-medium text-gray-900">
-                      {formatDateTime(application.submittedAt || application.createdAt)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+      {/* TIMELINE */}
+      <div className="mt-6 bg-white shadow rounded p-6">
+        <h2 className="text-lg font-semibold mb-3">Progress</h2>
 
-            {/* Interview Section */}
-            {application?.interview?.scheduled ? (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Interview Scheduled</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-blue-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Date & Time</p>
-                      <p className="font-medium text-gray-900">
-                        {new Date(application.interview.date).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Phone className="w-5 h-5 text-blue-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Mode</p>
-                      <p className="font-medium text-gray-900 capitalize">{application.interview.mode || 'Online'}</p>
-                    </div>
-                  </div>
-                  {application.interview.location && (
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <p className="text-sm text-gray-600">Location</p>
-                        <p className="font-medium text-gray-900">{application.interview.location}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Interview Status</h3>
-                <div className="text-center py-8">
-                  <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-600 mb-1">No Interview Scheduled Yet</p>
-                  <p className="text-sm text-gray-500">You will be notified once an interview is scheduled</p>
-                </div>
-              </div>
-            )}
-          </div>
+        <div className="flex justify-between text-sm">
+          <span>Applied</span>
+          <span>Reviewed</span>
+          <span>Shortlisted</span>
+          <span>Interview</span>
+          <span>Final</span>
+        </div>
+      </div>
 
-          {/* Application Timeline */}
-          {application && (
-            <div className="mb-8">
-              <ApplicationTimeline currentStatus={application.applicationStatus || 'pending'} />
-            </div>
-          )}
-
-          {/* Main Content Grid */}
-          <div className="grid lg:grid-cols-3 gap-8 mb-8">
-            {/* Recent Applications */}
-            <div className="lg:col-span-2">
-              <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Recent Applications</h2>
-                  <Link href="/job-seeker/applications" className="text-sm text-blue-600 hover:text-blue-800">View all</Link>
-                </div>
-                <div className="space-y-4">
-                  {recentApplications.length > 0 ? recentApplications.map((app: any) => (
-                    <div key={app.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h3 className="font-medium text-gray-900">{app.jobTitle || 'Job Title'}</h3>
-                        <p className="text-sm text-gray-600">{app.company || 'Company'}</p>
-                        <p className="text-xs text-gray-500">Applied {new Date(app.createdAt).toLocaleDateString()}</p>
-                      </div>
-                      <div className="text-right">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          app.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          app.status === 'reviewed' ? 'bg-blue-100 text-blue-800' :
-                          app.status === 'shortlisted' ? 'bg-purple-100 text-purple-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {app.status || 'pending'}
-                        </span>
-                      </div>
-                    </div>
-                  )) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                      <p>No applications yet</p>
-                      <Link href="/jobs" className="text-blue-600 hover:text-blue-800 text-sm">Browse jobs</Link>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Upcoming Interviews */}
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Upcoming Interviews</h2>
-                  <Link href="/job-seeker/interviews" className="text-sm text-blue-600 hover:text-blue-800">View all</Link>
-                </div>
-                <div className="space-y-4">
-                  {upcomingInterviews.map((interview) => (
-                    <div key={interview.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h3 className="font-medium text-gray-900">{interview.jobTitle}</h3>
-                        <p className="text-sm text-gray-600">{interview.company}</p>
-                        <div className="flex items-center gap-4 mt-1">
-                          <span className="text-xs text-gray-500 flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {new Date(interview.date).toLocaleDateString()}
-                          </span>
-                          <span className="text-xs text-gray-500 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {interview.time}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-                          {interview.type}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Saved Jobs */}
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Saved Jobs</h3>
-                  <Bookmark className="w-5 h-5 text-gray-400" />
-                </div>
-                <div className="space-y-3">
-                  {savedJobs.map((job) => (
-                    <div key={job.id} className="p-3 border rounded-lg">
-                      <h4 className="font-medium text-gray-900 text-sm">{job.title}</h4>
-                      <p className="text-xs text-gray-600">{job.company} • {job.location}</p>
-                      <p className="text-xs text-green-600 font-medium">{job.salary}</p>
-                    </div>
-                  ))}
-                </div>
-                <Link href="/jobs?saved=true" className="text-sm text-blue-600 hover:text-blue-800 mt-3 inline-block">View all saved jobs</Link>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                <div className="space-y-3">
-                  <Link href="/jobs" className="flex items-center gap-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition">
-                    <FileText className="w-5 h-5 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-900">Browse Jobs</span>
-                  </Link>
-                  <Link href="/job-seeker/profile" className="flex items-center gap-3 p-3 bg-green-50 hover:bg-green-100 rounded-lg transition">
-                    <User className="w-5 h-5 text-green-600" />
-                    <span className="text-sm font-medium text-green-900">Update Profile</span>
-                  </Link>
-                  <Link href="/job-seeker/applications" className="flex items-center gap-3 p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition">
-                    <Phone className="w-5 h-5 text-purple-600" />
-                    <span className="text-sm font-medium text-purple-900">Track Applications</span>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Notifications */}
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Notifications</h3>
-                <div className="space-y-3">
-                  {notifications.slice(0, 3).map((notification) => (
-                    <div key={notification.id} className={`p-3 rounded-lg text-sm ${notification.read ? 'bg-gray-50' : 'bg-blue-50 border-l-4 border-blue-500'}`}>
-                      <p className="text-gray-900">{notification.message}</p>
-                      <p className="text-xs text-gray-500 mt-1">{new Date(notification.timestamp).toLocaleDateString()}</p>
-                    </div>
-                  ))}
-                </div>
-                <button className="text-sm text-blue-600 hover:text-blue-800 mt-3">View all notifications</button>
-              </div>
-            </div>
-          </div>
-
-          {/* Why Choose TALEX Section */}
-          <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-8 rounded-lg border border-primary/20">
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">Why Choose TALEX?</h2>
-            <p className="text-gray-700 mb-6">Explore job opportunities, schedule interviews, and connect with top Canadian employers.</p>
-            <div className="flex gap-4">
-              <Link href="/jobs" className="bg-primary hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition">
-                Explore Opportunities
-              </Link>
-              <Link href="/job-seeker/profile" className="bg-secondary hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition">
-                Complete Profile
-              </Link>
-            </div>
-          </div>
-        </motion.div>
-      </main>
     </div>
-  )
+  );
 }
-
-export default JobSeekerDashboard

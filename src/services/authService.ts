@@ -100,6 +100,27 @@ const AuthService = {
     }
   },
 
+  // Login User (Simplified version for new login page)
+  loginUser: async (credentials: { email: string; password: string }) => {
+    try {
+      const result = await API.post('/auth/login', credentials);
+      const data = result.data;
+
+      // Extract token and user
+      const token = data.token || data.accessToken || data.data?.token || data.data?.accessToken;
+      const user = data.user || data.data?.user;
+
+      if (!token || !user) {
+        throw new Error('Invalid login response: missing token or user data');
+      }
+
+      return { token, user };
+    } catch (error: any) {
+      console.error('Login error:', error);
+      throw new Error(error.response?.data?.message || 'Login failed');
+    }
+  },
+
   // Get Profile (Protected)
   getProfile: async () => {
     try {
@@ -187,3 +208,6 @@ const AuthService = {
 };
 
 export default AuthService;
+
+// Named exports for convenience
+export const loginUser = AuthService.loginUser;
