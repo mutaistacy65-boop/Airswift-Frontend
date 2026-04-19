@@ -92,3 +92,16 @@ export const isValidUserEmail = (email: string): boolean => {
          emailLower.endsWith('.org') ||
          emailLower.endsWith('.net')
 }
+
+export const getPostLoginPath = (role?: string, hasSubmittedApplication?: boolean) => {
+  const normalizedRole = role?.toLowerCase()
+  if (normalizedRole === 'admin') {
+    return '/admin/dashboard'
+  }
+
+  if (hasSubmittedApplication) {
+    return '/dashboard'
+  }
+
+  return '/apply'
+}

@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 import { loginUser } from "@/services/auth";
 import { useAuth } from "@/context/AuthContext";
 import { clearAuth } from "@/utils/authHelpers";
-import { validateEmailForAuth } from "@/utils/roleUtils";
+import { getPostLoginPath, validateEmailForAuth } from "@/utils/roleUtils";
 import { Eye, EyeOff } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
 
@@ -22,13 +22,8 @@ export default function LoginPage() {
   useEffect(() => {
     if (!user) return;
 
-    if (user?.role?.toLowerCase() === 'admin') {
-      router.replace('/admin/dashboard');
-    } else if (user?.hasSubmittedApplication) {
-      router.replace('/dashboard');
-    } else {
-      router.replace('/apply');
-    }
+    const redirectPath = getPostLoginPath(user.role, user.hasSubmittedApplication)
+    router.replace(redirectPath)
   }, [user, router]);
 
   const handleLogin = async (e) => {
