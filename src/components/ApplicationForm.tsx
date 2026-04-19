@@ -5,7 +5,7 @@ import DocumentUpload from './DocumentUpload'
 import ContinueDraftModal from './ContinueDraftModal'
 import JobSearchDropdown from './JobSearchDropdown'
 import { debugToken, forcePostWithToken } from '@/utils/authDebug'
-import { getStoredUser } from '@/utils/authUtils'
+import { useAuth } from '@/context/AuthContext'
 
 interface ApplicationFormProps {
   onSuccess?: () => void
@@ -231,14 +231,15 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     setStep(step - 1)
   }
 
+  const { user } = useAuth()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!validateStep(3)) return
 
     // 🚫 Check if user is admin - admins cannot submit applications
-    const storedUser = getStoredUser()
-    if (storedUser?.role === 'admin') {
+    if (user?.role === 'admin') {
       alert('Admin users cannot submit applications. Please login as a job seeker.')
       return
     }
@@ -289,11 +290,11 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       if (debugMode) {
         // 🚨 HARD FIX: Force attach token manually (bypass interceptor)
         console.log('🚨 USING HARD FIX MODE - Force attaching token manually');
-        response = await forcePostWithToken('/applications', formData);
+        response = await forcePostWithToken('/applications/apply', formData);
       } else {
         // ✅ NORMAL MODE: Use API instance with interceptor
         console.log('✅ USING NORMAL MODE - API instance with interceptor');
-        response = await API.post('/applications', formData);
+        response = await API.post('/applications/apply', formData);
       }
 
       const result = response.data

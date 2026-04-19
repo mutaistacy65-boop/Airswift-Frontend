@@ -6,7 +6,7 @@ import { io, Socket } from 'socket.io-client'
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL || 'https://airswift-backend-fjt3.onrender.com'
 
-// 🔒 Socket instance - initialized only AFTER login
+// 🔒 Global socket instance - persists across the app
 let socket: Socket | null = null
 
 /**
@@ -66,6 +66,11 @@ export const initSocket = (token?: string): Socket | null => {
   socket.on('unauthorized', () => {
     console.error('🚫 Socket.IO authentication failed - token may be expired')
   })
+
+  // Store globally for persistence
+  if (typeof window !== 'undefined') {
+    (window as any).socket = socket
+  }
 
   return socket
 }

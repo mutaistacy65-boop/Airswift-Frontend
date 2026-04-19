@@ -1,31 +1,15 @@
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
-import api from '@/lib/api'; // Your API configuration
+import { useState, useEffect } from 'react'
+import api from '@/lib/api'
+import ProtectedRoute from '@/components/ProtectedRoute'
 
 const AdminUsers = () => {
-  const router = useRouter();
-
-  // ✅ ADMIN PAGE PROTECTION
-  useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user) {
-      console.log("🔄 Redirecting to:", "/");
-      router.push("/");
-      return;
-    }
-    if (user.role !== "admin") {
-      console.log("🔄 Redirecting to:", "/");
-      router.push("/");
-    }
-  }, [router]);
-
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    fetchUsers()
+  }, [])
 
   const fetchUsers = async () => {
     try {
@@ -44,10 +28,11 @@ const AdminUsers = () => {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Admin - Users</h1>
+    <ProtectedRoute role="admin">
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-6">Admin - Users</h1>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full">
           <thead className="bg-gray-50">
             <tr>
@@ -96,6 +81,7 @@ const AdminUsers = () => {
         </table>
       </div>
     </div>
+    </ProtectedRoute>
   );
 };
 

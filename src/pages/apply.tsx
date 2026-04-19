@@ -4,60 +4,45 @@ import MainLayout from '@/layouts/MainLayout'
 import ApplicationForm from '@/components/SafeApplicationForm'
 import API from '@/services/apiClient'
 import { useAuth } from '@/context/AuthContext'
-import { getStoredUser } from '@/utils/authUtils'
+import { useRequireAuth } from '@/hooks/useProtectedRoute'
 import Loader from '@/components/Loader'
 
 export default function ApplicationPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
+  useRequireAuth({ role: 'user' })
 
   const [checking, setChecking] = useState(true)
   const [hasApplied, setHasApplied] = useState(false)
   const [application, setApplication] = useState<any>(null)
 
-  // 🔒 Route Protection Guard - Redirect if user has already submitted application
-  // IMPORTANT: Check both AuthContext and localStorage to prevent redirect loops
+  // 🔒 Route protection using AuthContext
+  // Redirect if user is admin or has already submitted an application
   useEffect(() => {
     const checkAndRedirect = () => {
-      console.log("🔒 Apply page guard checking...");
-      
-      // First check localStorage for immediate response
-      const storedUser = getStoredUser();
-      
-      // 🚫 Admin users should not access application forms
-      if (storedUser?.role === 'admin') {
-        console.log("🚫 Admin user detected, redirecting to /admin/dashboard");
-        router.push("/admin/dashboard");
-        return;
+      if (!user) return
+
+      if (user.role === 'admin') {
+        router.push('/admin/dashboard')
+        return
       }
 
-      if (storedUser?.hasSubmittedApplication) {
-        console.log("🔄 User has submitted application, redirecting to /job-seeker/dashboard");
-        router.push("/job-seeker/dashboard");
-        return;
+      if (user.hasSubmittedApplication) {
+        router.push('/job-seeker/dashboard')
+        return
       }
 
-      // Also check AuthContext if user exists
-      if (user?.role === 'admin') {
-        console.log("🚫 AuthContext shows admin role, redirecting to /admin/dashboard");
-        router.push("/admin/dashboard");
-        return;
-      }
-
-      if (user?.hasSubmittedApplication) {
-        console.log("🔄 AuthContext shows submitted application, redirecting to /job-seeker/dashboard");
-        router.push("/job-seeker/dashboard");
-        return;
-      }
-
-      setChecking(false);
-    };
-
-    // Wait for auth to load, then check
-    if (!authLoading) {
-      checkAndRedirect();
+      setChecking(false)
     }
-  }, [user, authLoading, router]);
+
+    if (!authLoading) {
+      if (!user) {
+        router.push('/login')
+        return
+      }
+      checkAndRedirect()
+    }
+  }, [user, authLoading, router])
 
   useEffect(() => {
     if (authLoading) return
@@ -70,13 +55,7 @@ export default function ApplicationPage() {
 
     const checkStatus = async () => {
       try {
-        // FORCE attach token for debug
-        const token = localStorage.getItem('token');
-        const res = await API.get('/users/status', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await API.get('/users/status')
         if (res.data?.hasApplied) {
           setHasApplied(true)
           setApplication(res.data?.application || null)
@@ -85,7 +64,7 @@ export default function ApplicationPage() {
         if (err?.response?.status === 401) {
           console.error('Unauthorized. Please login again.')
         } else {
-          console.error("Status check failed:", err)
+          console.error('Status check failed:', err)
         }
       } finally {
         setChecking(false)

@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import Button from "../components/Button";
 import API from '@/services/apiClient';
 import { clearAuth, saveAuthState } from '@/utils/authHelpers';
+import { validateEmailForAuth } from '@/utils/roleUtils';
 
 export default function Register() {
   const router = useRouter();
@@ -42,6 +43,14 @@ export default function Register() {
 
     if (!formData.name || !formData.email || !formData.password) {
       setError("Please fill in all fields");
+      setLoading(false);
+      return;
+    }
+
+    // Email validation
+    const emailValidation = validateEmailForAuth(formData.email);
+    if (!emailValidation.isValid) {
+      setError(emailValidation.error);
       setLoading(false);
       return;
     }

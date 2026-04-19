@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { loginUser } from "@/services/auth";
 import { useAuth } from "@/context/AuthContext";
-import { clearAuth, saveAuthState } from "@/utils/authHelpers";
+import { clearAuth } from "@/utils/authHelpers";
+import { validateEmailForAuth } from "@/utils/roleUtils";
 import { Eye, EyeOff } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, refreshUser, user } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,33 +19,40 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (!user) return;
+
+    if (user?.role?.toLowerCase() === 'admin') {
+      router.replace('/admin/dashboard');
+    } else if (user?.hasSubmittedApplication) {
+      router.replace('/dashboard');
+    } else {
+      router.replace('/apply');
+    }
+  }, [user, router]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      // Clear any existing auth state first
+      // Email validation and role assignment logic
+      const emailValidation = validateEmailForAuth(email);
+      if (!emailValidation.isValid) {
+        setError(emailValidation.error);
+        return;
+      }
+
       clearAuth();
 
       const res = await loginUser({ email, password });
-      const { token, user } = res;
+      const { token } = res;
 
-      // Save auth state
-      saveAuthState(token, user);
-
-      // Update context
-      await login({ token, user });
-
-      // Role-based redirect
-      if (user.role === "admin") {
-        router.replace("/admin/dashboard");
-      } else {
-        router.replace("/user/dashboard");
-      }
-
+      await login({ token });
+      await refreshUser();
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      setError(err.response?.data?.message || err.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -75,20 +83,20 @@ export default function LoginPage() {
 
       const { token, user } = await res.json();
 
-      // Only allow non-admin users to login with Google
-      if (user.role === "admin") {
+      // Email validation for Google login
+      const emailValidation = validateEmailForAuth(user?.email);
+      if (!emailValidation.isValid) {
+        setError(emailValidation.error);
+        return;
+      }
+
+      if (user?.role?.toLowerCase() === 'admin') {
         setError("Admin login not allowed with Google. Please use email/password.");
         return;
       }
 
-      // Save auth state
-      saveAuthState(token, user);
-
-      // Update context
-      await login({ token, user });
-
-      // Redirect to user dashboard
-      router.replace("/user/dashboard");
+      await login({ token });
+      await refreshUser();
 
     } catch (err) {
       setError(err.message || "Google login failed");

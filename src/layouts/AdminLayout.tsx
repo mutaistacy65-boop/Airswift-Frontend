@@ -1,35 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { useRequireAuth } from '@/hooks/useProtectedRoute'
 
-export default function AdminLayout({ children }) {
-  const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { isLoading, isAuthorized } = useRequireAuth({ role: 'admin' })
 
-  useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
-    setUser(storedUser);
-    setLoading(false);
-  }, []);
+  if (isLoading) return <p>Loading...</p>
+  if (!isAuthorized) return null
 
-  useEffect(() => {
-    if (loading) return;
-    if (!user) router.push("/login");
-  }, [user, loading]);
-
-  if (loading) return <p>Loading...</p>;
-
-  if (!user) {
-    router.push("/login");
-    return null;
-  }
-
-  if (user.role.toLowerCase() !== "admin") {
-    router.push("/unauthorized");
-    return null;
-  }
-
-  return children;
+  return <>{children}</>
 }

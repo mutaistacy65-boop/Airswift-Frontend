@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import API from '@/services/apiClient'
 import { socket } from '@/services/socket'
+import { useRequireAuth } from '@/hooks/useProtectedRoute'
 
 interface Application {
   _id: string
@@ -28,30 +29,20 @@ export default function AdminDashboard() {
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ subject: '', message: '', date: '', time: '' })
   const [notes, setNotes] = useState<{ [key: string]: string }>({})
-  const [user, setUser] = useState<any>(null)
+  const { user, isAuthorized } = useRequireAuth({ role: 'admin' })
 
-  // Check user role and auth
+  // Initial data fetch when user is authorized
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem('user') || 'null')
-    if (!storedUser || storedUser.role.toLowerCase() !== 'admin') {
-      window.location.href = '/unauthorized'
-      return
-    }
-    setUser(storedUser)
-  }, [])
-
-  // Initial data fetch
-  useEffect(() => {
-    if (user?.role === 'admin') {
+    if (isAuthorized && user?.role === 'admin') {
       fetchApplications()
       fetchPendingJobs()
     }
-  }, [user])
+  }, [user, isAuthorized])
 
   // 🛡️ ROLE-AWARE SOCKET HANDLING
   // Only listen to socket events if user is admin
   useEffect(() => {
-    if (!user || user.role.toLowerCase() !== 'admin') return
+    if (!isAuthorized || !user) return
 
     // Guard against socket not being ready
     if (!socket || !socket.connected) {
@@ -116,7 +107,7 @@ export default function AdminDashboard() {
       socket.off('job:created', handleJobCreated)
       socket.off('job:updated', handleJobUpdated)
     }
-  }, [user, socket])
+  }, [user, isAuthorized, socket])
 
   const fetchApplications = async () => {
     try {

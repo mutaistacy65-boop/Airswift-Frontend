@@ -3,11 +3,13 @@ import { useSocket } from "@/hooks/useSocket";
 import { useNotification } from "@/context/NotificationContext";
 import StatusTimeline from "@/components/StatusTimeline";
 import API from '@/services/apiClient';
+import { useAuth } from '@/context/AuthContext';
 
 export default function MyApplications() {
   const [apps, setApps] = useState([]);
   const { subscribe, isConnected } = useSocket();
   const { addNotification } = useNotification();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchApps = async () => {
@@ -42,10 +44,9 @@ export default function MyApplications() {
 
     // Listen for new applications
     const unsubscribeNewApp = subscribe("new_application", (data: any) => {
-      // Only add if it's the current user's application
-      const currentUserId = JSON.parse(localStorage.getItem("user") || "{}")?._id;
+      const currentUserId = user?.id || user?._id
       if (data.user === currentUserId) {
-        setApps((prev) => [data, ...prev]);
+        setApps((prev) => [data, ...prev])
       }
     });
 

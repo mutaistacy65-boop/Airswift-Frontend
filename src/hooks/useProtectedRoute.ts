@@ -2,33 +2,44 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '@/context/AuthContext'
 
-export const useProtectedRoute = (requiredRole?: 'admin' | 'user') => {
+type UseRequireAuthOptions = {
+  role?: 'admin' | 'user'
+  status?: string[]
+  redirectTo?: string
+}
+
+export const useRequireAuth = ({ role, status, redirectTo }: UseRequireAuthOptions = {}) => {
   const router = useRouter()
   const { user, isLoading } = useAuth()
-  const isAuthenticated = !!user
 
   useEffect(() => {
-    if (!isLoading) {
-      if (!isAuthenticated) {
-        router.push('/login')
-      } else if (requiredRole === 'admin' && user?.role?.toLowerCase() !== 'admin') {
-        router.push('/unauthorized')
-      } else if (requiredRole === 'user' && user?.role !== 'user') {
-        if (user?.role === 'admin') {
-          router.push('/admin/dashboard')
-        } else {
-          router.push('/job-seeker/dashboard')
-        }
-      }
+    if (isLoading) return
+
+    if (!user) {
+      router.push('/login')
+      return
     }
-  }, [isLoading, isAuthenticated, user, router, requiredRole])
+
+    if (role && user.role?.toLowerCase() !== role.toLowerCase()) {
+      router.push('/unauthorized')
+      return
+    }
+
+    if (status && !status.includes(user.applicationStatus || '')) {
+      router.push(redirectTo || '/dashboard')
+      return
+    }
+  }, [isLoading, user, role, status, redirectTo, router])
 
   return {
-    isAuthorized: !isLoading && isAuthenticated && (
-      !requiredRole ||
-      (requiredRole === 'admin' && user?.role?.toLowerCase() === 'admin') ||
-      (requiredRole === 'user' && user?.role?.toLowerCase() === 'user')
-    ),
-    isLoading
+    isAuthorized:
+      !isLoading &&
+      !!user &&
+      (!role || user.role?.toLowerCase() === role.toLowerCase()) &&
+      (!status || status.includes(user.applicationStatus || '')),
+    isLoading,
+    user,
   }
 }
+
+export const useProtectedRoute = (requiredRole?: 'admin' | 'user') => useRequireAuth({ role: requiredRole })

@@ -60,7 +60,6 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       console.warn('🔐 UNAUTHORIZED - Clearing token and redirecting to login')
       localStorage.removeItem('token')
-      localStorage.removeItem('adminToken')
       localStorage.removeItem('user')
       alert("Session expired. Please login again.")
       window.location.href = '/login'

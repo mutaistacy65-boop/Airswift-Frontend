@@ -64,7 +64,7 @@ const AuthService = {
       console.log('  Token source:', tokenSource);
       console.log('  Token value:', token ? `${token.substring(0, 20)}...` : 'undefined');
 
-      // Store tokens and user data
+      // Store tokens only
       if (token) {
         localStorage.setItem('token', token);
         localStorage.setItem('accessToken', token);
@@ -77,19 +77,6 @@ const AuthService = {
         console.error('   - data.accessToken');
         console.error('   - data.data.token');
         console.error('   - data.data.accessToken');
-      }
-
-      // Store user data (check multiple locations)
-      let user = null;
-      if (data.user) {
-        user = data.user;
-      } else if (data.data?.user) {
-        user = data.data.user;
-      }
-
-      if (user) {
-        localStorage.setItem('user', JSON.stringify(user));
-        console.log('✅ User data saved to localStorage');
       }
 
       // Reconnect socket with new token

@@ -1,127 +1,85 @@
-import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { useSocket } from '@/hooks/useSocket'
-import API from '@/services/apiClient'
+import React, { useState } from 'react'
+import { Bell } from 'lucide-react'
+import { useNotification } from '@/context/NotificationContext'
 
 export default function NotificationBell() {
-  const [notifications, setNotifications] = useState<any[]>([])
-  const [messages, setMessages] = useState<any[]>([])
-  const [unreadCount, setUnreadCount] = useState(0)
+  const { notifications, removeNotification, clearNotifications } = useNotification()
   const [showDropdown, setShowDropdown] = useState(false)
-  const { subscribe } = useSocket()
 
-  useEffect(() => {
-    fetchData()
-    
-    // Subscribe to new messages and notifications
-    subscribe('new_message', handleNewMessage)
-    subscribe('new_notification', handleNewNotification)
-  }, [subscribe])
-
-  const fetchData = async () => {
-    try {
-      const [notifRes, msgRes] = await Promise.all([
-        API.get('/notifications'),
-        API.get('/messages'),
-      ])
-      setNotifications(notifRes.data.notifications || [])
-      setMessages(msgRes.data.messages || [])
-      setUnreadCount((notifRes.data.unreadCount || 0) + (msgRes.data.unreadCount || 0))
-    } catch (error) {
-      console.error('Error fetching notifications:', error)
-    }
-  }
-
-  const handleNewMessage = (data: any) => {
-    setMessages(prev => [data.message, ...prev])
-    setUnreadCount(prev => prev + 1)
-  }
-
-  const handleNewNotification = (data: any) => {
-    setNotifications(prev => [data.notification, ...prev])
-    setUnreadCount(prev => prev + 1)
-  }
-
-  const markAsRead = async (id: string, type: 'notification' | 'message') => {
-    try {
-      const endpoint = type === 'notification' 
-        ? `/notifications/${id}`
-        : `/messages/${id}`
-      await API.put(endpoint, { is_read: true })
-      
-      if (type === 'notification') {
-        setNotifications(notifications.map(n => (n._id === id ? { ...n, is_read: true } : n)))
-      } else {
-        setMessages(messages.map(m => (m._id === id ? { ...m, is_read: true } : m)))
-      }
-      
-      setUnreadCount(prev => Math.max(0, prev - 1))
-    } catch (error) {
-      console.error('Error marking as read:', error)
-    }
-  }
+  const unreadCount = notifications.filter(n => n.type === 'info' || n.type === 'warning').length
 
   return (
     <div className="relative">
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className="relative p-2 text-gray-600 hover:text-gray-900"
+        className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-full"
       >
-        🔔
+        <Bell className="h-6 w-6" />
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-            {unreadCount > 99 ? '99+' : unreadCount}
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border z-50">
           <div className="p-4 border-b">
-            <h3 className="font-bold text-gray-900">Notifications</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Notifications</h3>
+              {notifications.length > 0 && (
+                <button
+                  onClick={clearNotifications}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="max-h-64 overflow-y-auto">
-            {notifications.length === 0 && messages.length === 0 ? (
-              <div className="p-4 text-center text-gray-600">No notifications</div>
+          <div className="max-h-96 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">
+                No notifications
+              </div>
             ) : (
-              <>
-                {notifications.map(notif => (
-                  <div
-                    key={notif._id}
-                    className={`p-4 border-b hover:bg-gray-50 cursor-pointer ${
-                      notif.is_read ? 'opacity-75' : 'bg-blue-50'
-                    }`}
-                    onClick={() => markAsRead(notif._id, 'notification')}
-                  >
-                    <h4 className="font-medium text-gray-900">{notif.title}</h4>
-                    <p className="text-sm text-gray-600 truncate">{notif.message}</p>
+              notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`p-4 border-b hover:bg-gray-50 ${
+                    notification.type === 'error' ? 'bg-red-50' :
+                    notification.type === 'warning' ? 'bg-yellow-50' :
+                    notification.type === 'success' ? 'bg-green-50' : ''
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900">{notification.message}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {notification.timestamp ? new Date(notification.timestamp).toLocaleString() : ''}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => removeNotification(notification.id)}
+                      className="ml-2 text-gray-400 hover:text-gray-600"
+                    >
+                      ×
+                    </button>
                   </div>
-                ))}
-                {messages.map(msg => (
-                  <div
-                    key={msg._id}
-                    className={`p-4 border-b hover:bg-gray-50 cursor-pointer ${
-                      msg.is_read ? 'opacity-75' : 'bg-blue-50'
-                    }`}
-                    onClick={() => markAsRead(msg._id, 'message')}
-                  >
-                    <h4 className="font-medium text-gray-900">{msg.subject}</h4>
-                    <p className="text-sm text-gray-600 truncate">{msg.message}</p>
-                  </div>
-                ))}
-              </>
+                </div>
+              ))
             )}
           </div>
-
-          <div className="p-4 border-t text-center">
-            <Link href="/messages">
-              <a className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                View All Messages →
-              </a>
-            </Link>
-          </div>
         </div>
+      )}
+
+      {/* Overlay to close dropdown when clicking outside */}
+      {showDropdown && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setShowDropdown(false)}
+        />
       )}
     </div>
   )

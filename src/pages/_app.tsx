@@ -20,7 +20,7 @@ import '@/styles/globals.css'
  *
  * Use the shared API client for backend requests:
  *   API.get('/profile')
- *   API.post('/applications', data)
+ *   API.post('/applications/apply', data)
  */
 
 export default function App({ Component, pageProps }: AppProps) {

@@ -10,11 +10,13 @@ export default function Dashboard() {
   useEffect(() => {
     if (!isLoading) {
       if (!isAuthenticated || !user) {
-        router.push('/login')
-      } else if (user.role === 'admin') {
-        router.push('/admin/dashboard')
+        router.replace('/login')
+      } else if (user?.role?.toLowerCase() === 'admin') {
+        router.replace('/admin/dashboard')
+      } else if (user?.hasSubmittedApplication) {
+        router.replace('/job-seeker/dashboard')
       } else {
-        router.push('/job-seeker/dashboard')
+        router.replace('/apply')
       }
     }
   }, [isAuthenticated, user, isLoading, router])

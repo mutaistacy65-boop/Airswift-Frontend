@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 import API from '@/services/apiClient'; // Centralized API client with auth interceptor
 import JobSearchDropdown from './JobSearchDropdown';
-import { getStoredUser } from '@/utils/authUtils';
+import { useAuth } from '@/context/AuthContext';
 
 interface SafeApplicationFormProps {
   onSuccess?: () => void;
@@ -33,6 +33,8 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
     nationalId: useRef(null),
     passport: useRef(null)
   };
+
+  const { user, refreshUser } = useAuth();
 
   // Handle file selection
   const handleFileChange = (
@@ -147,8 +149,7 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
     console.log('CV at submit:', cvFile);
 
     // 🚫 Check if user is admin - admins cannot submit applications
-    const storedUser = getStoredUser()
-    if (storedUser?.role === 'admin') {
+    if (user?.role === 'admin') {
       setError('❌ Admin users cannot submit applications. Please login as a job seeker.');
       return;
     }
@@ -194,55 +195,31 @@ export default function SafeApplicationForm({ onSuccess }: SafeApplicationFormPr
       }
 
       try {
-        const response = await API.post("/applications", formDataToSend);
+        const response = await API.post('/applications/apply', formDataToSend);
 
-        console.log("✅ Application submitted successfully");
+        console.log('✅ Application submitted successfully');
 
-        setSuccess("Application submitted successfully!");
+        setSuccess('Application submitted successfully!');
 
-        // 🎉 Show success toast notification
         toast.success('🎉 Application submitted successfully! Redirecting to dashboard...', {
           duration: 4000,
-          position: 'top-center'
+          position: 'top-center',
         });
 
-        // Save application data to localStorage
-        localStorage.setItem("latestApplication", JSON.stringify(response.data));
+        localStorage.setItem('latestApplication', JSON.stringify(response.data));
 
-        // 📝 IMPORTANT: Fetch fresh user profile after submission
         try {
-          const profileRes = await API.get('/users/profile');
-          const updatedUser = profileRes.data?.user || profileRes.data;
-          
-          if (updatedUser) {
-            console.log("🔄 Updating user state with fresh profile:", updatedUser);
-            localStorage.setItem("user", JSON.stringify(updatedUser));
-            
-            // 🔄 Update AuthContext if available
-            const storedToken = localStorage.getItem('token') || localStorage.getItem('accessToken');
-            if (storedToken && window.dispatchEvent) {
-              // Dispatch custom event that AuthContext can listen to
-              window.dispatchEvent(new CustomEvent('userUpdated', { detail: updatedUser }));
-            }
-          }
+          await refreshUser();
+          console.log('🔄 AuthContext refreshed after application submission');
         } catch (profileErr) {
-          console.warn("⚠️ Could not fetch fresh profile, using submitted data");
-          // Fallback: manually update user state with submission response
-          const currentUser = JSON.parse(localStorage.getItem("user") || '{}');
-          const updatedUser = {
-            ...currentUser,
-            hasSubmittedApplication: true
-          };
-          localStorage.setItem("user", JSON.stringify(updatedUser));
+          console.warn('⚠️ Could not refresh AuthContext after submission:', profileErr);
         }
 
-        // Call onSuccess callback if provided
         if (onSuccess) {
           onSuccess();
         }
 
-        // ✅ Redirect to dashboard after successful submission
-        console.log("🔄 Redirecting to /job-seeker/dashboard");
+        console.log('🔄 Redirecting to /job-seeker/dashboard');
         setTimeout(() => {
           router.push('/job-seeker/dashboard');
         }, 1000);
