@@ -1,6 +1,7 @@
 // Base API URL
 import API from '@/services/apiClient'
 import { reconnectSocket } from '@/services/socket'
+import { clearAuthData } from '@/utils/authUtils'
 
 const AuthService = {
   // Registration with email verification
@@ -25,6 +26,8 @@ const AuthService = {
   // Login
   login: async (email: string, password: string) => {
     try {
+      clearAuthData();
+
       const result = await API.post('/auth/login', {
         email,
         password
@@ -103,6 +106,8 @@ const AuthService = {
   // Login User (Simplified version for new login page)
   loginUser: async (credentials: { email: string; password: string }) => {
     try {
+      clearAuthData();
+
       const result = await API.post('/auth/login', credentials);
       const data = result.data;
 

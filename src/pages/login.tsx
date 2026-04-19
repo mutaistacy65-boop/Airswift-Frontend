@@ -3,10 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { loginUser } from "@/services/auth";
+import { useAuth } from "@/context/AuthContext";
+import { clearAuth, saveAuthState } from "@/utils/authHelpers";
 import { Eye, EyeOff } from "lucide-react";
+import { GoogleLogin } from "@react-oauth/google";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,13 +24,19 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const res = await loginUser({ email, password });
+      // Clear any existing auth state first
+      clearAuth();
 
+      const res = await loginUser({ email, password });
       const { token, user } = res;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      // Save auth state
+      saveAuthState(token, user);
 
+      // Update context
+      await login({ token, user });
+
+      // Role-based redirect
       if (user.role === "admin") {
         router.replace("/admin/dashboard");
       } else {
@@ -40,10 +50,55 @@ export default function LoginPage() {
     }
   };
 
-  // 🔥 Google Login Redirect
-  const handleGoogleLogin = () => {
-    window.location.href =
-      "https://airswift-backend-fjt3.onrender.com/auth/google";
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+    setError("");
+
+    try {
+      // Clear any existing auth state first
+      clearAuth();
+
+      // Send Google credential to backend
+      const res = await fetch("https://airswift-backend-fjt3.onrender.com/auth/google", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          credential: credentialResponse.credential,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Google authentication failed");
+      }
+
+      const { token, user } = await res.json();
+
+      // Only allow non-admin users to login with Google
+      if (user.role === "admin") {
+        setError("Admin login not allowed with Google. Please use email/password.");
+        return;
+      }
+
+      // Save auth state
+      saveAuthState(token, user);
+
+      // Update context
+      await login({ token, user });
+
+      // Redirect to user dashboard
+      router.replace("/user/dashboard");
+
+    } catch (err) {
+      setError(err.message || "Google login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("Google login failed");
   };
 
   return (
@@ -142,16 +197,17 @@ export default function LoginPage() {
         </div>
 
         {/* 🔥 Google Login */}
-        <button
-          onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center gap-2 border py-2 rounded-lg hover:bg-gray-50 transition"
-        >
-          <img
-            src="https://www.svgrepo.com/show/475656/google-color.svg"
-            className="h-5 w-5"
+        <div className="w-full">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            theme="outline"
+            size="large"
+            text="continue_with"
+            shape="rectangular"
+            width="100%"
           />
-          Continue with Google
-        </button>
+        </div>
 
         <p className="text-center text-sm mt-6">
           Don’t have an account?{" "}

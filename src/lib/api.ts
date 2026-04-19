@@ -19,19 +19,25 @@ console.log('📡 API baseURL set to:', baseURL)
 
 // ✅ REQUEST INTERCEPTOR: Add Authorization header with Bearer token
 api.interceptors.request.use((config) => {
+  const url = config.url || ''
   const token = localStorage.getItem('token')
 
+  const isAuthRequest = url.includes('/auth/login') ||
+                       url.includes('/auth/register') ||
+                       url.includes('/auth/google')
+
   console.log('📤 API REQUEST INTERCEPTOR:')
-  console.log('   URL:', config.url)
+  console.log('   URL:', url)
   console.log('   Method:', config.method?.toUpperCase())
   console.log('   Token in localStorage:', token ? '✓ EXISTS' : '✗ MISSING')
 
-  // ✅ FIX: Add Authorization header if token exists
-  if (token) {
+  if (!isAuthRequest && token) {
     config.headers.Authorization = `Bearer ${token}`
     console.log('   ✅ Authorization header set: Bearer [token]')
-  } else {
+  } else if (!isAuthRequest && !token) {
     console.warn('   ⚠️ No token found - request may fail with 401')
+  } else {
+    console.log('   ℹ️ Skipping Authorization header for auth request')
   }
 
   return config

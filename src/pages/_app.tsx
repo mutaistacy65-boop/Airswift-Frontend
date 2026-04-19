@@ -6,6 +6,7 @@ import { NotificationProvider } from '@/context/NotificationContext'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import UserLocationEmitter from '@/components/UserLocationEmitter'
 import { Toaster } from 'react-hot-toast'
+import { GoogleOAuthProvider } from '@react-oauth/google'
 // @ts-ignore
 import 'leaflet/dist/leaflet.css'
 // @ts-ignore
@@ -42,13 +43,17 @@ export default function App({ Component, pageProps }: AppProps) {
     }
   }, [])
 
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""
+
   return (
     <ErrorBoundary>
       <NotificationProvider>
         <AuthProvider>
-          <UserLocationEmitter />
-          <Toaster position="top-right" toastOptions={{ duration: 3500 }} />
-          <Component {...pageProps} />
+          <GoogleOAuthProvider clientId={googleClientId}>
+            <UserLocationEmitter />
+            <Toaster position="top-right" toastOptions={{ duration: 3500 }} />
+            <Component {...pageProps} />
+          </GoogleOAuthProvider>
         </AuthProvider>
       </NotificationProvider>
     </ErrorBoundary>

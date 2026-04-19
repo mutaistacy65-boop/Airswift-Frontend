@@ -5,6 +5,7 @@ import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
 import { initSocket, reconnectSocket, disconnectSocket, getSocket } from '@/services/socket'
 import API from '@/services/apiClient'
+import { clearAuthData } from '@/utils/authUtils'
 
 interface User {
   id?: string
@@ -134,6 +135,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user])
 
   const login = async (data: any) => {
+    clearAuthData()
+
     // 🔒 Step 1: Validate token exists
     if (!data.token) {
       console.error('❌ Login failed: No token in response')
@@ -185,13 +188,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // 🔌 Disconnect socket
     disconnectSocket()
 
-    // Clear localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      localStorage.removeItem('role')
-      localStorage.removeItem('permissions')
-    }
+    // Clear localStorage auth state
+    clearAuthData()
 
     // 🟤 Toast notification
     toast.success(`Goodbye, ${userName}! See you soon 👋`, {
