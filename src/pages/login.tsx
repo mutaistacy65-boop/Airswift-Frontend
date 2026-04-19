@@ -140,7 +140,7 @@ export default function LoginPage() {
             <input
               type="email"
               className="w-full mt-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="admin@example.com"
+              placeholder="user@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
