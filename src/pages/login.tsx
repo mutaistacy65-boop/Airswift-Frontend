@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
-import { loginUser } from "@/services/auth";
 import { useAuth } from "@/context/AuthContext";
 import { clearAuth } from "@/utils/authHelpers";
-import { getPostLoginPath, validateEmailForAuth } from "@/utils/roleUtils";
+import { validateEmailForAuth } from "@/utils/roleUtils";
 import { Eye, EyeOff } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
 import AuthService from "@/services/authService";
@@ -27,7 +26,6 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // Email validation and role assignment logic
       const emailValidation = validateEmailForAuth(email);
       if (!emailValidation.isValid) {
         setError(emailValidation.error);
@@ -38,8 +36,8 @@ export default function LoginPage() {
 
       const result = await AuthService.login(email, password);
 
-      if (result.success) {
-        // ✅ This handles the redirect automatically
+      if (result.success && result.token && result.user) {
+        await login({ token: result.token, user: result.user });
         redirectAfterLogin(result.user, router);
       } else {
         setError(result.error || "Login failed");
@@ -96,8 +94,9 @@ export default function LoginPage() {
         return;
       }
 
-      AuthService.storeToken(token, user);
-      redirectAfterLogin(user, router);
+      const normalizedUser = AuthService.normalizeUser(user);
+      await login({ token, user: normalizedUser });
+      redirectAfterLogin(normalizedUser, router);
 
     } catch (err) {
       setError(err.message || "Google login failed");
