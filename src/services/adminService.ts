@@ -45,42 +45,42 @@ export const adminService = {
 
   // Applications Management
   getAllApplications: async (params?: any) => {
-    const response = await API.get('/admin/applications', { params })
+    const response = await API.get('/applications/admin', { params })
     return response.data
   },
 
   getApplication: async (id: string) => {
-    const response = await API.get(`/admin/applications/${id}`)
+    const response = await API.get(`/applications/${id}`)
     return response.data
   },
 
   updateApplicationStatus: async (id: string, status: string, notes?: string) => {
-    const response = await API.patch(`/admin/applications/${id}`, { status, notes })
+    const response = await API.patch(`/applications/${id}/status`, { status, notes })
     return response.data
   },
 
   verifyApplicationDocs: async (id: string) => {
-    const response = await API.patch(`/admin/applications/${id}/verify-docs`)
+    const response = await API.patch(`/applications/${id}`, { status: 'verified' })
     return response.data
   },
 
   shortlistApplication: async (id: string) => {
-    const response = await API.patch(`/admin/applications/${id}/shortlist`)
+    const response = await API.patch(`/applications/${id}/shortlist`, { status: 'shortlisted' })
     return response.data
   },
 
   addApplicationNote: async (id: string, note: string) => {
-    const response = await API.post(`/admin/applications/${id}`, { note })
+    const response = await API.put(`/applications/${id}/notes`, { notes: note })
     return response.data
   },
 
   bulkUpdateApplications: async (applicationIds: string[], status: string) => {
-    const response = await API.patch('/admin/applications', {
-      applicationIds,
-      status,
-      bulkAction: 'status_update'
-    })
-    return response.data
+    // Note: Check if backend supports bulk operations - may need to loop through IDs
+    const promises = applicationIds.map(id =>
+      API.patch(`/applications/${id}/status`, { status })
+    )
+    const responses = await Promise.all(promises)
+    return { success: true, updated: responses.length }
   },
 
   // Interview Management
@@ -271,7 +271,7 @@ export const adminService = {
 
   // System Health
   getSystemHealth: async () => {
-    const response = await API.get('/admin/health')
+    const response = await API.get('/admin/system/health')
     return response.data
   },
 
@@ -283,10 +283,12 @@ export const adminService = {
 
   // Bulk Operations on Applications
   bulkDeleteApplications: async (applicationIds: string[], reason?: string) => {
-    const response = await API.delete('/admin/applications/bulk-delete', {
-      data: { applicationIds, reason }
-    })
-    return response.data
+    // Call delete for each application ID
+    const promises = applicationIds.map(id =>
+      API.delete(`/applications/${id}`)
+    )
+    const responses = await Promise.all(promises)
+    return { success: true, deleted: responses.length }
   },
 
   sendInterviewInvitation: async (applicationId: string, interviewData: any) => {

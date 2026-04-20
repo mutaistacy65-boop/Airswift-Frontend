@@ -6,6 +6,7 @@ import ContinueDraftModal from './ContinueDraftModal'
 import JobSearchDropdown from './JobSearchDropdown'
 import { debugToken, forcePostWithToken } from '@/utils/authDebug'
 import { useAuth } from '@/context/AuthContext'
+import { applicationService } from '@/services/applicationService'
 
 interface ApplicationFormProps {
   onSuccess?: () => void
@@ -263,54 +264,32 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
         token: localStorage.getItem('token') ? 'present' : 'missing'
       })
 
-      // Extract values to match exact specification
-      const { jobId, nationalId, phone, passport: passportFile, cv: cvFile } = applicationData;
+      // Extract values to match API specification
+      const { jobId, nationalId, phone, passport: passportFile, cv: cvFile } = applicationData
 
-      const formData = new FormData();
+      // Call application service to submit
+      const result = await applicationService.submitApplication(
+        jobId,
+        phone,
+        cvFile,
+        passportFile,
+        nationalId
+      )
 
-      formData.append("jobId", jobId);
-      formData.append("nationalId", nationalId);
-      formData.append("phone", phone);
-      formData.append("passport", passportFile);
-      formData.append("cv", cvFile);
+      console.log('✅ Application submitted successfully:', result)
 
-      console.log('📋 Sending FormData with keys:', Array.from(formData.keys()));
-
-      // 🔍 Debug: Log all FormData entries before sending
-      console.log('🔍 FormData entries debug:');
-      for (const pair of formData.entries()) {
-        console.log(`   ${pair[0]}:`, pair[1] instanceof File ? `File(${pair[1].name}, ${pair[1].size} bytes)` : pair[1]);
+      alert('Application submitted successfully!')
+      
+      // Clear drafts after successful submission
+      localStorage.removeItem(STORAGE_KEY)
+      try {
+        await API.delete('/drafts')
+      } catch (error) {
+        console.log('Backend draft cleanup failed')
       }
-
-      // ✅ DO NOT manually set Authorization header - interceptor handles it
-      // ✅ DO NOT set Content-Type for FormData - axios handles it automatically
-
-      let response;
-
-      if (debugMode) {
-        // 🚨 HARD FIX: Force attach token manually (bypass interceptor)
-        console.log('🚨 USING HARD FIX MODE - Force attaching token manually');
-        response = await forcePostWithToken('/applications/apply', formData);
-      } else {
-        // ✅ NORMAL MODE: Use API instance with interceptor
-        console.log('✅ USING NORMAL MODE - API instance with interceptor');
-        response = await API.post('/applications/apply', formData);
-      }
-
-      const result = response.data
-
-      if (result.success) {
-        alert('Application submitted successfully!')
-        // Clear drafts after successful submission
-        localStorage.removeItem(STORAGE_KEY)
-        try {
-          await API.delete('/drafts')
-        } catch (error) {
-          console.log('Backend draft cleanup failed')
-        }
-        if (onSuccess) onSuccess()
-        router.push('/job-seeker/dashboard')
-      }
+      
+      if (onSuccess) onSuccess()
+      router.push('/job-seeker/dashboard')
     } catch (error: any) {
       console.error('Application submission error:', error)
       console.error('Error response:', error.response?.data || error.message)
@@ -320,13 +299,15 @@ export default function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
       if (error.response?.data?.message) {
         message = error.response.data.message
-      } else if (error.status === 401) {
+      } else if (error.response?.status === 401) {
         message = 'Authentication failed. Please login again.'
-      } else if (error.status === 400) {
+      } else if (error.response?.status === 400) {
         message = 'Invalid application data. Please check all fields.'
-      } else if (error.status === 413) {
+      } else if (error.response?.status === 403) {
+        message = 'You do not have permission to submit applications.'
+      } else if (error.response?.status === 413) {
         message = 'Files are too large. Please reduce file sizes.'
-      } else if (error.status >= 500) {
+      } else if (error.response?.status >= 500) {
         message = 'Server error. Please try again later.'
       } else if (!navigator.onLine) {
         message = 'No internet connection. Please check your connection.'

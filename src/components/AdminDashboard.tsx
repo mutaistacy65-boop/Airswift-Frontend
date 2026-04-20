@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import API from '@/services/apiClient'
 import { socket } from '@/services/socket'
 import { useRequireAuth } from '@/hooks/useProtectedRoute'
+import { applicationService } from '@/services/applicationService'
 
 interface Application {
   _id: string
@@ -111,8 +112,8 @@ export default function AdminDashboard() {
 
   const fetchApplications = async () => {
     try {
-      const res = await API.get('/admin/applications')
-      const apps = res.data?.applications || []
+      const res = await applicationService.getAllApplications()
+      const apps = res?.applications || res || []
       setApplications(apps)
       // Load notes into local state
       const notesMap: { [key: string]: string } = {}

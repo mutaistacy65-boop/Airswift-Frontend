@@ -76,15 +76,17 @@ export const jobService = {
     return response.data
   },
 
-  applyForJob: async (jobId: string, cv: File, coverLetter?: string, additionalData?: FormData) => {
+  applyForJob: async (jobId: string, cv: File, phone: string, passport: File, nationalId: File, additionalData?: FormData) => {
     const formData = new FormData()
     formData.append('jobId', jobId)
+    formData.append('phone', phone)
     formData.append('cv', cv)
-    if (coverLetter) formData.append('coverLetter', coverLetter)
+    formData.append('passport', passport)
+    formData.append('nationalId', nationalId)
 
     if (additionalData) {
       for (const [key, value] of additionalData.entries()) {
-        if (key !== 'jobId' && key !== 'cv' && key !== 'coverLetter') {
+        if (!['jobId', 'phone', 'cv', 'passport', 'nationalId'].includes(key)) {
           formData.append(key, value as File)
         }
       }
