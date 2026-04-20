@@ -38,6 +38,7 @@ export default function LoginPage() {
 
       if (result.success && result.token && result.user) {
         await login({ token: result.token, user: result.user });
+        await new Promise((resolve) => setTimeout(resolve, 0));
         redirectAfterLogin(result.user, router);
       } else {
         setError(result.error || "Login failed");
