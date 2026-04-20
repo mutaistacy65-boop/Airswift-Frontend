@@ -8,6 +8,8 @@ import { clearAuth } from "@/utils/authHelpers";
 import { getPostLoginPath, validateEmailForAuth } from "@/utils/roleUtils";
 import { Eye, EyeOff } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
+import AuthService from "@/services/authService";
+import { redirectAfterLogin } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,13 +20,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (!user) return;
-
-    const redirectPath = getPostLoginPath(user.role, user.hasSubmittedApplication)
-    router.replace(redirectPath)
-  }, [user, router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -41,11 +36,14 @@ export default function LoginPage() {
 
       clearAuth();
 
-      const res = await loginUser({ email, password });
-      const { token } = res;
+      const result = await AuthService.login(email, password);
 
-      await login({ token });
-      await refreshUser();
+      if (result.success) {
+        // ✅ This handles the redirect automatically
+        redirectAfterLogin(result.user, router);
+      } else {
+        setError(result.error || "Login failed");
+      }
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Login failed");
     } finally {
@@ -98,8 +96,8 @@ export default function LoginPage() {
         return;
       }
 
-      await login({ token });
-      await refreshUser();
+      AuthService.storeToken(token, user);
+      redirectAfterLogin(user, router);
 
     } catch (err) {
       setError(err.message || "Google login failed");

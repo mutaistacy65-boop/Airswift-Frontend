@@ -4,9 +4,11 @@ import { AuthProvider } from '@/context/AuthContext';
 
 // Mock next/router
 const mockPush = jest.fn();
+const mockReplace = jest.fn();
 jest.mock('next/router', () => ({
   useRouter: () => ({
     push: mockPush,
+    replace: mockReplace,
     pathname: '/',
   }),
 }));
@@ -18,12 +20,18 @@ describe('AuthContext Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockPush.mockClear();
+    mockReplace.mockClear();
     localStorage.clear();
   });
 
   test('initial state has no user and is loading', async () => {
     const wrapper = ({ children }: any) => <AuthProvider>{children}</AuthProvider>;
     const { result } = renderHook(() => useAuth(), { wrapper });
+
+    // Wait for the provider to mount
+    await waitFor(() => {
+      expect(result.current).toBeDefined();
+    });
 
     // Wait for initial loading to complete
     await waitFor(() => {
@@ -33,11 +41,17 @@ describe('AuthContext Integration Tests', () => {
     expect(result.current.user).toBeNull();
   });
 
-  test('login sets user data', () => {
+  test('login sets user data', async () => {
     const wrapper = ({ children }: any) => <AuthProvider>{children}</AuthProvider>;
     const { result } = renderHook(() => useAuth(), { wrapper });
 
+    // Wait for the provider to mount
+    await waitFor(() => {
+      expect(result.current).toBeDefined();
+    });
+
     const userData = {
+      token: 'test-token',
       user: {
         id: '123',
         email: 'testuser@example.com',
@@ -54,12 +68,18 @@ describe('AuthContext Integration Tests', () => {
     expect(result.current.user?.role).toBe('user');
   });
 
-  test('logout clears user data and redirects', () => {
+  test('logout clears user data and redirects', async () => {
     const wrapper = ({ children }: any) => <AuthProvider>{children}</AuthProvider>;
     const { result } = renderHook(() => useAuth(), { wrapper });
 
+    // Wait for the provider to mount
+    await waitFor(() => {
+      expect(result.current).toBeDefined();
+    });
+
     // First login
     const userData = {
+      token: 'test-token',
       user: {
         id: '123',
         email: 'testuser@example.com',
@@ -80,7 +100,7 @@ describe('AuthContext Integration Tests', () => {
     });
 
     expect(result.current.user).toBeNull();
-    expect(mockPush).toHaveBeenCalledWith('/login');
+    expect(mockReplace).toHaveBeenCalledWith('/login');
   });
 
 });

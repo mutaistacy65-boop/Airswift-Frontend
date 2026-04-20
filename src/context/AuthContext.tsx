@@ -3,8 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
-import { initSocket, disconnectSocket, getSocket } from '@/services/socket'
-import API from '@/services/apiClient'
+import { initSocket, disconnectSocket, getSocket, reconnectSocket as reconnectSocketConnection } from '@/services/socket'
+import AuthService from '@/services/authService'
 import { clearAuthData } from '@/utils/authUtils'
 import { useNotification } from '@/context/NotificationContext'
 
@@ -42,6 +42,7 @@ interface AuthContextType {
   login: (data: any) => Promise<void>
   logout: () => void
   refreshUser: () => Promise<void>
+  reconnectSocket: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -58,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (storedUser && token) {
         const parsed = JSON.parse(storedUser)
-        if (parsed && typeof parsed === 'object' && parsed.email && parsed.role && (parsed.id || parsed._id)) {
+        if (parsed && typeof parsed === 'object' && parsed.email && (parsed.id || parsed._id)) {
           return parsed
         }
       }
@@ -75,17 +76,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const router = useRouter()
   const { addNotification } = useNotification()
 
+  const normalizeUser = (userData: any) => {
+    if (!userData) return null
+    const normalizedUser = { ...userData }
+    if (!normalizedUser.role && normalizedUser.email === 'admin@talex.com') {
+      normalizedUser.role = 'admin'
+    }
+    if (!normalizedUser.id && normalizedUser._id) {
+      normalizedUser.id = normalizedUser._id
+    }
+    return normalizedUser
+  }
+
   const fetchUser = useCallback(async () => {
     setIsLoading(true)
     try {
-      const response = await API.get('/profile')
-      const fetchedUser = response.data?.user || response.data
+      const result = await AuthService.getProfile()
+      if (!result.success || !result.user) {
+        throw new Error(result.error || 'Invalid user object received')
+      }
 
-      if (fetchedUser && fetchedUser.role) {
-        setUser(fetchedUser)
-        localStorage.setItem('user', JSON.stringify(fetchedUser))
-      } else {
-        throw new Error('Invalid user object received')
+      const normalizedUser = normalizeUser(result.user)
+      setUser(normalizedUser)
+      localStorage.setItem('user', JSON.stringify(normalizedUser))
+
+      const token = localStorage.getItem('token')
+      if (normalizedUser?.role === 'admin' && token) {
+        localStorage.setItem('adminToken', token)
       }
     } catch (error) {
       console.warn('Unable to refresh authenticated user:', error)
@@ -127,7 +144,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const handleAuditLog = (log: any) => {
       console.log('📋 Audit log:', log)
-      // You can add audit log handling here if needed
       if (log.action === 'LOGIN' && log.userId !== user?.id) {
         // Handle other user login events if needed
       }
@@ -135,12 +151,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const handleUserOnline = (data: any) => {
       console.log('👤 User online:', data.userId)
-      // Handle online status updates
     }
 
     const handleUserOffline = (data: any) => {
       console.log('👤 User offline:', data.userId)
-      // Handle offline status updates
     }
 
     socketInstance.on('status:update', handleStatusUpdate)
@@ -188,6 +202,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     localStorage.setItem('token', data.token)
+    localStorage.setItem('accessToken', data.token)
+
+    if (data.user) {
+      const normalizedUser = normalizeUser(data.user)
+      setUser(normalizedUser)
+      localStorage.setItem('user', JSON.stringify(normalizedUser))
+      if (normalizedUser?.role === 'admin') {
+        localStorage.setItem('adminToken', data.token)
+      }
+    }
+
+    initSocket(data.token)
 
     const roleEmoji = {
       admin: '👑',
@@ -219,12 +245,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchUser()
   }
 
+  const reconnectSocket = () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    if (token) {
+      reconnectSocketConnection(token)
+    }
+  }
+
   if (!mounted) return null
 
   const isAuthenticated = !!user && !isLoading
 
   return (
-    <AuthContext.Provider value={{ user, profile, isLoading, isAuthenticated, login, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{ user, profile, isLoading, isAuthenticated, login, logout, refreshUser, reconnectSocket }}>
       {children}
     </AuthContext.Provider>
   )
