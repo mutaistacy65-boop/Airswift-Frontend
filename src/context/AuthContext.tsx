@@ -5,7 +5,6 @@ import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
 import { initSocket, disconnectSocket, getSocket, reconnectSocket as reconnectSocketConnection } from '@/services/socket'
 import AuthService from '@/services/authService'
-import { clearAuthData } from '@/utils/authUtils'
 import { useNotification } from '@/context/NotificationContext'
 
 interface User {
@@ -115,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.warn('Unable to refresh authenticated user:', error)
-      clearAuthData()
+      AuthService.clearAuthData()
       setUser(null)
       return null
     } finally {
@@ -205,7 +204,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (data: any) => {
     setIsLoading(true)
-    clearAuthData()
+    AuthService.clearAuthData()
 
     if (!data.token) {
       console.error('❌ Login failed: No token in response')
@@ -213,27 +212,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Login failed: No token received')
     }
 
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('accessToken', data.token)
+    const normalizedUser = normalizeUser(data.user)
+    setUser(normalizedUser)
+    AuthService.storeToken(data.token, normalizedUser)
 
-    if (data.user) {
-      const normalizedUser = normalizeUser(data.user)
-      setUser(normalizedUser)
-      localStorage.setItem('user', JSON.stringify(normalizedUser))
-      if (normalizedUser?.role === 'admin') {
-        localStorage.setItem('adminToken', data.token)
-      }
+    if (data.token) {
+      initSocket(data.token)
     }
-
-    initSocket(data.token)
 
     const roleEmoji = {
       admin: '👑',
       recruiter: '💼',
       user: '👤',
-    }[data.user?.role?.toLowerCase?.()] || '✅'
+    }[normalizedUser?.role] || '✅'
 
-    toast.success(`Welcome back, ${data.user?.name || 'User'}!`, {
+    toast.success(`Welcome back, ${normalizedUser?.name || 'User'}!`, {
       icon: roleEmoji,
       duration: 4000,
     })
@@ -245,7 +238,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null)
     setProfile(null)
     disconnectSocket()
-    clearAuthData()
+    AuthService.clearAuthData()
 
     toast.success(`Goodbye, ${userName}! See you soon 👋`, {
       duration: 3000,
