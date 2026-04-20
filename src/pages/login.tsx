@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "@/context/AuthContext";
 import { clearAuth } from "@/lib/auth";
@@ -36,20 +36,14 @@ export default function LoginPage() {
 
       const result = await AuthService.login(email, password);
 
-      if (result && result.token && result.user) {
+      if (result.success) {
         const normalizedUser = AuthService.normalizeUser(result.user);
-        console.log('🔐 [Login] Received result:', {
-          email: normalizedUser?.email,
-          role: normalizedUser?.role,
-          id: normalizedUser?.id || normalizedUser?._id,
-        });
+        console.log('✅ Login successful, redirecting...', normalizedUser);
 
         await login({ token: result.token, user: normalizedUser });
-
-        console.log('➡️ Redirecting after login to:', normalizedUser?.role?.toLowerCase() === 'admin' ? '/admin/dashboard' : 'role-based route')
         await redirectAfterLogin(normalizedUser, router);
       } else {
-        setError(result?.error || 'Login failed');
+        setError(result.error || 'Login failed');
       }
     } catch (err) {
       console.error("❌ [Login] Error:", err);
@@ -117,6 +111,12 @@ export default function LoginPage() {
   const handleGoogleError = () => {
     setError("Google login failed");
   };
+
+  useEffect(() => {
+    if (user && router.pathname === '/login') {
+      redirectAfterLogin(user, router);
+    }
+  }, [user, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
