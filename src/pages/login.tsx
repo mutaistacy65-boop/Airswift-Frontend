@@ -118,11 +118,11 @@ export default function LoginPage() {
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
 
         {/* 🔥 LOGO */}
-        <div className="flex justify-center mb-4">
+        <div className="flex justify-center mb-6">
           <img
-            src="/logo.png" // put logo in /public folder
-            alt="Company Logo"
-            className="h-12"
+            src="/logo.svg"
+            alt="TALEX Logo"
+            className="h-16 w-auto"
           />
         </div>
 

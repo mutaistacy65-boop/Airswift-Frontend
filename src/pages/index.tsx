@@ -37,6 +37,12 @@ const stats = [
 const Home: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
+      {/* Logo Header */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center">
+          <img src="/logo.svg" alt="TALEX Logo" className="h-12 w-auto" />
+        </div>
+      </header>
       <main>
         <section className="relative overflow-hidden bg-gradient-to-br from-primary via-teal to-secondary text-white py-24 lg:py-32">
           <div className="absolute inset-0 opacity-20">

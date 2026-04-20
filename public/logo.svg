@@ -1,0 +1,16 @@
+<svg viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Maple Leaf -->
+  <g transform="translate(25, 25)">
+    <!-- Leaf shape -->
+    <path d="M 0,-15 L 4,-8 L 3,-2 L 8,-5 L 10,2 L 15,-1 L 12,6 L 18,8 L 10,10 L 12,16 L 5,12 L 3,18 L 0,10 L -3,18 L -5,12 L -12,16 L -10,10 L -18,8 L -15,-1 L -10,2 L -8,-5 L -3,-2 L -4,-8 Z" fill="#D32F2F" />
+  </g>
+
+  <!-- Curved line -->
+  <path d="M 60,50 Q 80,45 100,50" stroke="#00897B" stroke-width="2" fill="none" stroke-linecap="round" />
+  
+  <!-- TALEX Text -->
+  <text x="60" y="30" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#222222">TALEX</text>
+  
+  <!-- Tagline -->
+  <text x="60" y="50" font-family="Arial, sans-serif" font-size="10" fill="#666666">Recruitment Excellence</text>
+</svg>
