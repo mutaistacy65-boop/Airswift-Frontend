@@ -1491,41 +1491,4 @@ export default function SendMessagePage() {
 }
 
 
-export async function getServerSideProps(context: any) {
-  const { req } = context;
-  const token = req.cookies.accessToken;
 
-  if (!token) {
-    return {
-      redirect: {
-        destination: '/login',
-        permanent: false,
-      },
-    };
-  }
-
-  // Optional: Verify token on server side
-  try {
-    // You can add JWT verification here if needed
-    // const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // if (decoded.role !== 'admin') {
-    //   return {
-    //     redirect: {
-    //       destination: '/',
-    //       permanent: false,
-    //     },
-    //   };
-    // }
-  } catch (error) {
-    return {
-      redirect: {
-        destination: '/login',
-        permanent: false,
-      },
-    };
-  }
-
-  return {
-    props: {},
-  };
-}
