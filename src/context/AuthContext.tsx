@@ -204,7 +204,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (data: any) => {
     setIsLoading(true)
-    AuthService.clearAuthData()
 
     if (!data.token) {
       console.error('❌ Login failed: No token in response')
