@@ -93,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true)
     try {
       const result = await AuthService.getProfile()
-      const normalizedUser = normalizeUser(result)
+      const normalizedUser = normalizeUser(result.user)
 
       if (normalizedUser && normalizedUser.role) {
         setUser(normalizedUser)
