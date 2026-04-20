@@ -12,7 +12,7 @@ import { redirectAfterLogin } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, refreshUser, user } = useAuth();
+  const { login, user } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -101,9 +101,8 @@ export default function LoginPage() {
         return;
       }
 
-      const normalizedUser = AuthService.normalizeUser(user);
-      await login({ token, user: normalizedUser });
-      redirectAfterLogin(normalizedUser, router);
+      await login({ token, user });
+      await redirectAfterLogin(user, router);
 
     } catch (err) {
       setError(err.message || "Google login failed");
