@@ -41,7 +41,7 @@ interface AuthContextType {
   isAuthenticated: boolean
   login: (data: any) => Promise<void>
   logout: () => void
-  refreshUser: () => Promise<void>
+  refreshUser: () => Promise<User | null>
   reconnectSocket: () => void
 }
 
@@ -93,22 +93,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true)
     try {
       const result = await AuthService.getProfile()
-      if (!result.success || !result.user) {
-        throw new Error(result.error || 'Invalid user object received')
-      }
+      const normalizedUser = normalizeUser(result)
 
-      const normalizedUser = normalizeUser(result.user)
-      setUser(normalizedUser)
-      localStorage.setItem('user', JSON.stringify(normalizedUser))
+      if (normalizedUser && normalizedUser.role) {
+        setUser(normalizedUser)
+        localStorage.setItem('user', JSON.stringify(normalizedUser))
 
-      const token = localStorage.getItem('token')
-      if (normalizedUser?.role === 'admin' && token) {
-        localStorage.setItem('adminToken', token)
+        const token = localStorage.getItem('token')
+        if (normalizedUser?.role === 'admin' && token) {
+          localStorage.setItem('adminToken', token)
+        }
+
+        return normalizedUser
+      } else {
+        throw new Error('Invalid user object received')
       }
     } catch (error) {
       console.warn('Unable to refresh authenticated user:', error)
       clearAuthData()
       setUser(null)
+      return null
     } finally {
       setIsLoading(false)
     }
@@ -243,7 +247,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const refreshUser = async () => {
-    await fetchUser()
+    return await fetchUser()
   }
 
   const reconnectSocket = () => {

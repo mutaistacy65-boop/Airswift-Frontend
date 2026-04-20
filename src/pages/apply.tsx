@@ -5,12 +5,11 @@ import ApplicationForm from '@/components/SafeApplicationForm'
 import API from '@/services/apiClient'
 import { useAuth } from '@/context/AuthContext'
 import { useRequireAuth } from '@/hooks/useProtectedRoute'
-import Loader from '@/components/Loader'
 
 export default function ApplicationPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
-  useRequireAuth({ role: 'user' })
+  useRequireAuth()
 
   const [checking, setChecking] = useState(true)
   const [hasApplied, setHasApplied] = useState(false)

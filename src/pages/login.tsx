@@ -36,20 +36,17 @@ export default function LoginPage() {
 
       const result = await AuthService.login(email, password);
 
-      if (result.success && result.token && result.user) {
-        console.log("🔐 [Login] Received result:", {
+      if (result && result.token && result.user) {
+        console.log('🔐 [Login] Received result:', {
           email: result.user.email,
           role: result.user.role,
-          id: result.user.id || result.user._id
+          id: result.user.id || result.user._id,
         });
-        
+
         await login({ token: result.token, user: result.user });
-        
-        console.log("🔐 [Login] Context updated, proceeding with redirect...");
-        // Don't wait for setTimeout, redirect immediately
-        redirectAfterLogin(result.user, router);
+        await redirectAfterLogin(result.user, router);
       } else {
-        setError(result.error || "Login failed");
+        setError(result?.error || 'Login failed');
       }
     } catch (err) {
       console.error("❌ [Login] Error:", err);
