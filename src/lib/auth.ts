@@ -103,12 +103,14 @@ export const verifyGoogleToken = async (googleToken: string): Promise<{ token: s
 }
 
 const navigateTo = async (router: any, path: string): Promise<void> => {
-  if (router && typeof router.push === 'function') {
+  if (router && typeof router.replace === 'function') {
     try {
-      await router.push(path)
+      if (router.pathname !== path) {
+        await router.replace(path)
+      }
       return
     } catch (error) {
-      console.warn('Redirect failed via router.push, falling back to window.location:', error)
+      console.warn('Redirect failed via router.replace, falling back to window.location:', error)
     }
   }
 

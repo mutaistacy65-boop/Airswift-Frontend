@@ -41,6 +41,7 @@ export default function LoginPage() {
         console.log('✅ Login successful, redirecting...', normalizedUser);
 
         await login({ token: result.token, user: normalizedUser });
+        await new Promise((resolve) => setTimeout(resolve, 0));
         await redirectAfterLogin(normalizedUser, router);
       } else {
         setError(result.error || 'Login failed');

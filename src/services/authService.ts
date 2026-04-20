@@ -8,6 +8,11 @@ class AuthService {
     const userPayload = user.user ? user.user : user
     const normalizedUser = { ...userPayload }
 
+    // Normalize role casing and values
+    if (normalizedUser.role) {
+      normalizedUser.role = normalizedUser.role.toString().toLowerCase()
+    }
+
     // Case-insensitive admin email fallback
     if (!normalizedUser.role && normalizedUser.email?.toLowerCase() === 'admin@talex.com') {
       normalizedUser.role = 'admin'

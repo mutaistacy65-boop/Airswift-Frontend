@@ -79,6 +79,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const normalizeUser = (userData: any) => {
     if (!userData) return null
     const normalizedUser = { ...userData }
+
+    if (normalizedUser.role) {
+      normalizedUser.role = normalizedUser.role.toString().toLowerCase()
+    }
+
     // Case-insensitive email check for admin
     if (!normalizedUser.role && normalizedUser.email?.toLowerCase() === 'admin@talex.com') {
       normalizedUser.role = 'admin'
@@ -199,10 +204,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user])
 
   const login = async (data: any) => {
+    setIsLoading(true)
     clearAuthData()
 
     if (!data.token) {
       console.error('❌ Login failed: No token in response')
+      setIsLoading(false)
       throw new Error('Login failed: No token received')
     }
 
@@ -224,12 +231,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       admin: '👑',
       recruiter: '💼',
       user: '👤',
-    }[data.user?.role] || '✅'
+    }[data.user?.role?.toLowerCase?.()] || '✅'
 
     toast.success(`Welcome back, ${data.user?.name || 'User'}!`, {
       icon: roleEmoji,
       duration: 4000,
     })
+    setIsLoading(false)
   }
 
   const logout = () => {
