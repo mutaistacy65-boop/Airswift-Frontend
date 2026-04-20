@@ -11,6 +11,8 @@ import { GoogleOAuthProvider } from '@react-oauth/google'
 import 'leaflet/dist/leaflet.css'
 // @ts-ignore
 import '@/styles/globals.css'
+// @ts-ignore
+import '@/styles/AdminUsers.css'
 
 /**
  * 🍪 CRITICAL GLOBAL CONFIGURATION 🍪
