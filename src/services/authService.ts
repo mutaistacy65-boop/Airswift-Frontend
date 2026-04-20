@@ -176,7 +176,7 @@ class AuthService {
   static async getProfile() {
     try {
       console.log('👤 Fetching user profile...')
-      const response = await api.get('/auth/profile')
+      const response = await api.get('/auth/me')
       const data = response.data || {}
       const profileUser = this.normalizeUser(data.user || data)
       console.log('✅ Profile fetched successfully')

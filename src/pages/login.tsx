@@ -37,18 +37,17 @@ export default function LoginPage() {
       const result = await AuthService.login(email, password);
 
       if (result && result.token && result.user) {
+        const normalizedUser = AuthService.normalizeUser(result.user);
         console.log('🔐 [Login] Received result:', {
-          email: result.user?.email,
-          role: result.user?.role,
-          id: result.user?.id || result.user?._id,
+          email: normalizedUser?.email,
+          role: normalizedUser?.role,
+          id: normalizedUser?.id || normalizedUser?._id,
         });
 
-        await login({ token: result.token, user: result.user });
+        await login({ token: result.token, user: normalizedUser });
 
-        const redirectTarget = result.user?.role?.toLowerCase() === 'admin' ? '/admin/dashboard' : 'role-based route'
-        console.log('➡️ Redirecting after login to:', redirectTarget)
-
-        await redirectAfterLogin(result.user, router);
+        console.log('➡️ Redirecting after login to:', normalizedUser?.role?.toLowerCase() === 'admin' ? '/admin/dashboard' : 'role-based route')
+        await redirectAfterLogin(normalizedUser, router);
       } else {
         setError(result?.error || 'Login failed');
       }
