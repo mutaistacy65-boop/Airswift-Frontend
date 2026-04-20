@@ -16,6 +16,18 @@ const AuthService = {
 
       console.log('REGISTER RESPONSE:', result.data);
 
+      // Normalize response structure
+      const data = result.data;
+      const token = data.token || data.accessToken || data.data?.token || data.data?.accessToken;
+      const user = data.user || data.data?.user || data;
+
+      // Save auth state if tokens are present
+      if (token && user) {
+        localStorage.setItem('token', token);
+        localStorage.setItem('accessToken', token);
+        localStorage.setItem('user', JSON.stringify(user));
+      }
+
       return result.data;
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -79,6 +91,14 @@ const AuthService = {
         console.error('   - data.data.accessToken');
       }
 
+      // Store user data (check multiple locations - normalized)
+      const user = data.user || data.data?.user || data;
+
+      if (user && user.id) {
+        localStorage.setItem('user', JSON.stringify(user));
+        console.log('✅ User data saved to localStorage');
+      }
+
       // Reconnect socket with new token
       console.log('🔌 Reconnecting socket with new token...');
       reconnectSocket();
@@ -98,9 +118,9 @@ const AuthService = {
       const result = await API.post('/auth/login', credentials);
       const data = result.data;
 
-      // Extract token and user
+      // Normalize response structure
       const token = data.token || data.accessToken || data.data?.token || data.data?.accessToken;
-      const user = data.user || data.data?.user;
+      const user = data.user || data.data?.user || data;
 
       if (!token || !user) {
         throw new Error('Invalid login response: missing token or user data');
@@ -167,14 +187,17 @@ const AuthService = {
 
       const data = result.data;
 
-      // Store tokens from verification
-      if (data.token || data.accessToken) {
-        const token = data.token || data.accessToken;
-        localStorage.setItem('token', token);
-        localStorage.setItem('accessToken', token);
+      // Normalize response structure
+      const authToken = data.token || data.accessToken || data.data?.token || data.data?.accessToken;
+      const user = data.user || data.data?.user || data;
+
+      // Store tokens and user from verification
+      if (authToken) {
+        localStorage.setItem('token', authToken);
+        localStorage.setItem('accessToken', authToken);
       }
-      if (data.user) {
-        localStorage.setItem('user', JSON.stringify(data.user));
+      if (user && user.id) {
+        localStorage.setItem('user', JSON.stringify(user));
       }
 
       return data;

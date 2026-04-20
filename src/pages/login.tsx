@@ -76,7 +76,15 @@ export default function LoginPage() {
         throw new Error("Google authentication failed");
       }
 
-      const { token, user } = await res.json();
+      const responseData = await res.json();
+
+      // Normalize response structure
+      const token = responseData.token || responseData.accessToken || responseData.data?.token || responseData.data?.accessToken;
+      const user = responseData.user || responseData.data?.user || responseData;
+
+      if (!token || !user) {
+        throw new Error("Invalid response from Google authentication");
+      }
 
       // Email validation for Google login
       const emailValidation = validateEmailForAuth(user?.email);

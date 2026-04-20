@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Button from "../components/Button";
-import API from '@/services/apiClient';
+import AuthService from '@/services/authService';
 import { clearAuth, saveAuthState } from '@/utils/authHelpers';
 import { validateEmailForAuth } from '@/utils/roleUtils';
 
@@ -16,13 +16,16 @@ export default function Register() {
     try {
       clearAuth();
 
-      const res = await API.post("/auth/register", {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-      });
+      // Use AuthService which handles response normalization
+      const result = await AuthService.register(
+        formData.name,
+        formData.email,
+        formData.password
+      );
 
-      const { token, user } = res.data;
+      // Extract normalized token and user
+      const token = result.token || result.accessToken || result.data?.token || result.data?.accessToken;
+      const user = result.user || result.data?.user || result;
 
       if (token && user) {
         saveAuthState(token, user);

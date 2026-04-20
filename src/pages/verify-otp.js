@@ -71,8 +71,11 @@ export default function VerifyOTP() {
         router.push('/login');
       } else {
         // For verification flow, the user should be logged in now
-        // The verify-otp API should return authentication tokens
-        const { user, accessToken, refreshToken } = response.data;
+        // Normalize response structure
+        const data = response.data;
+        const accessToken = data.accessToken || data.token || data.data?.accessToken || data.data?.token;
+        const user = data.user || data.data?.user || data;
+        const refreshToken = data.refreshToken || data.data?.refreshToken;
         
         if (user && accessToken) {
           // Store authentication data
