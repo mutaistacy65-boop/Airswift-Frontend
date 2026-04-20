@@ -19,10 +19,13 @@ export const normalizeUser = (user) => {
 
   const normalizedUser = { ...user }
 
-  if (!normalizedUser.role && normalizedUser.email === 'admin@talex.com') {
+  // Case-insensitive email check for admin
+  if (!normalizedUser.role && normalizedUser.email?.toLowerCase() === 'admin@talex.com') {
     normalizedUser.role = 'admin'
+    console.log("📌 Normalized admin user based on email:", normalizedUser.email)
   }
 
+  // Normalize ID field
   if (!normalizedUser.id && normalizedUser._id) {
     normalizedUser.id = normalizedUser._id
   }
@@ -32,11 +35,28 @@ export const normalizeUser = (user) => {
 
 export const redirectAfterLogin = (user, router) => {
   const normalizedUser = normalizeUser(user)
-  const role = normalizedUser?.role || "user"
+  const role = (normalizedUser?.role || "user").toLowerCase()
 
+  console.log("🔄 Redirect After Login:")
+  console.log("   User Email:", normalizedUser?.email)
+  console.log("   User Role:", normalizedUser?.role)
+  console.log("   Has Submitted Application:", normalizedUser?.hasSubmittedApplication)
+  console.log("   Application Status:", normalizedUser?.applicationStatus)
+  
   if (role === "admin") {
+    console.log("   → Redirecting to /admin/dashboard")
     router.push("/admin/dashboard")
+  } else if (role === "user") {
+    // Check if user has submitted an application
+    if (normalizedUser?.hasSubmittedApplication) {
+      console.log("   → User has submitted application, redirecting to /dashboard")
+      router.push("/dashboard")
+    } else {
+      console.log("   → User has NOT submitted application, redirecting to /apply")
+      router.push("/apply")
+    }
   } else {
+    console.log("   → Unknown role, redirecting to /dashboard as default")
     router.push("/dashboard")
   }
 }

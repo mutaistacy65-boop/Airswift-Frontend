@@ -36,10 +36,17 @@ export default function AdminDashboard() {
       return;
     }
 
-    if (user.role.toLowerCase() !== "admin") {
+    const userRole = user?.role?.toLowerCase() || "user";
+    console.log("🔐 Admin Dashboard Guard - User Role:", userRole);
+    
+    if (userRole !== "admin") {
+      console.log("❌ Access denied - not an admin. Redirecting to unauthorized");
       router.push("/unauthorized");
+      return;
     }
-  }, [user, isLoading]);
+    
+    console.log("✅ Admin access granted");
+  }, [user, isLoading, router]);
   
   const [summary, setSummary] = useState<any>(null)
   const [trends, setTrends] = useState<any[]>([])

@@ -79,7 +79,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const normalizeUser = (userData: any) => {
     if (!userData) return null
     const normalizedUser = { ...userData }
-    if (!normalizedUser.role && normalizedUser.email === 'admin@talex.com') {
+    // Case-insensitive email check for admin
+    if (!normalizedUser.role && normalizedUser.email?.toLowerCase() === 'admin@talex.com') {
       normalizedUser.role = 'admin'
     }
     if (!normalizedUser.id && normalizedUser._id) {
