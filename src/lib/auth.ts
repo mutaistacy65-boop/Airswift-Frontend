@@ -103,12 +103,12 @@ export const verifyGoogleToken = async (googleToken: string): Promise<{ token: s
 }
 
 const navigateTo = async (router: any, path: string): Promise<void> => {
-  if (router && typeof router.push === 'function') {
+  if (router && typeof router.replace === 'function') {
     try {
-      await router.push(path)
+      await router.replace(path)
       return
     } catch (error) {
-      console.warn('Redirect failed via router.push, falling back to window.location:', error)
+      console.warn('Redirect failed via router.replace, falling back to window.location:', error)
     }
   }
 
@@ -122,16 +122,8 @@ export const redirectAfterLogin = async (user: AuthUser | null, router: any): Pr
 
   const normalizedUser = normalizeUser(user)
   const role = normalizedUser?.role?.toLowerCase() || 'user'
+  const target = role === 'admin' ? '/admin/dashboard' : normalizedUser.hasSubmittedApplication ? '/dashboard' : '/apply'
 
-  if (role === 'admin') {
-    await navigateTo(router, '/admin/dashboard')
-    return
-  }
-
-  if (normalizedUser.hasSubmittedApplication) {
-    await navigateTo(router, '/dashboard')
-    return
-  }
-
-  await navigateTo(router, '/apply')
+  console.log('➡️ redirectAfterLogin -> role:', role, 'target:', target)
+  await navigateTo(router, target)
 }

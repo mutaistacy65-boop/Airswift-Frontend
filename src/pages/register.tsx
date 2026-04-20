@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import Button from "../components/Button";
 import AuthService from '@/services/authService';
-import { clearAuth, saveAuthState } from '@/utils/authHelpers';
+import { clearAuth } from '@/lib/auth';
 import { validateEmailForAuth } from '@/utils/roleUtils';
 
 export default function Register() {
@@ -28,7 +28,7 @@ export default function Register() {
       const user = result.user || result.data?.user || result;
 
       if (token && user) {
-        saveAuthState(token, user);
+        AuthService.storeToken(token, user)
         router.push(user.role === "admin" ? "/admin/dashboard" : "/user/dashboard");
       } else {
         router.push("/login");

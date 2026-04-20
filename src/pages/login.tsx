@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "@/context/AuthContext";
-import { clearAuth } from "@/utils/authHelpers";
+import { clearAuth } from "@/lib/auth";
 import { validateEmailForAuth } from "@/utils/roleUtils";
 import { Eye, EyeOff } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
@@ -38,12 +38,16 @@ export default function LoginPage() {
 
       if (result && result.token && result.user) {
         console.log('🔐 [Login] Received result:', {
-          email: result.user.email,
-          role: result.user.role,
-          id: result.user.id || result.user._id,
+          email: result.user?.email,
+          role: result.user?.role,
+          id: result.user?.id || result.user?._id,
         });
 
         await login({ token: result.token, user: result.user });
+
+        const redirectTarget = result.user?.role?.toLowerCase() === 'admin' ? '/admin/dashboard' : 'role-based route'
+        console.log('➡️ Redirecting after login to:', redirectTarget)
+
         await redirectAfterLogin(result.user, router);
       } else {
         setError(result?.error || 'Login failed');

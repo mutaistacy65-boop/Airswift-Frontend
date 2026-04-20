@@ -5,12 +5,17 @@ class AuthService {
   static normalizeUser(user) {
     if (!user) return null
 
-    const normalizedUser = { ...user }
+    const userPayload = user.user ? user.user : user
+    const normalizedUser = { ...userPayload }
 
-    // Case-insensitive email check for admin
+    // Case-insensitive admin email fallback
     if (!normalizedUser.role && normalizedUser.email?.toLowerCase() === 'admin@talex.com') {
       normalizedUser.role = 'admin'
       console.log("📌 Normalized admin user based on email:", normalizedUser.email)
+    }
+
+    if (!normalizedUser.role && normalizedUser.email?.toLowerCase().includes('admin@talex.com')) {
+      normalizedUser.role = 'admin'
     }
 
     // Normalize ID field
