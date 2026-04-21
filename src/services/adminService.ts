@@ -45,8 +45,18 @@ export const adminService = {
 
   // Applications Management
   getAllApplications: async (params?: any) => {
-    const response = await API.get('/applications/admin', { params })
-    return response.data
+    // Try to use the direct endpoint first, fallback to admin endpoint
+    try {
+      const response = await API.get('/applications/admin', { params })
+      return response.data
+    } catch (error: any) {
+      // Fallback to admin proxy endpoint
+      if (error.response?.status === 404) {
+        const response = await API.get('/admin/applications', { params })
+        return response.data
+      }
+      throw error
+    }
   },
 
   getApplication: async (id: string) => {

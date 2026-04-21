@@ -85,6 +85,7 @@ export const applicationService = {
    * Get all applications (admin only)
    */
   getAllApplications: async (params?: any) => {
+    // Use the dedicated admin endpoint
     const response = await API.get('/applications/admin', { params })
     return response.data
   },
