@@ -36,6 +36,23 @@ export default function LoginPage() {
 
       const result = await AuthService.login(email, password);
 
+      // ⚠️ Check if account is not verified
+      if (result.code === 'ACCOUNT_NOT_VERIFIED') {
+        setError(result.message || "Your account has not been verified yet. Check your email for the verification link.");
+        
+        // Optional: Offer to resend verification link
+        setTimeout(() => {
+          const resendOption = window.confirm(
+            'Would you like us to resend the verification link to your email?'
+          );
+          if (resendOption) {
+            router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+          }
+        }, 2000);
+        
+        return;
+      }
+
       if (result.success) {
         const normalizedUser = AuthService.normalizeUser(result.user);
         console.log('✅ Login successful, redirecting...', normalizedUser);
@@ -48,7 +65,23 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error("❌ [Login] Error:", err);
-      setError(err.response?.data?.message || err.message || "Login failed");
+      
+      // Handle specific error codes from backend
+      if (err.response?.data?.code === 'ACCOUNT_NOT_VERIFIED') {
+        setError(err.response.data.message || "Your account has not been verified yet. Check your email for the verification link.");
+        
+        // Auto-offer to resend after a moment
+        setTimeout(() => {
+          const resendOption = window.confirm(
+            'Would you like us to resend the verification link?'
+          );
+          if (resendOption) {
+            router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+          }
+        }, 2000);
+      } else {
+        setError(err.response?.data?.message || err.message || "Login failed");
+      }
     } finally {
       setLoading(false);
     }

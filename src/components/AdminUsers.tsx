@@ -16,6 +16,12 @@ interface AdminUsersProps {
   title?: string;
 }
 
+interface EditFormData {
+  name: string;
+  email: string;
+  role: string;
+}
+
 const AdminUsers: React.FC<AdminUsersProps> = ({ title = 'Admin Users' }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -26,6 +32,120 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ title = 'Admin Users' }) => {
   const [verifiedFilter, setVerifiedFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
+
+  // Modal states
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [editFormData, setEditFormData] = useState<EditFormData>({
+    name: '',
+    email: '',
+    role: ''
+  });
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Open edit modal
+  const openEditModal = (user: User) => {
+    setSelectedUser(user);
+    setEditFormData({
+      name: user.name,
+      email: user.email,
+      role: user.role
+    });
+    setEditModalOpen(true);
+    setActionError(null);
+  };
+
+  // Close edit modal
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setSelectedUser(null);
+    setEditFormData({ name: '', email: '', role: '' });
+    setActionError(null);
+  };
+
+  // Open delete modal
+  const openDeleteModal = (user: User) => {
+    setSelectedUser(user);
+    setDeleteModalOpen(true);
+    setActionError(null);
+  };
+
+  // Close delete modal
+  const closeDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setSelectedUser(null);
+    setActionError(null);
+  };
+
+  // Handle edit form change
+  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Update user
+  const handleUpdateUser = async () => {
+    if (!selectedUser) return;
+
+    try {
+      setActionLoading(true);
+      setActionError(null);
+
+      const response = await api.put(`/admin/users/${selectedUser._id || selectedUser.id}`, editFormData);
+      
+      // Update the users list with the updated user
+      setUsers(prev => prev.map(u => 
+        (u._id === selectedUser._id || u.id === selectedUser.id) 
+          ? { ...u, ...editFormData }
+          : u
+      ));
+
+      setSuccessMessage('User updated successfully!');
+      setTimeout(() => {
+        setSuccessMessage(null);
+        closeEditModal();
+      }, 2000);
+    } catch (err: any) {
+      console.error('Error updating user:', err);
+      setActionError(err.response?.data?.message || 'Failed to update user');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Delete user
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+
+    try {
+      setActionLoading(true);
+      setActionError(null);
+
+      await api.delete(`/admin/users/${selectedUser._id || selectedUser.id}`);
+
+      // Remove the deleted user from the list
+      setUsers(prev => prev.filter(u => 
+        (u._id !== selectedUser._id && u.id !== selectedUser.id)
+      ));
+
+      setSuccessMessage('User deleted successfully!');
+      setTimeout(() => {
+        setSuccessMessage(null);
+        closeDeleteModal();
+      }, 2000);
+    } catch (err: any) {
+      console.error('Error deleting user:', err);
+      setActionError(err.response?.data?.message || 'Failed to delete user');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   // Fetch users from API
   const fetchUsers = useCallback(async () => {
@@ -256,6 +376,7 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ title = 'Admin Users' }) => {
                     <th>Role</th>
                     <th>Verified</th>
                     <th>Created</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -277,6 +398,22 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ title = 'Admin Users' }) => {
                       </td>
                       <td className="date-cell">
                         {new Date(user.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="actions-cell">
+                        <button 
+                          className="btn-action btn-edit"
+                          onClick={() => openEditModal(user)}
+                          title="Edit user"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button 
+                          className="btn-action btn-delete"
+                          onClick={() => openDeleteModal(user)}
+                          title="Delete user"
+                        >
+                          🗑️ Delete
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -313,6 +450,158 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ title = 'Admin Users' }) => {
           </>
         )}
       </div>
+
+      {/* Edit Modal */}
+      {editModalOpen && selectedUser && (
+        <div className="modal-overlay" onClick={closeEditModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Edit User</h2>
+              <button className="modal-close" onClick={closeEditModal}>✕</button>
+            </div>
+
+            <div className="modal-body">
+              {actionError && (
+                <div className="alert alert-error">
+                  {actionError}
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="alert alert-success">
+                  {successMessage}
+                </div>
+              )}
+
+              <form onSubmit={(e) => { e.preventDefault(); handleUpdateUser(); }}>
+                <div className="form-group">
+                  <label htmlFor="edit-name">Name</label>
+                  <input
+                    id="edit-name"
+                    type="text"
+                    name="name"
+                    value={editFormData.name}
+                    onChange={handleEditFormChange}
+                    className="form-input"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="edit-email">Email</label>
+                  <input
+                    id="edit-email"
+                    type="email"
+                    name="email"
+                    value={editFormData.email}
+                    onChange={handleEditFormChange}
+                    className="form-input"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="edit-role">Role</label>
+                  <select
+                    id="edit-role"
+                    name="role"
+                    value={editFormData.role}
+                    onChange={handleEditFormChange}
+                    className="form-input"
+                  >
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="recruiter">Recruiter</option>
+                    <option value="job-seeker">Job Seeker</option>
+                    <option value="employer">Employer</option>
+                  </select>
+                </div>
+
+                <div className="modal-footer">
+                  <button 
+                    type="button" 
+                    className="btn-cancel" 
+                    onClick={closeEditModal}
+                    disabled={actionLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn-save"
+                    disabled={actionLoading}
+                  >
+                    {actionLoading ? 'Updating...' : 'Update User'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {deleteModalOpen && selectedUser && (
+        <div className="modal-overlay" onClick={closeDeleteModal}>
+          <div className="modal-content modal-delete" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Confirm Delete</h2>
+              <button className="modal-close" onClick={closeDeleteModal}>✕</button>
+            </div>
+
+            <div className="modal-body">
+              {actionError && (
+                <div className="alert alert-error">
+                  {actionError}
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="alert alert-success">
+                  {successMessage}
+                </div>
+              )}
+
+              <div className="delete-confirmation">
+                <p className="warning-icon">⚠️</p>
+                <p className="confirmation-text">
+                  Are you sure you want to delete this user?
+                </p>
+                <div className="user-info">
+                  <div className="info-row">
+                    <span className="info-label">Name:</span>
+                    <span className="info-value">{selectedUser.name}</span>
+                  </div>
+                  <div className="info-row">
+                    <span className="info-label">Email:</span>
+                    <span className="info-value">{selectedUser.email}</span>
+                  </div>
+                </div>
+                <p className="warning-text">This action cannot be undone.</p>
+              </div>
+
+              <div className="modal-footer">
+                <button 
+                  type="button" 
+                  className="btn-cancel" 
+                  onClick={closeDeleteModal}
+                  disabled={actionLoading}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="button" 
+                  className="btn-delete-confirm"
+                  onClick={handleDeleteUser}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? 'Deleting...' : 'Delete User'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -8,7 +8,17 @@ import bcrypt from 'bcryptjs'
 import { logActivity } from '@/lib/auditLogService'
 import { connectDB } from '@/lib/mongodb'
 import User from '@/lib/models/User'
-import { sendOTPEmail } from '@/lib/emailService'
+import { sendOTPEmail, sendVerificationEmail } from '@/lib/emailService'
+import { 
+  verificationResendLimiter, 
+  registrationLimiter, 
+  createRateLimitErrorResponse 
+} from '@/lib/rateLimiter'
+import { 
+  generateVerificationToken, 
+  verifyTokenMatch, 
+  isTokenValid 
+} from '@/lib/emailVerificationHelper'
 
 /**
  * 🍪 CRITICAL BACKEND REQUIREMENT 🍪
@@ -100,7 +110,71 @@ const proxyToBackend = async (req: NextApiRequest, res: NextApiResponse, endpoin
 
 export const authLogin = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
-    // Skip connectDB for login - just proxy to backend
+    // Check if user exists and is verified in local DB first
+    await connectDB();
+    
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ 
+        message: "Email and password are required",
+        code: 'VALIDATION_ERROR'
+      });
+    }
+
+    // Check if user exists locally
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    // ⚠️ IMPORTANT: Block unverified users from logging in
+    if (user && !user.isVerified) {
+      // User exists but not verified - don't allow login
+      console.log(`⚠️ Login attempt for unverified account: ${email}`);
+
+      // Generate new verification token if needed
+      const now = new Date();
+      const shouldGenerateNewToken = !user.verificationTokenExpires || 
+                                     now > user.verificationTokenExpires;
+
+      if (shouldGenerateNewToken) {
+        const { token, hashedToken, expiresAt } = generateVerificationToken(24 * 60);
+        user.verificationToken = hashedToken;
+        user.verificationTokenExpires = expiresAt;
+        await user.save();
+
+        // Resend verification email
+        try {
+          await sendVerificationEmail(email, user.name, token);
+          console.log(`✅ Verification email resent to unverified user: ${email}`);
+        } catch (emailError) {
+          console.error('Failed to resend verification email on login:', emailError);
+        }
+      }
+
+      // Log failed login attempt
+      try {
+        await logActivity({
+          user_id: user._id,
+          action: 'LOGIN_UNVERIFIED',
+          request: req,
+          details: {
+            email: user.email,
+            reason: 'Account not verified'
+          },
+        });
+      } catch (auditError) {
+        console.warn('Failed to log login attempt:', auditError);
+      }
+
+      return res.status(403).json({ 
+        message: "Your account has not been verified yet. Check your email for the verification link.",
+        code: 'ACCOUNT_NOT_VERIFIED',
+        email: email,
+        redirect: '/verify-email',
+        retryAfter: 60 // Suggest checking email after 1 minute
+      });
+    }
+
+    // Try to proxy to backend for credentials verification
     const url = `${API_URL}/api/auth/login`
     const config = {
       method: req.method as any,
@@ -245,48 +319,126 @@ export const authRegister = async (req: NextApiRequest, res: NextApiResponse) =>
 
     const { name, email, password, role } = req.body;
 
-    // Check if user exists
-    const existingUser = await User.findOne({ email });
+    // Validate input
+    if (!name || !email || !password) {
+      return res.status(400).json({ 
+        message: "Name, email, and password are required",
+        code: 'VALIDATION_ERROR'
+      });
+    }
+
+    // 🔐 Rate limiting: max 3 registration attempts per 30 minutes per email
+    const { allowed, retryAfter } = registrationLimiter.isAllowed(email, 3);
+    if (!allowed) {
+      const error = createRateLimitErrorResponse(retryAfter);
+      return res.status(429).json(error);
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
 
     if (existingUser) {
       if (existingUser.isVerified) {
-        // Exists and verified
-        return res.json({ redirect: "/login" });
+        // User exists and is verified - direct to login
+        // ⚠️ SECURITY: Don't explicitly say account exists (prevents email enumeration)
+        // Instead, we tell them to check their email or login
+        return res.status(409).json({ 
+          message: "An account with this email already exists. Please log in.",
+          code: 'USER_EXISTS',
+          redirect: '/login'
+        });
       } else {
-        // Exists but not verified - resend OTP if not in cooldown
-        if (existingUser.otpExpires && existingUser.otpExpires > new Date(Date.now() - 60000)) {
-          return res.status(429).json({ message: "Please wait before requesting another OTP" });
+        // User exists but NOT verified - resend verification email with rate limit
+        // 🔐 Rate limiting: max 3 resends per 5 minutes
+        const { allowed: resendAllowed, retryAfter: resendRetryAfter } = 
+          verificationResendLimiter.isAllowed(email, 3);
+        
+        if (!resendAllowed) {
+          const error = createRateLimitErrorResponse(resendRetryAfter);
+          return res.status(429).json({
+            ...error,
+            code: 'VERIFICATION_RESEND_RATE_LIMIT',
+            email // Include email only if user initiated resend
+          });
         }
 
-        // Generate new OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        existingUser.otp = otp;
-        existingUser.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        // Generate new verification token (expires in 24 hours)
+        const { token, hashedToken, expiresAt } = generateVerificationToken(24 * 60);
+        
+        existingUser.verificationToken = hashedToken;
+        existingUser.verificationTokenExpires = expiresAt;
         await existingUser.save();
 
-        await sendOTPEmail(email, otp);
+        // Send verification email
+        try {
+          await sendVerificationEmail(email, existingUser.name, token);
+          console.log(`✅ Verification email resent to ${email}`);
+        } catch (emailError) {
+          console.error('Failed to resend verification email:', emailError);
+          // Don't expose email error to user
+          return res.status(500).json({ 
+            message: "Failed to send verification email. Please try again.",
+            code: 'EMAIL_SEND_FAILED'
+          });
+        }
 
-        return res.json({ redirect: "/verify-otp", email });
+        // Log the resend attempt
+        try {
+          await logActivity({
+            user_id: existingUser._id,
+            action: 'VERIFICATION_RESEND',
+            request: req,
+            details: { 
+              email: existingUser.email,
+              reason: 'Duplicate registration attempt'
+            },
+          });
+        } catch (auditError) {
+          console.warn('Failed to log resend attempt:', auditError);
+        }
+
+        return res.status(200).json({ 
+          message: "Account already exists. Verification email has been resent.",
+          code: 'VERIFICATION_EMAIL_RESENT',
+          email: email, // Safe to return since user initiated this action
+          redirect: '/verify-email'
+        });
       }
     }
 
-    // New user
+    // ✅ NEW USER - Create account with verification required
     const hashedPassword = await bcrypt.hash(password, 10);
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Generate verification token (expires in 24 hours)
+    const { token, hashedToken, expiresAt } = generateVerificationToken(24 * 60);
 
     const newUser = new User({
       name,
-      email,
+      email: email.toLowerCase(),
       password: hashedPassword,
       role: role || 'user',
-      isVerified: false,
-      otp,
-      otpExpires: new Date(Date.now() + 10 * 60 * 1000),
+      isVerified: false, // 🔑 CRITICAL: Set to false - account not verified yet
+      verificationToken: hashedToken, // Store hashed token
+      verificationTokenExpires: expiresAt, // Store expiry time
+      otp: null, // OTP flow is deprecated in favor of token-based verification
+      otpExpires: null,
     });
 
     await newUser.save();
 
-    await sendOTPEmail(email, otp);
+    // Send verification email
+    try {
+      await sendVerificationEmail(email, name, token);
+      console.log(`✅ Verification email sent to ${email}`);
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+      // Delete user if email fails (transaction-like behavior)
+      await User.deleteOne({ _id: newUser._id });
+      return res.status(500).json({ 
+        message: "Failed to send verification email. Please try again.",
+        code: 'EMAIL_SEND_FAILED'
+      });
+    }
 
     // Log registration
     try {
@@ -294,21 +446,136 @@ export const authRegister = async (req: NextApiRequest, res: NextApiResponse) =>
         user_id: newUser._id,
         action: 'REGISTER',
         request: req,
-        details: { email: newUser.email, name: newUser.name },
+        details: { 
+          email: newUser.email, 
+          name: newUser.name,
+          verified: false 
+        },
       });
     } catch (auditError) {
       console.warn('Failed to log registration:', auditError);
+      // Don't fail the registration if audit logging fails
     }
 
-    res.json({ redirect: "/verify-otp", email });
+    return res.status(201).json({ 
+      message: "Registration successful! Check your email to verify your account.",
+      code: 'REGISTRATION_SUCCESS',
+      email: email,
+      redirect: '/verify-email',
+      user: {
+        id: newUser._id,
+        email: newUser.email,
+        name: newUser.name,
+        isVerified: false
+      }
+    });
   } catch (error: any) {
     console.error('Registration error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    
+    // Handle duplicate key error separately (in case of race condition)
+    if (error.code === 11000) {
+      return res.status(409).json({ 
+        message: "An account with this email already exists. Please log in.",
+        code: 'USER_EXISTS',
+        redirect: '/login'
+      });
+    }
+
+    res.status(500).json({ 
+      message: 'Registration failed. Please try again.',
+      code: 'REGISTRATION_FAILED'
+    });
   }
 }
 
 export const authVerify = async (req: NextApiRequest, res: NextApiResponse) => {
   return proxyToBackend(req, res, 'verify')
+}
+
+/**
+ * Email verification endpoint
+ * Handles clicking the verification link from email
+ * URL format: /api/auth/verify-email?token=<verification_token>
+ */
+export const authVerifyEmail = async (req: NextApiRequest, res: NextApiResponse) => {
+  try {
+    const { token } = req.query;
+
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({
+        message: "Invalid verification link. Missing or malformed token.",
+        code: 'INVALID_TOKEN'
+      });
+    }
+
+    await connectDB();
+
+    // Find user with matching hashed token that hasn't expired
+    const user = await User.findOne({
+      verificationToken: { $exists: true, $ne: null },
+      verificationTokenExpires: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Verification link is invalid or has expired. Please request a new one.",
+        code: 'TOKEN_EXPIRED_OR_INVALID'
+      });
+    }
+
+    // Verify token by comparing hashes
+    const tokenMatches = verifyTokenMatch(token, user.verificationToken);
+    if (!tokenMatches) {
+      // Log suspicious activity (possible token tampering)
+      console.warn(`⚠️ Token verification failed for user: ${user.email}`);
+      return res.status(400).json({
+        message: "Verification link is invalid. Please request a new one.",
+        code: 'INVALID_TOKEN'
+      });
+    }
+
+    // ✅ Token is valid - Mark user as verified
+    user.isVerified = true;
+    user.verificationToken = null;
+    user.verificationTokenExpires = null;
+    await user.save();
+
+    // Log verification
+    try {
+      await logActivity({
+        user_id: user._id,
+        action: 'EMAIL_VERIFIED',
+        request: req,
+        details: {
+          email: user.email,
+          ipAddress: req.headers['x-forwarded-for'] || req.socket.remoteAddress
+        },
+      });
+    } catch (auditError) {
+      console.warn('Failed to log email verification:', auditError);
+    }
+
+    console.log(`✅ User verified: ${user.email}`);
+
+    return res.status(200).json({
+      message: "Email verified successfully! You can now log in.",
+      code: 'EMAIL_VERIFIED',
+      email: user.email,
+      redirect: '/login',
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        isVerified: true
+      }
+    });
+  } catch (error: any) {
+    console.error('Email verification error:', error);
+    return res.status(500).json({
+      message: 'Email verification failed. Please try again.',
+      code: 'VERIFICATION_FAILED'
+    });
+  }
 }
 
 export const authRefresh = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -380,7 +647,94 @@ export const authResendOtp = async (req: NextApiRequest, res: NextApiResponse) =
 }
 
 export const authResendVerification = async (req: NextApiRequest, res: NextApiResponse) => {
-  return proxyToBackend(req, res, 'resend-verification')
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is required",
+        code: 'VALIDATION_ERROR'
+      });
+    }
+
+    // 🔐 Rate limiting: max 3 resends per 5 minutes
+    const { allowed, retryAfter } = verificationResendLimiter.isAllowed(email, 3);
+    if (!allowed) {
+      const error = createRateLimitErrorResponse(retryAfter);
+      return res.status(429).json({
+        ...error,
+        code: 'VERIFICATION_RESEND_RATE_LIMIT'
+      });
+    }
+
+    await connectDB();
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      // ⚠️ SECURITY: Don't reveal if email exists (prevents email enumeration)
+      return res.status(200).json({
+        message: "If an account with that email exists and is unverified, a verification link will be sent.",
+        code: 'RESEND_INITIATED'
+      });
+    }
+
+    if (user.isVerified) {
+      // Account already verified - direct to login
+      return res.status(200).json({
+        message: "Your account is already verified. You can log in.",
+        code: 'ALREADY_VERIFIED',
+        redirect: '/login'
+      });
+    }
+
+    // User exists and is NOT verified - send new verification link
+    const { token, hashedToken, expiresAt } = generateVerificationToken(24 * 60);
+    
+    user.verificationToken = hashedToken;
+    user.verificationTokenExpires = expiresAt;
+    await user.save();
+
+    // Send verification email
+    try {
+      await sendVerificationEmail(email, user.name, token);
+      console.log(`✅ Verification email resent to ${email}`);
+    } catch (emailError) {
+      console.error('Failed to resend verification email:', emailError);
+      return res.status(500).json({
+        message: "Failed to send verification email. Please try again.",
+        code: 'EMAIL_SEND_FAILED'
+      });
+    }
+
+    // Log the resend
+    try {
+      await logActivity({
+        user_id: user._id,
+        action: 'VERIFICATION_RESEND',
+        request: req,
+        details: {
+          email: user.email,
+          reason: 'User requested resend'
+        },
+      });
+    } catch (auditError) {
+      console.warn('Failed to log resend:', auditError);
+    }
+
+    return res.status(200).json({
+      message: "Verification link has been sent to your email.",
+      code: 'VERIFICATION_EMAIL_SENT',
+      email: email,
+      retryAfter: 300 // Suggest retry after 5 minutes
+    });
+  } catch (error: any) {
+    console.error('Resend verification error:', error);
+    return res.status(500).json({
+      message: 'Failed to resend verification. Please try again.',
+      code: 'RESEND_FAILED'
+    });
+  }
 }
 
 export const authSendRegistrationOtp = async (req: NextApiRequest, res: NextApiResponse) => {
