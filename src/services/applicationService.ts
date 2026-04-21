@@ -19,7 +19,7 @@ export const applicationService = {
     phone: string,
     cv: File,
     passport: File,
-    nationalId: File
+    nationalId: string
   ) => {
     const formData = new FormData()
     formData.append('jobId', jobId)
