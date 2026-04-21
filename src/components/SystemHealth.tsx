@@ -82,6 +82,7 @@ const SystemHealth: React.FC = () => {
       }
     } finally {
       setRefreshing(false);
+      setLoading(false);
     }
   }, []);
 

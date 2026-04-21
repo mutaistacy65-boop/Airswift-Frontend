@@ -61,6 +61,11 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ title = 'Admin Users' }) => {
     }
   }, []);
 
+  // Fetch users on component mount
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
   // Filter users based on search and filters
   useEffect(() => {
     let filtered = users;
