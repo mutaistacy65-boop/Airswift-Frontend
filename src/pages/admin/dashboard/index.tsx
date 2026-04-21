@@ -503,20 +503,4 @@ export default function AdminDashboard() {
   );
 }
 
-export async function getServerSideProps(context: any) {
-  const { req } = context;
-  const token = req.cookies.accessToken;
 
-  if (!token) {
-    return {
-      redirect: {
-        destination: '/login',
-        permanent: false,
-      },
-    };
-  }
-
-  return {
-    props: {},
-  };
-}

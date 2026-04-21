@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState, useEffect } from 'react'
 import { adminService } from '@/services/adminService'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -8,11 +9,23 @@ const AdminUsers = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [retrying, setRetrying] = useState(false)
+=======
+import React, { useEffect } from 'react'
+import { useRouter } from 'next/router'
+import { useAuth } from '@/context/AuthContext'
+import AdminUsers from '@/components/AdminUsers'
+import Loader from '@/components/Loader'
 
+export default function AdminUsersPage() {
+  const router = useRouter()
+  const { user, isLoading } = useAuth()
+>>>>>>> fee8ffbd9587e97ff13d6c344ad80b952310e5e7
+
+  // Check if user is admin
   useEffect(() => {
-    fetchUsers()
-  }, [])
+    if (isLoading) return
 
+<<<<<<< HEAD
   const fetchUsers = async () => {
     try {
       setLoading(true)
@@ -153,3 +166,31 @@ const AdminUsers = () => {
 }
 
 export default AdminUsers
+=======
+    if (!user) {
+      router.push('/login')
+      return
+    }
+
+    const userRole = user?.role?.toLowerCase() || 'user'
+    if (userRole !== 'admin') {
+      router.push('/unauthorized')
+      return
+    }
+  }, [user, isLoading, router])
+
+  if (isLoading) {
+    return <Loader />
+  }
+
+  if (!user || user.role?.toLowerCase() !== 'admin') {
+    return null
+  }
+
+  return (
+    <div>
+      <AdminUsers title="Admin Users Management" />
+    </div>
+  )
+}
+>>>>>>> fee8ffbd9587e97ff13d6c344ad80b952310e5e7
