@@ -180,12 +180,12 @@ export const adminService = {
 
   // Settings Management
   getSettings: async () => {
-    const response = await API.get('/admin/settings')
+    const response = await API.get('/settings')
     return response.data
   },
 
   updateSettings: async (settings: any) => {
-    const response = await API.put('/admin/settings', settings)
+    const response = await API.put('/settings', settings)
     return response.data
   },
 
@@ -239,28 +239,29 @@ export const adminService = {
 
   // Payment Management
   getPayments: async (params?: any) => {
-    const response = await API.get('/admin/payments', { params })
+    const response = await API.get('/payment', { params })
     return response.data
   },
 
   updatePaymentStatus: async (id: string, status: string, notes?: string) => {
-    const response = await API.put(`/admin/payments/${id}/status`, { status, notes })
+    const response = await API.put(`/payment/${id}/status`, { status, notes })
     return response.data
   },
 
+  // Stats are calculated from payments data on the frontend
   getPaymentStats: async () => {
-    const response = await API.get('/admin/payments/stats')
-    return response.data
+    // Deprecated: Use calculations from getPayments data instead
+    throw new Error('Payment stats endpoint deprecated. Calculate stats from payments data.')
   },
 
   // Audit & Reports
   getAuditLogs: async (params?: any) => {
-    const response = await API.get('/admin/audit', { params })
+    const response = await API.get('/admin/audit-logs', { params })
     return response.data
   },
 
   getEmailLogs: async (params?: any) => {
-    const response = await API.get('/admin/email-logs', { params })
+    const response = await API.get('/email', { params })
     return response.data
   },
 
@@ -281,7 +282,7 @@ export const adminService = {
 
   // System Health
   getSystemHealth: async () => {
-    const response = await API.get('/admin/system/health')
+    const response = await API.get('/system-health')
     return response.data
   },
 

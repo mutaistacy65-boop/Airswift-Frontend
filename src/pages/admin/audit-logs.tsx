@@ -38,12 +38,13 @@ export default function AuditLogsPage() {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/audit-logs", {
+      const res = await api.get("/admin/audit-logs", {
         params: { search, action, startDate, endDate },
       });
-      setLogs(res.data);
+      setLogs(res.data.logs || []);
     } catch (error) {
       console.error("Failed to fetch audit logs:", error);
+      setLogs([]);
     } finally {
       setLoading(false);
     }

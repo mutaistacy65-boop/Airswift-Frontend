@@ -56,7 +56,7 @@ const SystemHealth: React.FC = () => {
       setRefreshing(true);
       console.log('📡 Fetching system health data...');
 
-      const response = await api.get('/admin/system-health');
+      const response = await api.get('/system-health');
       console.log('✅ Health data received:', response.data);
 
       setHealth(response.data);

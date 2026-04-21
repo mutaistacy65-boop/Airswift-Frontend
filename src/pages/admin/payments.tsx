@@ -108,25 +108,82 @@ export default function AdminPaymentsPage() {
     }
   }, [currentPage, pageSize, searchTerm, statusFilter, serviceFilter, addNotification])
 
-  const fetchStats = useCallback(async () => {
+  const calculateStats = (paymentsList: Payment[]) => {
     try {
-      setStatsLoading(true)
-      const response = await adminService.getPaymentStats()
-      setStats(response)
+      if (!paymentsList || paymentsList.length === 0) {
+        return {
+          totalRevenue: 0,
+          paymentsByType: [],
+          monthlyRevenue: [],
+        }
+      }
+
+      // Calculate total revenue
+      const totalRevenue = paymentsList.reduce((sum, p) => sum + (p.amount || 0), 0)
+
+      // Calculate payments by type
+      const typeMap = new Map<string, { count: number; total: number }>()
+      paymentsList.forEach((p) => {
+        const type = p.service_type || 'unknown'
+        if (!typeMap.has(type)) {
+          typeMap.set(type, { count: 0, total: 0 })
+        }
+        const current = typeMap.get(type)!
+        current.count += 1
+        current.total += p.amount || 0
+      })
+
+      const paymentsByType = Array.from(typeMap.entries()).map(([service_type, data]) => ({
+        service_type,
+        count: data.count,
+        total: data.total,
+      }))
+
+      // Calculate monthly revenue
+      const monthMap = new Map<string, number>()
+      paymentsList.forEach((p) => {
+        const date = new Date(p.created_at)
+        const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        monthMap.set(month, (monthMap.get(month) || 0) + (p.amount || 0))
+      })
+
+      const monthlyRevenue = Array.from(monthMap.entries())
+        .map(([month, total]) => ({ month, total }))
+        .sort((a, b) => a.month.localeCompare(b.month))
+
+      return { totalRevenue, paymentsByType, monthlyRevenue }
     } catch (error) {
-      addNotification('Failed to load payment statistics', 'error')
-      console.error(error)
-    } finally {
-      setStatsLoading(false)
+      console.error('Error calculating stats:', error)
+      return {
+        totalRevenue: 0,
+        paymentsByType: [],
+        monthlyRevenue: [],
+      }
     }
-  }, [addNotification])
+  }
+
+  const fetchStats = useCallback(() => {
+    // Stats are now calculated from payments data
+    if (payments.length > 0) {
+      setStatsLoading(true)
+      try {
+        const calculatedStats = calculateStats(payments)
+        setStats(calculatedStats)
+      } finally {
+        setStatsLoading(false)
+      }
+    }
+  }, [payments])
 
   useEffect(() => {
     if (isAuthorized) {
       fetchPayments()
-      fetchStats()
     }
-  }, [isAuthorized, fetchPayments, fetchStats])
+  }, [isAuthorized, fetchPayments])
+
+  useEffect(() => {
+    fetchStats()
+  }, [payments, fetchStats])
 
   useEffect(() => {
     if (!socket) return

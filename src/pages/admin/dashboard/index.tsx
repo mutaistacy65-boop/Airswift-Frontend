@@ -63,17 +63,15 @@ export default function AdminDashboard() {
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      const [summaryRes, funnelRes, activitiesRes, healthRes] = await Promise.all([
-        API.get('/admin/dashboard/summary'),
-        API.get('/admin/dashboard/funnel'),
-        API.get('/admin/dashboard/activities'),
-        API.get('/admin/system/health')
-      ])
-
-      setSummary(summaryRes.data || {})
-      setFunnel(funnelRes.data || [])
-      setActivities(activitiesRes.data || [])
-      setHealth(healthRes.data || {})
+      const response = await API.get('/admin/dashboard')
+      const data = response.data || {}
+      
+      // Parse the single response containing all dashboard data
+      setSummary(data.summary || {})
+      setFunnel(data.funnel || [])
+      setActivities(data.activities || [])
+      setHealth(data.health || {})
+      setTrends(data.trends || [])
     } catch (error) {
       console.error('Failed to load dashboard data:', error)
       // Set safe defaults to prevent crashes
@@ -81,19 +79,16 @@ export default function AdminDashboard() {
       setFunnel([])
       setActivities([])
       setHealth(null)
+      setTrends([])
     } finally {
       setStatsLoading(false)
     }
   }, [])
 
   const fetchTrends = async (range: string) => {
-    try {
-      const response = await API.get(`/admin/dashboard/trends?range=${range}`)
-      setTrends(Array.isArray(response.data) ? response.data : [])
-    } catch (error) {
-      console.error('Error fetching trends:', error)
-      setTrends([])
-    }
+    // Trends are now fetched as part of the main dashboard data
+    // This function is kept for backward compatibility but does nothing
+    console.log('Trends are now part of dashboard data, range:', range)
   }
 
   const fetchAdminActions = useCallback(async () => {
@@ -160,12 +155,6 @@ export default function AdminDashboard() {
       unsubscribeShortlisted?.()
     }
   }, [subscribe, fetchDashboardData, fetchAdminActions, fetchEmailLogs])
-
-  useEffect(() => {
-    if (!isLoading) {
-      fetchTrends(trendRange)
-    }
-  }, [isLoading, trendRange])
 
   // Protect route
   if (isLoading) {

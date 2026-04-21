@@ -69,7 +69,7 @@ export const AdminLogs = ({ limit = 20, compact = false }: AdminLogsProps) => {
         ...(filters.endDate && { endDate: filters.endDate })
       })
 
-      const response = await API.get(`/audit-logs?${params}`)
+      const response = await API.get(`/admin/audit-logs?${params}`)
 
       setLogs(Array.isArray(response.data.logs) ? response.data.logs : [])
       setPagination((prev) => ({

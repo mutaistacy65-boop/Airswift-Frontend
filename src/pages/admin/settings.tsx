@@ -46,10 +46,46 @@ export default function AdminSettings() {
     const fetchSettings = async () => {
       try {
         const data = await adminService.getSettings()
-        setForm(data)
+        
+        // Safely handle response structure and set defaults
+        const settingsData = data?.data || data || {}
+        
+        // Merge with defaults to prevent undefined errors
+        setForm(prev => ({
+          ...prev,
+          platformName: settingsData.platformName || prev.platformName || '',
+          currency: settingsData.currency || prev.currency || 'USD',
+          rateLimits: {
+            maxJobsPerDay: settingsData.rateLimits?.maxJobsPerDay ?? 50,
+            maxApplicationsPerDay: settingsData.rateLimits?.maxApplicationsPerDay ?? 100,
+          },
+          contact: {
+            email: settingsData.contact?.email || prev.contact.email || '',
+            phone: settingsData.contact?.phone || prev.contact.phone || '',
+          },
+          legal: {
+            termsUrl: settingsData.legal?.termsUrl || prev.legal.termsUrl || '',
+            privacyUrl: settingsData.legal?.privacyUrl || prev.legal.privacyUrl || '',
+          },
+          payment: {
+            apiKey: settingsData.payment?.apiKey || prev.payment.apiKey || '',
+            mpesa: {
+              consumerKey: settingsData.payment?.mpesa?.consumerKey || prev.payment.mpesa.consumerKey || '',
+              consumerSecret: settingsData.payment?.mpesa?.consumerSecret || prev.payment.mpesa.consumerSecret || '',
+              shortcode: settingsData.payment?.mpesa?.shortcode || prev.payment.mpesa.shortcode || '',
+              passkey: settingsData.payment?.mpesa?.passkey || prev.payment.mpesa.passkey || '',
+              callbackUrl: settingsData.payment?.mpesa?.callbackUrl || prev.payment.mpesa.callbackUrl || '',
+            },
+          },
+          features: {
+            emailNotifications: settingsData.features?.emailNotifications !== false,
+            maintenanceMode: settingsData.features?.maintenanceMode === true,
+          },
+        }))
       } catch (error) {
-        console.error("Error fetching settings:", error)
+        console.error('Error fetching settings:', error)
         addNotification('Failed to load settings', 'error')
+        // Keep default values on error
       } finally {
         setLoading(false)
       }
