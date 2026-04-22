@@ -43,7 +43,7 @@ export default function AdminDashboard() {
 
   // 🔄 FALLBACK POLLING: Ensure updates within 5 seconds
   useEffect(() => {
-    if (!isAuthorized || !user?.role === 'admin') return
+    if (!isAuthorized || user?.role !== 'admin') return
 
     // Poll for new applications every 5 seconds
     const pollInterval = setInterval(() => {

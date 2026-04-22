@@ -37,8 +37,8 @@ export default function LoginPage() {
       const result = await AuthService.login(email, password);
 
       // ⚠️ Check if account is not verified
-      if (result.code === 'ACCOUNT_NOT_VERIFIED') {
-        setError(result.message || "Your account has not been verified yet. Check your email for the verification link.");
+      if ((result as any).code === 'ACCOUNT_NOT_VERIFIED') {
+        setError((result as any).message || "Your account has not been verified yet. Check your email for the verification link.");
         
         // Optional: Offer to resend verification link
         setTimeout(() => {

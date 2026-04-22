@@ -135,7 +135,14 @@ const JobApplicationPage: React.FC = () => {
         console.log(`   ${pair[0]}:`, pair[1] instanceof File ? `File(${(pair[1] as File).name}, ${(pair[1] as File).size} bytes)` : pair[1]);
       }
 
-      await jobService.applyForJob(id as string, cv, coverLetter, formData)
+      await jobService.applyForJob(
+        id as string,
+        cv,
+        user?.phone || '',
+        passport,
+        nationalId,
+        formData
+      )
 
       addNotification('Application submitted successfully! You will be notified of the next steps.', 'success')
       router.push('/job-seeker/dashboard')
