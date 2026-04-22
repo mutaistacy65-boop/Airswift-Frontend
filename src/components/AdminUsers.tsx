@@ -193,14 +193,6 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ title = 'Admin Users' }) => {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
-  // 🔄 POLLING: Refresh user list every 5 seconds to ensure real-time updates
-  useEffect(() => {
-    const pollInterval = setInterval(() => {
-      fetchUsers()
-    }, 5000)
-
-    return () => clearInterval(pollInterval)
-  }, [fetchUsers])
   // Filter users based on search and filters
   useEffect(() => {
     let filtered = users;

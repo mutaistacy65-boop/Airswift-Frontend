@@ -14,9 +14,6 @@ function AuditLogs() {
 
   useEffect(() => {
     fetchAuditLogs();
-    // Refresh audit logs every 10 seconds for real-time updates
-    const interval = setInterval(fetchAuditLogs, 10000);
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useAuth } from '@/context/AuthContext'
@@ -13,7 +13,6 @@ import { adminService } from '@/services/adminService'
 import { emailService } from '@/services/emailService'
 import { cvService, CVScore } from '@/services/cvService'
 import { useSocket } from '@/hooks/useSocket'
-import useApplicationPolling from '@/hooks/useApplicationPolling'
 import { formatDate } from '@/utils/helpers'
 import { Eye, Mail, Send, FileText, BarChart3, Trash2 } from 'lucide-react'
 
@@ -228,13 +227,13 @@ const AdminApplicationsPage = () => {
     }
   }
 
-  // ✅ Use polling as fallback when socket.io isn't available
-  // This ensures applications always appear even if socket events aren't emitted
-  useApplicationPolling(
-    useCallback(() => fetchApplications(), []),
-    5000, // Poll every 5 seconds
-    user?.role === 'admin' && !isConnected // Only poll if admin and socket not connected
-  )
+  // ℹ️ Manual refresh only - admins can click refresh button to fetch latest data
+  // Polling disabled for better performance
+  // useApplicationPolling(
+  //   useCallback(() => fetchApplications(), []),
+  //   5000, // Poll every 5 seconds
+  //   user?.role === 'admin' && !isConnected // Only poll if admin and socket not connected
+  // )
 
   const getStatusBadgeColor = (status: string) => {
     switch (status?.toString().toLowerCase()) {

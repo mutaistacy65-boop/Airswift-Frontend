@@ -88,9 +88,6 @@ const SystemHealth: React.FC = () => {
 
   useEffect(() => {
     fetchHealthData();
-    // Auto-refresh every 10 seconds
-    const interval = setInterval(fetchHealthData, 10000);
-    return () => clearInterval(interval);
   }, [fetchHealthData]);
 
   const getStatusColor = (status: string | undefined): string => {
