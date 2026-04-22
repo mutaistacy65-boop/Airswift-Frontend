@@ -39,15 +39,15 @@ const SafeAuditLogs = () => {
         endDate: filters.endDate || undefined
       };
 
-      const response = await api.get('/admin/audit/logs', { params });
+      const response = await api.get('/audit-logs', { params });
       const data = response.data || {};
 
       setLogs(Array.isArray(data.logs) ? data.logs : []);
       setPagination((prev) => ({
         ...prev,
-        page: data.page || override.page || prev.page,
-        pages: data.pages || prev.pages,
-        total: data.total || 0
+        page: data.pagination?.page || override.page || prev.page,
+        pages: data.pagination?.pages || prev.pages,
+        total: data.pagination?.total || 0
       }));
     } catch (err) {
       console.error('Failed to load audit logs:', err);

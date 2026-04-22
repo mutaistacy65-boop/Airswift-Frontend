@@ -587,6 +587,15 @@ const AdminApplicationsPage = () => {
                                 <BarChart3 size={16} />
                               </button>
                             )}
+                            <button
+                              onClick={() => {
+                                alert(`Manage user: ${app.fullName}\nEmail: ${app.email}\n\nRedirect to user management with this user's details.`)
+                              }}
+                              className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg"
+                              title="Manage applicant user"
+                            >
+                              👤
+                            </button>
                           </div>
                         </div>
                         </td>
@@ -645,6 +654,18 @@ const AdminApplicationsPage = () => {
                     Download CV
                   </a>
                 )}
+                <button
+                  onClick={() => {
+                    // Open user management for this applicant
+                    setSelectedApplication(selectedApplication)
+                    // TODO: Navigate to user management or show user edit modal
+                    alert(`Edit user: ${selectedApplication.fullName} (${selectedApplication.email})`)
+                  }}
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 inline-flex items-center justify-center gap-2"
+                  title="Edit applicant user profile"
+                >
+                  ✏️ Edit User
+                </button>
               </div>
 
               <button

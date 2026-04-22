@@ -106,13 +106,17 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ title = 'Admin Users' }) => {
           : u
       ));
 
-      setSuccessMessage('User updated successfully!');
+      setSuccessMessage('✅ User updated successfully!');
+      console.log('✅ User persisted to database:', response);
+      
       setTimeout(() => {
         setSuccessMessage(null);
         closeEditModal();
-      }, 2000);
+        // Refresh to ensure data is synced
+        fetchUsers();
+      }, 1500);
     } catch (err: any) {
-      console.error('Error updating user:', err);
+      console.error('❌ Error updating user:', err);
       setActionError(err.response?.data?.message || 'Failed to update user');
     } finally {
       setActionLoading(false);
@@ -127,20 +131,24 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ title = 'Admin Users' }) => {
       setActionLoading(true);
       setActionError(null);
 
-      await api.delete(`/admin/users/${selectedUser._id || selectedUser.id}`);
+      const response = await api.delete(`/admin/users/${selectedUser._id || selectedUser.id}`);
 
       // Remove the deleted user from the list
       setUsers(prev => prev.filter(u => 
         (u._id !== selectedUser._id && u.id !== selectedUser.id)
       ));
 
-      setSuccessMessage('User deleted successfully!');
+      setSuccessMessage('✅ User deleted successfully!');
+      console.log('✅ User deleted from database:', response);
+      
       setTimeout(() => {
         setSuccessMessage(null);
         closeDeleteModal();
-      }, 2000);
+        // Refresh to ensure data is synced
+        fetchUsers();
+      }, 1500);
     } catch (err: any) {
-      console.error('Error deleting user:', err);
+      console.error('❌ Error deleting user:', err);
       setActionError(err.response?.data?.message || 'Failed to delete user');
     } finally {
       setActionLoading(false);
@@ -185,7 +193,14 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ title = 'Admin Users' }) => {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+  // 🔄 POLLING: Refresh user list every 5 seconds to ensure real-time updates
+  useEffect(() => {
+    const pollInterval = setInterval(() => {
+      fetchUsers()
+    }, 5000)
 
+    return () => clearInterval(pollInterval)
+  }, [fetchUsers])
   // Filter users based on search and filters
   useEffect(() => {
     let filtered = users;
@@ -400,20 +415,49 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ title = 'Admin Users' }) => {
                         {new Date(user.createdAt).toLocaleDateString()}
                       </td>
                       <td className="actions-cell">
-                        <button 
-                          className="btn-action btn-edit"
-                          onClick={() => openEditModal(user)}
-                          title="Edit user"
-                        >
-                          ✏️ Edit
-                        </button>
-                        <button 
-                          className="btn-action btn-delete"
-                          onClick={() => openDeleteModal(user)}
-                          title="Delete user"
-                        >
-                          🗑️ Delete
-                        </button>
+                        <div className="action-buttons-group">
+                          <button 
+                            className="btn-action btn-edit"
+                            onClick={() => openEditModal(user)}
+                            title="Edit user details"
+                            style={{
+                              backgroundColor: '#3b82f6',
+                              color: 'white',
+                              padding: '0.5rem 1rem',
+                              borderRadius: '0.375rem',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontSize: '0.875rem',
+                              fontWeight: '500',
+                              transition: 'background-color 0.2s',
+                            }}
+                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#2563eb')}
+                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#3b82f6')}
+                          >
+                            ✏️ Edit
+                          </button>
+                          <button 
+                            className="btn-action btn-delete"
+                            onClick={() => openDeleteModal(user)}
+                            title="Delete user"
+                            style={{
+                              backgroundColor: '#ef4444',
+                              color: 'white',
+                              padding: '0.5rem 1rem',
+                              borderRadius: '0.375rem',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontSize: '0.875rem',
+                              fontWeight: '500',
+                              transition: 'background-color 0.2s',
+                              marginLeft: '0.5rem',
+                            }}
+                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
+                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#ef4444')}
+                          >
+                            🗑️ Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

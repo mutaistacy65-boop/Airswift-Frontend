@@ -31,6 +31,7 @@ export default function AdminDashboard() {
   const [form, setForm] = useState({ subject: '', message: '', date: '', time: '' })
   const [notes, setNotes] = useState<{ [key: string]: string }>({})
   const { user, isAuthorized } = useRequireAuth({ role: 'admin' })
+  const [lastFetchTime, setLastFetchTime] = useState(Date.now())
 
   // Initial data fetch when user is authorized
   useEffect(() => {
@@ -39,6 +40,19 @@ export default function AdminDashboard() {
       fetchPendingJobs()
     }
   }, [user, isAuthorized])
+
+  // 🔄 FALLBACK POLLING: Ensure updates within 5 seconds
+  useEffect(() => {
+    if (!isAuthorized || !user?.role === 'admin') return
+
+    // Poll for new applications every 5 seconds
+    const pollInterval = setInterval(() => {
+      fetchApplications()
+      fetchPendingJobs()
+    }, 5000)
+
+    return () => clearInterval(pollInterval)
+  }, [isAuthorized, user])
 
   // 🛡️ ROLE-AWARE SOCKET HANDLING
   // Only listen to socket events if user is admin

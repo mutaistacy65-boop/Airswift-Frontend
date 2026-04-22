@@ -24,7 +24,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Only admins can access audit logs
   const user = await getAuthUser(req)
   if (!user || user.role !== 'admin') {
-    return res.status(403).json({ message: 'Access denied. Admins only.' })
+    return res.status(403).json({ 
+      success: false,
+      message: 'Access denied. Admin access required.' 
+    })
   }
 
   if (req.method === 'GET') {
@@ -159,7 +162,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
     } catch (error: any) {
       console.error('Error fetching audit logs:', error)
-      return res.status(500).json({ message: 'Internal server error' })
+      return res.status(500).json({ 
+        success: false,
+        message: 'Failed to fetch audit logs',
+        error: error.message 
+      })
     }
   } else if (req.method === 'POST') {
     // Export logs
@@ -224,11 +231,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
     } catch (error: any) {
       console.error('Error exporting audit logs:', error)
-      return res.status(500).json({ message: 'Internal server error' })
+      return res.status(500).json({ 
+        success: false,
+        message: 'Failed to export audit logs',
+        error: error.message 
+      })
     }
   } else {
     res.setHeader('Allow', ['GET', 'POST'])
-    return res.status(405).json({ message: 'Method Not Allowed' })
+    return res.status(405).json({ 
+      success: false,
+      message: 'Method Not Allowed' 
+    })
   }
 }
 

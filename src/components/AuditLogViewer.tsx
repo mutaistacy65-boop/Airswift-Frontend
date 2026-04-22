@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { usePermissions } from '@/hooks/usePermissions'
 import { getSocket } from '@/services/socket'
+import API from '@/services/apiClient'
 
 interface AuditLog {
   _id: string
@@ -50,10 +51,9 @@ export default function AuditLogViewer() {
 
   const fetchAuditLogs = async () => {
     try {
-      const response = await fetch('/api/audit-logs?limit=50')
-      if (response.ok) {
-        const logs = await response.json()
-        setAuditLogs(logs)
+      const response = await API.get('/audit-logs?limit=50')
+      if (response.data && response.data.logs) {
+        setAuditLogs(response.data.logs)
       }
     } catch (error) {
       console.error('Failed to fetch audit logs:', error)
