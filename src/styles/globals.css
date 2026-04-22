@@ -1,6 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --primary: #0A66C2;
+  --primary-dark: #004182;
+  --primary-light: #E8F0FE;
+  --accent: #22C55E;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --background: #F8FAFC;
+  --surface: #FFFFFF;
+  --text-primary: #111827;
+  --text-secondary: #6B7280;
+  --border: #E5E7EB;
+}
 
 * {
   margin: 0;
@@ -8,13 +24,18 @@
   box-sizing: border-box;
 }
 
+html,
 body {
-  background-color: #f8f9fa;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  background-color: var(--background);
+  font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: var(--text-primary);
 }
 
 code {
@@ -30,72 +51,63 @@ body {
   position: relative;
 }
 
-/* Global Page Watermark - Covers Entire Page */
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 150px,
-      rgba(59, 130, 246, 0.12) 150px,
-      rgba(59, 130, 246, 0.12) 300px
-    );
-  background-attachment: fixed;
-  font-size: 120px;
-  font-weight: 900;
-  pointer-events: none;
-  z-index: -1;
+/* Card Styles */
+.card {
+  @apply bg-white rounded-lg shadow-md p-6 border border-gray-100;
 }
 
-body::after {
-  content: 'AIRSWIFT';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  font-size: 600px;
-  font-weight: 900;
-  color: rgba(59, 130, 246, 0.1);
-  opacity: 0.5;
-  pointer-events: none;
-  z-index: -1;
-  white-space: pre;
-  line-height: 1.2;
-  padding: 50px;
-  transform: rotate(-30deg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  word-wrap: break-word;
-  overflow: hidden;
+.card-header {
+  @apply flex items-center gap-3 mb-4 pb-4 border-b border-gray-200;
 }
 
-/* Navbar Watermark */
-.navbar-watermark {
-  position: relative;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(245, 247, 250, 0.5) 100%);
+.card-title {
+  @apply text-lg font-bold text-gray-900;
 }
 
-.navbar-watermark::before {
-  content: 'AIRSWIFT';
-  position: absolute;
-  top: 50%;
-  right: 1%;
-  font-size: 600px;
-  font-weight: 900;
-  opacity: 0.1;
-  transform: translateY(-50%) rotate(-20deg);
-  white-space: nowrap;
-  pointer-events: none;
-  z-index: 0;
-  color: #3b82f6;
+/* Button Base Styles */
+.btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2;
+}
+
+.btn-primary {
+  @apply bg-primary text-white hover:bg-primary-dark shadow-sm hover:shadow-md;
+}
+
+.btn-secondary {
+  @apply border border-border bg-surface hover:bg-gray-50 text-text-primary shadow-sm hover:shadow-md;
+}
+
+.btn-accent {
+  @apply bg-accent text-white hover:bg-green-600 shadow-sm hover:shadow-md;
+}
+
+.btn-outline {
+  @apply border-2 border-primary text-primary hover:bg-primary hover:text-white;
+}
+
+/* Badge Styles */
+.badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+}
+
+.badge-success {
+  @apply bg-green-100 text-green-800;
+}
+
+.badge-warning {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.badge-danger {
+  @apply bg-red-100 text-red-800;
+}
+
+.badge-info {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.badge-purple {
+  @apply bg-purple/10 text-purple border border-purple/20;
 }
 
 /* AuditLogs Component Styling */

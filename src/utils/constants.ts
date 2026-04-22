@@ -59,7 +59,7 @@ export const USER_ROLES = ['job_seeker', 'admin']
 // Payment Constants (M-Pesa - Kenya Safaricom)
 export const PAYMENT_METHODS = ['mpesa']
 export const PAYMENT_AMOUNTS = {
-  INTERVIEW_FEE: 3, // KSH
+  INTERVIEW_FEE: 3, // USD
   VISA_PROCESSING: 30000, // KSH
 }
 export const PAYMENT_CURRENCY = 'KES'

@@ -1,223 +1,233 @@
-import React, { useState, useEffect } from 'react';
-import apiClient from '../services/apiClient';
-import { getSocket } from '../socket';
-import EditModal from './EditModal';
+import React, { useState, useEffect, useCallback } from 'react';
+import api from '@/lib/api';
 
-function AdminUsers() {
-  const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
+interface User {
+  _id: string;
+  id?: string;
+  name: string;
+  email: string;
+  role: string;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface AdminUsersProps {
+  title?: string;
+}
+
+interface EditFormData {
+  name: string;
+  email: string;
+  role: string;
+}
+
+const AdminUsers: React.FC<AdminUsersProps> = ({ title = 'Admin Users' }) => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [verifiedFilter, setVerifiedFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
 
-  // Edit modal states
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState({});
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  // Modal states
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [editFormData, setEditFormData] = useState<EditFormData>({
+    name: '',
+    email: '',
+    role: ''
+  });
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  // Open edit modal
+  const openEditModal = (user: User) => {
+    setSelectedUser(user);
+    setEditFormData({
+      name: user.name,
+      email: user.email,
+      role: user.role
+    });
+    setEditModalOpen(true);
+    setActionError(null);
+  };
 
-  useEffect(() => {
-    filterUsers();
-  }, [users, searchTerm, roleFilter, verifiedFilter]);
+  // Close edit modal
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setSelectedUser(null);
+    setEditFormData({ name: '', email: '', role: '' });
+    setActionError(null);
+  };
 
-  // 🔴 Real-time Socket.IO listening for user updates
-  useEffect(() => {
-    const socket = getSocket();
+  // Open delete modal
+  const openDeleteModal = (user: User) => {
+    setSelectedUser(user);
+    setDeleteModalOpen(true);
+    setActionError(null);
+  };
 
-    if (!socket) {
-      console.warn('Socket.IO is not connected');
-      return;
+  // Close delete modal
+  const closeDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setSelectedUser(null);
+    setActionError(null);
+  };
+
+  // Handle edit form change
+  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Update user
+  const handleUpdateUser = async () => {
+    if (!selectedUser) return;
+
+    try {
+      setActionLoading(true);
+      setActionError(null);
+
+      const response = await api.put(`/admin/users/${selectedUser._id || selectedUser.id}`, editFormData);
+      
+      // Update the users list with the updated user
+      setUsers(prev => prev.map(u => 
+        (u._id === selectedUser._id || u.id === selectedUser.id) 
+          ? { ...u, ...editFormData }
+          : u
+      ));
+
+      setSuccessMessage('✅ User updated successfully!');
+      console.log('✅ User persisted to database:', response);
+      
+      setTimeout(() => {
+        setSuccessMessage(null);
+        closeEditModal();
+        // Refresh to ensure data is synced
+        fetchUsers();
+      }, 1500);
+    } catch (err: any) {
+      console.error('❌ Error updating user:', err);
+      setActionError(err.response?.data?.message || 'Failed to update user');
+    } finally {
+      setActionLoading(false);
     }
+  };
 
-    // Listen for user updates
-    const handleUserUpdated = (data) => {
-      console.log('📡 User updated via socket:', data);
+  // Delete user
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
 
-      if (data.user && data.userId) {
-        setUsers(prevUsers =>
-          prevUsers.map(u => u._id === data.userId ? data.user : u)
-        );
-      }
-    };
+    try {
+      setActionLoading(true);
+      setActionError(null);
 
-    // Listen for user deletions
-    const handleUserDeleted = (data) => {
-      console.log('📡 User deleted via socket:', data);
+      const response = await api.delete(`/admin/users/${selectedUser._id || selectedUser.id}`);
 
-      if (data.userId) {
-        setUsers(prevUsers => prevUsers.filter(u => u._id !== data.userId));
-      }
-    };
+      // Remove the deleted user from the list
+      setUsers(prev => prev.filter(u => 
+        (u._id !== selectedUser._id && u.id !== selectedUser.id)
+      ));
 
-    socket.on('userUpdated', handleUserUpdated);
-    socket.on('userDeleted', handleUserDeleted);
+      setSuccessMessage('✅ User deleted successfully!');
+      console.log('✅ User deleted from database:', response);
+      
+      setTimeout(() => {
+        setSuccessMessage(null);
+        closeDeleteModal();
+        // Refresh to ensure data is synced
+        fetchUsers();
+      }, 1500);
+    } catch (err: any) {
+      console.error('❌ Error deleting user:', err);
+      setActionError(err.response?.data?.message || 'Failed to delete user');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
-    // Cleanup listeners on unmount
-    return () => {
-      socket.off('userUpdated', handleUserUpdated);
-      socket.off('userDeleted', handleUserDeleted);
-    };
-  }, []);
-
-  const fetchUsers = async () => {
+  // Fetch users from API
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('📥 Fetching all users from /api/admin/users');
-
-      const response = await apiClient.get('/admin/users');
-      console.log('✅ Users fetched successfully:', response.data);
-
-      setUsers(response.data.users || []);
-    } catch (err) {
+      console.log('📥 Fetching users from /api/admin/users');
+      
+      const response = await api.get('/admin/users');
+      
+      // Handle response structure: { users: [...] }
+      const usersData = response.data.users || response.data;
+      console.log('✅ Users fetched successfully:', usersData.length, 'users');
+      
+      setUsers(Array.isArray(usersData) ? usersData : []);
+    } catch (err: any) {
       console.error('❌ Error fetching users:', err);
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch users';
-      setError(errorMessage);
-
-      // Handle specific error cases
+      
+      // Provide user-friendly error messages
       if (err.response?.status === 401) {
-        setError('Unauthorized - Please login again');
+        setError('Unauthorized. Please log in again.');
       } else if (err.response?.status === 403) {
-        setError('Forbidden - You do not have permission to view users');
+        setError('You do not have permission to view users. Admin access required.');
+      } else if (err.response?.status === 404) {
+        setError('Users endpoint not found. Backend may not be configured.');
+      } else {
+        setError(err.response?.data?.message || err.message || 'Failed to fetch users');
       }
+      
+      setUsers([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const filterUsers = () => {
-    let filtered = users.filter((user) => {
-      // Search filter
-      const matchesSearch = !searchTerm ||
-        user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+  // Fetch users on component mount
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+  // 🔄 POLLING: Refresh user list every 5 seconds to ensure real-time updates
+  useEffect(() => {
+    const pollInterval = setInterval(() => {
+      fetchUsers()
+    }, 5000)
 
-      // Role filter
-      const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+    return () => clearInterval(pollInterval)
+  }, [fetchUsers])
+  // Filter users based on search and filters
+  useEffect(() => {
+    let filtered = users;
 
-      // Verified filter
-      const matchesVerified = verifiedFilter === 'all' ||
-        (verifiedFilter === 'verified' ? user.isVerified : !user.isVerified);
+    // Apply search filter
+    if (search.trim()) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(user =>
+        user.name.toLowerCase().includes(searchLower) ||
+        user.email.toLowerCase().includes(searchLower)
+      );
+    }
 
-      return matchesSearch && matchesRole && matchesVerified;
-    });
+    // Apply role filter
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter(user => user.role === roleFilter);
+    }
+
+    // Apply verification filter
+    if (verifiedFilter !== 'all') {
+      const isVerifiedValue = verifiedFilter === 'verified';
+      filtered = filtered.filter(user => user.isVerified === isVerifiedValue);
+    }
 
     setFilteredUsers(filtered);
-    setCurrentPage(1); // Reset to first page when filtering
-  };
-
-  const handleRefresh = () => {
-    fetchUsers();
-  };
-
-  const handleEditUser = (user) => {
-    setEditingUser(user);
-    setIsEditModalOpen(true);
-  };
-
-  const handleSaveUser = async (updatedData) => {
-    try {
-      setIsSaving(true);
-      console.log('💾 Saving user changes:', updatedData);
-
-      const response = await apiClient.put(`/admin/users/${editingUser._id}`, updatedData);
-
-      // Update local state
-      const updatedUsers = users.map(u =>
-        u._id === editingUser._id ? { ...u, ...updatedData, lastModifiedAt: new Date() } : u
-      );
-      setUsers(updatedUsers);
-
-      // Track save time
-      setSaveStatus(prev => ({
-        ...prev,
-        [editingUser._id]: new Date()
-      }));
-
-      setIsEditModalOpen(false);
-      setEditingUser(null);
-
-      // Show success notification
-      alert('✅ User updated successfully!');
-    } catch (err) {
-      console.error('❌ Error saving user:', err);
-      alert('❌ Error: ' + (err.response?.data?.message || err.message));
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDeleteUser = async (userId) => {
-    try {
-      const confirmDelete = window.confirm(
-        'Are you sure you want to delete this user? This action cannot be undone.'
-      );
-
-      if (!confirmDelete) return;
-
-      console.log('🗑️ Deleting user:', userId);
-      await apiClient.delete(`/admin/users/${userId}`);
-
-      // Update local state
-      setUsers(users.filter(u => u._id !== userId));
-      setDeleteConfirm(null);
-
-      // Show success notification
-      alert('✅ User deleted successfully!');
-    } catch (err) {
-      console.error('❌ Error deleting user:', err);
-      alert('❌ Error: ' + (err.response?.data?.message || err.message));
-    }
-  };
-
-  const getEditFields = () => {
-    if (!editingUser) return [];
-
-    return [
-      { name: 'name', label: 'Name', type: 'text' as const, value: editingUser.name, required: true },
-      { name: 'email', label: 'Email', type: 'email' as const, value: editingUser.email, required: true },
-      { name: 'phone', label: 'Phone', type: 'text' as const, value: editingUser.phone || '' },
-      { name: 'location', label: 'Location', type: 'text' as const, value: editingUser.location || '' },
-      { name: 'role', label: 'Role', type: 'select' as const, value: editingUser.role || 'user', options: [
-        { label: 'User', value: 'user' },
-        { label: 'Recruiter', value: 'recruiter' },
-        { label: 'Admin', value: 'admin' }
-      ]},
-      { name: 'isVerified', label: 'Verified', type: 'checkbox' as const, value: editingUser.isVerified },
-      { name: 'bio', label: 'Bio', type: 'textarea' as const, value: editingUser.bio || '', rows: 3 }
-    ];
-  };
-
-  const handleExportCSV = () => {
-    const csvContent = [
-      ['ID', 'Name', 'Email', 'Role', 'Verified', 'Created Date'],
-      ...filteredUsers.map(user => [
-        user._id,
-        user.name,
-        user.email,
-        user.role,
-        user.isVerified ? 'Yes' : 'No',
-        new Date(user.createdAt).toLocaleString()
-      ])
-    ];
-
-    const csvString = csvContent.map(row => row.join(',')).join('\n');
-    const blob = new Blob([csvString], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `users_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-  };
+    setCurrentPage(1);
+  }, [users, search, roleFilter, verifiedFilter]);
 
   // Pagination
   const indexOfLastUser = currentPage * usersPerPage;
@@ -225,6 +235,44 @@ function AdminUsers() {
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
+  // Export to CSV
+  const handleExport = () => {
+    if (filteredUsers.length === 0) {
+      alert('No users to export');
+      return;
+    }
+
+    const headers = ['Name', 'Email', 'Role', 'Verified', 'Created Date'];
+    const rows = filteredUsers.map(user => [
+      user.name,
+      user.email,
+      user.role,
+      user.isVerified ? 'Yes' : 'No',
+      new Date(user.createdAt).toLocaleDateString()
+    ]);
+
+    let csv = headers.join(',') + '\n';
+    rows.forEach(row => {
+      csv += row.map(cell => `"${cell}"`).join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `users-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  // Statistics
+  const totalUsers = users.length;
+  const adminUsers = users.filter(u => u.role === 'admin').length;
+  const verifiedUsers = users.filter(u => u.isVerified).length;
+
+  // Loading state
   if (loading) {
     return (
       <div className="admin-users-container loading">
@@ -234,14 +282,15 @@ function AdminUsers() {
     );
   }
 
+  // Error state
   if (error) {
     return (
       <div className="admin-users-container error">
         <div className="error-card">
           <h2>⚠️ Error</h2>
           <p>{error}</p>
-          <button onClick={handleRefresh} className="btn-retry">
-            Retry
+          <button className="btn-retry" onClick={fetchUsers}>
+            Try Again
           </button>
         </div>
       </div>
@@ -250,9 +299,30 @@ function AdminUsers() {
 
   return (
     <div className="admin-users-container">
+      {/* Header */}
       <div className="admin-header">
-        <h1>User Management</h1>
-        <p className="subtitle">Total Users: {filteredUsers.length}</p>
+        <h1>{title}</h1>
+        <p className="subtitle">Manage all users in the system</p>
+      </div>
+
+      {/* Statistics */}
+      <div className="stats-section">
+        <div className="stat-card">
+          <div className="stat-label">Total Users</div>
+          <div className="stat-value">{totalUsers}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Admins</div>
+          <div className="stat-value">{adminUsers}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Verified</div>
+          <div className="stat-value">{verifiedUsers}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Unverified</div>
+          <div className="stat-value">{totalUsers - verifiedUsers}</div>
+        </div>
       </div>
 
       {/* Controls */}
@@ -260,18 +330,18 @@ function AdminUsers() {
         <div className="search-section">
           <input
             type="text"
-            placeholder="Search by name or email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
+            placeholder="Search by name or email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
         <div className="filter-section">
           <select
+            className="filter-select"
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="filter-select"
           >
             <option value="all">All Roles</option>
             <option value="admin">Admin</option>
@@ -280,9 +350,9 @@ function AdminUsers() {
           </select>
 
           <select
+            className="filter-select"
             value={verifiedFilter}
             onChange={(e) => setVerifiedFilter(e.target.value)}
-            className="filter-select"
           >
             <option value="all">All Verification Status</option>
             <option value="verified">Verified</option>
@@ -291,32 +361,12 @@ function AdminUsers() {
         </div>
 
         <div className="action-buttons">
-          <button onClick={handleRefresh} className="btn-refresh" title="Refresh users">
-            🔄 Refresh
+          <button className="btn-refresh" onClick={fetchUsers}>
+            ⟳ Refresh
           </button>
-          <button onClick={handleExportCSV} className="btn-export" title="Export to CSV">
-            📥 Export
+          <button className="btn-export" onClick={handleExport}>
+            ⬇ Export CSV
           </button>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="stats-section">
-        <div className="stat-card">
-          <span className="stat-label">Total Users</span>
-          <span className="stat-value">{users.length}</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Admins</span>
-          <span className="stat-value">{users.filter(u => u.role === 'admin').length}</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Verified</span>
-          <span className="stat-value">{users.filter(u => u.isVerified).length}</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Filtered Results</span>
-          <span className="stat-value">{filteredUsers.length}</span>
         </div>
       </div>
 
@@ -324,7 +374,11 @@ function AdminUsers() {
       <div className="users-section">
         {currentUsers.length === 0 ? (
           <div className="no-results">
-            <p>No users found matching your criteria.</p>
+            <p>
+              {filteredUsers.length === 0 && (search || roleFilter !== 'all' || verifiedFilter !== 'all')
+                ? 'No users match your filters'
+                : 'No users found'}
+            </p>
           </div>
         ) : (
           <>
@@ -336,54 +390,70 @@ function AdminUsers() {
                     <th>Email</th>
                     <th>Role</th>
                     <th>Verified</th>
-                    <th>Joined</th>
-                    <th>Last Updated</th>
+                    <th>Created</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {currentUsers.map((user) => (
-                    <tr key={user._id} className={`user-row role-${user.role}`}>
+                    <tr key={user._id || user.id}>
                       <td className="name-cell">
-                        <span className="user-name">{user.name || 'N/A'}</span>
+                        <span className="user-name">{user.name}</span>
                       </td>
                       <td className="email-cell">{user.email}</td>
                       <td className="role-cell">
-                        <span className={`role-badge role-${user.role}`}>
-                          {user.role || 'user'}
+                        <span className={`role-badge role-${user.role.toLowerCase()}`}>
+                          {user.role}
                         </span>
                       </td>
                       <td className="verified-cell">
-                        <span className={`badge badge-${user.isVerified ? 'verified' : 'unverified'}`}>
-                          {user.isVerified ? '✓ Yes' : '✗ No'}
+                        <span className={`badge ${user.isVerified ? 'badge-verified' : 'badge-unverified'}`}>
+                          {user.isVerified ? '✓ Verified' : '✗ Unverified'}
                         </span>
                       </td>
                       <td className="date-cell">
                         {new Date(user.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="date-cell">
-                        <div className="date-with-save">
-                          <span>{new Date(user.updatedAt).toLocaleDateString()}</span>
-                          {saveStatus[user._id] && (
-                            <span className="last-saved-time" title={new Date(saveStatus[user._id]).toLocaleString()}>
-                              💾 {new Date(saveStatus[user._id]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          )}
-                        </div>
-                      </td>
                       <td className="actions-cell">
-                        <div className="action-buttons-inline">
-                          <button
+                        <div className="action-buttons-group">
+                          <button 
                             className="btn-action btn-edit"
-                            onClick={() => handleEditUser(user)}
-                            title="Edit user"
+                            onClick={() => openEditModal(user)}
+                            title="Edit user details"
+                            style={{
+                              backgroundColor: '#3b82f6',
+                              color: 'white',
+                              padding: '0.5rem 1rem',
+                              borderRadius: '0.375rem',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontSize: '0.875rem',
+                              fontWeight: '500',
+                              transition: 'background-color 0.2s',
+                            }}
+                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#2563eb')}
+                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#3b82f6')}
                           >
                             ✏️ Edit
                           </button>
-                          <button
+                          <button 
                             className="btn-action btn-delete"
-                            onClick={() => handleDeleteUser(user._id)}
+                            onClick={() => openDeleteModal(user)}
                             title="Delete user"
+                            style={{
+                              backgroundColor: '#ef4444',
+                              color: 'white',
+                              padding: '0.5rem 1rem',
+                              borderRadius: '0.375rem',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontSize: '0.875rem',
+                              fontWeight: '500',
+                              transition: 'background-color 0.2s',
+                              marginLeft: '0.5rem',
+                            }}
+                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
+                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#ef4444')}
                           >
                             🗑️ Delete
                           </button>
@@ -399,19 +469,23 @@ function AdminUsers() {
             {totalPages > 1 && (
               <div className="pagination">
                 <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
                   className="btn-pagination"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
                 >
                   ← Previous
                 </button>
+
                 <div className="page-info">
                   Page {currentPage} of {totalPages}
+                  <br />
+                  ({indexOfFirstUser + 1}-{Math.min(indexOfLastUser, filteredUsers.length)} of {filteredUsers.length})
                 </div>
+
                 <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
                   className="btn-pagination"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
                 >
                   Next →
                 </button>
@@ -422,20 +496,158 @@ function AdminUsers() {
       </div>
 
       {/* Edit Modal */}
-      <EditModal
-        isOpen={isEditModalOpen}
-        title="Edit User"
-        fields={getEditFields()}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setEditingUser(null);
-        }}
-        onSave={handleSaveUser}
-        loading={isSaving}
-        lastSaved={editingUser?._id ? saveStatus[editingUser._id] : null}
-      />
+      {editModalOpen && selectedUser && (
+        <div className="modal-overlay" onClick={closeEditModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Edit User</h2>
+              <button className="modal-close" onClick={closeEditModal}>✕</button>
+            </div>
+
+            <div className="modal-body">
+              {actionError && (
+                <div className="alert alert-error">
+                  {actionError}
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="alert alert-success">
+                  {successMessage}
+                </div>
+              )}
+
+              <form onSubmit={(e) => { e.preventDefault(); handleUpdateUser(); }}>
+                <div className="form-group">
+                  <label htmlFor="edit-name">Name</label>
+                  <input
+                    id="edit-name"
+                    type="text"
+                    name="name"
+                    value={editFormData.name}
+                    onChange={handleEditFormChange}
+                    className="form-input"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="edit-email">Email</label>
+                  <input
+                    id="edit-email"
+                    type="email"
+                    name="email"
+                    value={editFormData.email}
+                    onChange={handleEditFormChange}
+                    className="form-input"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="edit-role">Role</label>
+                  <select
+                    id="edit-role"
+                    name="role"
+                    value={editFormData.role}
+                    onChange={handleEditFormChange}
+                    className="form-input"
+                  >
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="recruiter">Recruiter</option>
+                    <option value="job-seeker">Job Seeker</option>
+                    <option value="employer">Employer</option>
+                  </select>
+                </div>
+
+                <div className="modal-footer">
+                  <button 
+                    type="button" 
+                    className="btn-cancel" 
+                    onClick={closeEditModal}
+                    disabled={actionLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn-save"
+                    disabled={actionLoading}
+                  >
+                    {actionLoading ? 'Updating...' : 'Update User'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {deleteModalOpen && selectedUser && (
+        <div className="modal-overlay" onClick={closeDeleteModal}>
+          <div className="modal-content modal-delete" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Confirm Delete</h2>
+              <button className="modal-close" onClick={closeDeleteModal}>✕</button>
+            </div>
+
+            <div className="modal-body">
+              {actionError && (
+                <div className="alert alert-error">
+                  {actionError}
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="alert alert-success">
+                  {successMessage}
+                </div>
+              )}
+
+              <div className="delete-confirmation">
+                <p className="warning-icon">⚠️</p>
+                <p className="confirmation-text">
+                  Are you sure you want to delete this user?
+                </p>
+                <div className="user-info">
+                  <div className="info-row">
+                    <span className="info-label">Name:</span>
+                    <span className="info-value">{selectedUser.name}</span>
+                  </div>
+                  <div className="info-row">
+                    <span className="info-label">Email:</span>
+                    <span className="info-value">{selectedUser.email}</span>
+                  </div>
+                </div>
+                <p className="warning-text">This action cannot be undone.</p>
+              </div>
+
+              <div className="modal-footer">
+                <button 
+                  type="button" 
+                  className="btn-cancel" 
+                  onClick={closeDeleteModal}
+                  disabled={actionLoading}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="button" 
+                  className="btn-delete-confirm"
+                  onClick={handleDeleteUser}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? 'Deleting...' : 'Delete User'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
 
 export default AdminUsers;

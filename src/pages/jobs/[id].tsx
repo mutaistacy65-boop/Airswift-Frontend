@@ -11,7 +11,8 @@ import { formatDate } from '@/utils/helpers'
 const JobDetailPage: React.FC = () => {
   const router = useRouter()
   const { id } = router.query
-  const { user, isAuthenticated } = useAuth()
+  const { user } = useAuth()
+  const isAuthenticated = !!user
   const { addNotification } = useNotification()
   const [job, setJob] = useState<Job | null>(null)
   const [loading, setLoading] = useState(true)
@@ -108,7 +109,7 @@ const JobDetailPage: React.FC = () => {
             </div>
 
             {isAuthenticated ? (
-              user?.role === 'job_seeker' ? (
+              user?.role === 'user' ? (
                 <Button
                   onClick={() => router.push(`/jobs/apply/${id}`)}
                   size="lg"

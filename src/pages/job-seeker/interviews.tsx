@@ -5,16 +5,20 @@ import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
 import Loader from '@/components/Loader'
 import Button from '@/components/Button'
+import VoiceInterview from '@/components/VoiceInterview'
 import { jobService, JobApplication } from '@/services/jobService'
+import { interviewService } from '@/services/interviewService'
 import { formatDate } from '@/utils/helpers'
 
 const InterviewsPage: React.FC = () => {
-  const { isAuthorized, isLoading } = useProtectedRoute('job_seeker')
+  const { isAuthorized, isLoading } = useProtectedRoute('user')
   const { user } = useAuth()
   const { addNotification } = useNotification()
 
   const [applications, setApplications] = useState<JobApplication[]>([])
   const [loading, setLoading] = useState(true)
+  const [voiceInterviewOpen, setVoiceInterviewOpen] = useState(false)
+  const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null)
 
   useEffect(() => {
     if (isAuthorized) {
@@ -53,6 +57,27 @@ const InterviewsPage: React.FC = () => {
       fetchApplications() // Refresh the data
     } catch (error) {
       addNotification('Failed to update interview status', 'error')
+    }
+  }
+
+  const handleStartVoiceInterview = (application: JobApplication) => {
+    setSelectedApplication(application)
+    setVoiceInterviewOpen(true)
+  }
+
+  const handleVoiceInterviewComplete = async (results: any) => {
+    try {
+      if (selectedApplication) {
+        // Submit interview results
+        await interviewService.submitInterviewFeedback(selectedApplication.id, results)
+        addNotification('Voice interview completed successfully!', 'success')
+        fetchApplications() // Refresh the data
+      }
+    } catch (error) {
+      addNotification('Failed to save interview results', 'error')
+    } finally {
+      setVoiceInterviewOpen(false)
+      setSelectedApplication(null)
     }
   }
 
@@ -116,7 +141,7 @@ const InterviewsPage: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 flex-wrap">
                     <Button
                       onClick={() => handleJoinInterview(application.interviewDetails?.zoomLink || '')}
                       className="bg-blue-600 hover:bg-blue-700"
@@ -129,6 +154,13 @@ const InterviewsPage: React.FC = () => {
                       variant="outline"
                     >
                       Mark as Completed
+                    </Button>
+                    <Button
+                      onClick={() => window.location.href = `/job-seeker/reschedule?id=${application.id}&application=${application.id}`}
+                      variant="outline"
+                      className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                    >
+                      📅 Reschedule
                     </Button>
                   </div>
                 </div>
@@ -165,10 +197,16 @@ const InterviewsPage: React.FC = () => {
                   </div>
 
                   <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
-                    <p className="text-yellow-800">
+                    <p className="text-yellow-800 mb-3">
                       <strong>Great news!</strong> You've been shortlisted for this position.
-                      Our team will contact you soon with interview details and Zoom meeting link.
+                      You can now proceed with an AI-powered voice interview.
                     </p>
+                    <Button
+                      onClick={() => handleStartVoiceInterview(application)}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      🎤 Start AI Voice Interview
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -215,6 +253,20 @@ const InterviewsPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Voice Interview Modal */}
+      {selectedApplication && (
+        <VoiceInterview
+          isOpen={voiceInterviewOpen}
+          onClose={() => {
+            setVoiceInterviewOpen(false)
+            setSelectedApplication(null)
+          }}
+          jobRole="Software Engineer"
+          candidateName={user?.name || 'Candidate'}
+          onComplete={handleVoiceInterviewComplete}
+        />
+      )}
     </DashboardLayout>
   )
 }

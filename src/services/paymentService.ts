@@ -1,4 +1,11 @@
-import apiClient from './apiClient'
+import API from './apiClient'
+
+export interface PaymentData {
+  amount: number
+  serviceType: string
+  applicationId?: string
+  description?: string
+}
 
 export interface MpesaPaymentData {
   phoneNumber: string
@@ -8,29 +15,31 @@ export interface MpesaPaymentData {
 }
 
 export const paymentService = {
-  initiatePayment: async (paymentData: MpesaPaymentData) => {
-    const response = await apiClient.post('/payment/initiate', {
-      ...paymentData,
-      paymentMethod: 'mpesa',
-      currency: 'KES',
-    })
+  initiatePayment: async (paymentData: PaymentData) => {
+    const response = await API.post('/payment/initiate', paymentData)
     return response.data
   },
 
+  processPaymentCallback: async (callbackData: any) => {
+    const response = await API.post('/payment/callback', callbackData)
+    return response.data
+  },
+
+  initiateMpesaPayment: async (phoneNumber: string, amount: number, description: string, type: 'interview_fee' | 'visa_processing', applicationId?: string) => {
+    return paymentService.initiatePayment({
+      amount,
+      serviceType: type,
+      applicationId,
+      description
+    })
+  },
+
+  // Legacy methods for backward compatibility
   verifyPayment: async (transactionId: string) => {
-    const response = await apiClient.post('/payment/verify', {
+    const response = await API.post('/payment/verify', {
       transactionId,
       paymentMethod: 'mpesa',
     })
     return response.data
-  },
-
-  initiateMpesaPayment: async (phoneNumber: string, amount: number, description: string, type: 'interview_fee' | 'visa_processing') => {
-    return paymentService.initiatePayment({
-      phoneNumber: phoneNumber.replace(/^0/, '254'), // Convert to international format
-      amount,
-      description,
-      type,
-    })
   },
 }

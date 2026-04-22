@@ -1,190 +1,283 @@
-import React, { useState } from 'react'
-import Link from 'next/link'
-import MainLayout from '@/layouts/MainLayout'
-import Input from '@/components/Input'
-import Button from '@/components/Button'
-import { useAuth } from '@/context/AuthContext'
-import { useNotification } from '@/context/NotificationContext'
+import React, { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import Button from "../components/Button";
+import API from "@/services/apiClient";
+import { clearAuth } from '@/lib/auth';
+import { validateEmailForAuth } from '@/utils/roleUtils';
 
-const RegisterPage: React.FC = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: 'job_seeker',
-  })
-  const [errors, setErrors] = useState<{ [key: string]: string }>({})
-  const [loading, setLoading] = useState(false)
-  const { register } = useAuth()
-  const { addNotification } = useNotification()
-
-  const validateForm = (): boolean => {
-    const newErrors: { [key: string]: string } = {}
-
-    if (!formData.name) {
-      newErrors.name = 'Name is required'
-    }
-
-    if (!formData.email) {
-      newErrors.email = 'Email is required'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format'
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required'
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters'
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }))
-  }
+export default function Register() {
+  const router = useRouter();
+  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [registrationStatus, setRegistrationStatus] = useState<'form' | 'success'>('form');
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    if (!validateForm()) return
+    // Validation
+    if (!formData.name || !formData.email || !formData.password) {
+      setError("Please fill in all fields");
+      setLoading(false);
+      return;
+    }
 
-    setLoading(true)
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters");
+      setLoading(false);
+      return;
+    }
+
+    // Email validation
+    const emailValidation = validateEmailForAuth(formData.email);
+    if (!emailValidation.isValid) {
+      setError(emailValidation.error);
+      setLoading(false);
+      return;
+    }
+
     try {
-      await register({
+      clearAuth();
+
+      // Send registration request
+      const result = await API.post("/auth/register", {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        role: formData.role,
-      })
-      addNotification('Registration successful!', 'success')
-    } catch (error: any) {
-      addNotification(error.message || 'Registration failed', 'error')
+        role: 'user'
+      });
+
+      console.log("Registration response:", result.data);
+
+      // Handle the response
+      if (result.data.code === 'REGISTRATION_SUCCESS') {
+        // New user created - show verification email screen
+        setRegisteredEmail(formData.email);
+        setRegistrationStatus('success');
+        setFormData({ name: "", email: "", password: "" });
+      } else if (result.data.code === 'VERIFICATION_EMAIL_RESENT') {
+        // Unverified user tried to register again - show verification email screen
+        setRegisteredEmail(formData.email);
+        setRegistrationStatus('success');
+        setFormData({ name: "", email: "", password: "" });
+      } else {
+        // Unexpected response
+        setError(result.data.message || "Registration failed");
+      }
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      
+      // Handle specific error codes
+      if (err.response?.data?.code === 'USER_EXISTS') {
+        setError("An account with this email already exists. Please log in.");
+      } else if (err.response?.data?.code === 'RATE_LIMIT_EXCEEDED') {
+        setError(err.response.data.message || "Too many registration attempts. Please try again later.");
+      } else if (err.response?.data?.code === 'EMAIL_SEND_FAILED') {
+        setError("Failed to send verification email. Please try again.");
+      } else {
+        setError(err.response?.data?.message || err?.message || "Registration failed. Please try again.");
+      }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  return (
-    <MainLayout>
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          {/* Background with gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-red-400 via-red-500 to-red-700 opacity-10 rounded-3xl"></div>
+  // Registration form view
+  if (registrationStatus === 'form') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+        <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+          {/* Header */}
+          <div className="flex justify-center mb-6">
+            <div style={{
+              fontSize: "32px",
+              fontWeight: "bold",
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text"
+            }}>
+              Airswift
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold text-center mb-2">Create Account</h1>
+          <p className="text-center text-gray-600 text-sm mb-6">
+            Join our platform to find opportunities
+          </p>
 
-          {/* Main card */}
-          <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20">
-            {/* Header */}
-            <div className="text-center mb-8">
-              <div className="mx-auto h-16 w-16 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
-                <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
-              </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Join Airswift</h1>
-              <p className="text-gray-600">Create your account and start your journey</p>
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-sm">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Full Name */}
+            <div>
+              <label className="text-sm font-medium text-gray-700">Full Name</label>
+              <input
+                type="text"
+                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Your full name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                disabled={loading}
+                required
+              />
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-4">
-                <Input
-                  label="Full Name"
-                  placeholder="Enter your full name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  error={errors.name}
-                  required
-                  className="transition-all duration-200 focus:scale-105"
-                />
+            {/* Email Address */}
+            <div>
+              <label className="text-sm font-medium text-gray-700">Email Address</label>
+              <input
+                type="email"
+                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="you@example.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value.toLowerCase() })}
+                disabled={loading}
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                ℹ️ We'll send you a verification link to this email
+              </p>
+            </div>
 
-                <Input
-                  label="Email Address"
-                  type="email"
-                  placeholder="Enter your email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  error={errors.email}
-                  required
-                  className="transition-all duration-200 focus:scale-105"
-                />
+            {/* Password */}
+            <div>
+              <label className="text-sm font-medium text-gray-700">Password</label>
+              <input
+                type="password"
+                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Create a strong password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                disabled={loading}
+                required
+                minLength={6}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Minimum 6 characters
+              </p>
+            </div>
 
-                <Input
-                  label="Password"
-                  type="password"
-                  placeholder="Create a strong password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  error={errors.password}
-                  required
-                  className="transition-all duration-200 focus:scale-105"
-                />
-
-                <Input
-                  label="Confirm Password"
-                  type="password"
-                  placeholder="Confirm your password"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  error={errors.confirmPassword}
-                  required
-                  className="transition-all duration-200 focus:scale-105"
-                />
-
-                {/* Role Selection */}
-                <div className="mb-4">
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Account Type
-                  </label>
-                  <select
-                    name="role"
-                    value={formData.role}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 bg-white shadow-sm"
-                  >
-                    <option value="job_seeker">Job Seeker</option>
-                    <option value="admin">Administrator</option>
-                  </select>
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                loading={loading}
-              >
-                {loading ? 'Creating Account...' : 'Create Account'}
-              </Button>
-            </form>
-
-            {/* Footer */}
-            <div className="mt-8 text-center">
-              <p className="text-gray-600">
-                Already have an account?{' '}
-                <Link href="/login" className="text-red-600 font-semibold hover:text-red-700 transition-colors hover:underline">
-                  Sign in here
+            {/* Terms Agreement */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-gray-600">
+              <p className="margin-0">
+                By creating an account, you agree to our{" "}
+                <Link href="/terms" className="text-blue-600 hover:underline">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="text-blue-600 hover:underline">
+                  Privacy Policy
                 </Link>
               </p>
             </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+            >
+              {loading ? "Creating Account..." : "Create Account"}
+            </Button>
+          </form>
+
+          {/* Login Link */}
+          <p className="text-center text-sm text-gray-600 mt-6">
+            Already have an account?{" "}
+            <Link href="/login" className="text-blue-600 hover:underline font-medium">
+              Sign in
+            </Link>
+          </p>
+
+          {/* Security Note */}
+          <div className="text-xs text-gray-500 text-center mt-4 pt-4 border-t border-gray-200">
+            <p>
+              🔒 Your password is securely encrypted. We never share your data.
+            </p>
           </div>
         </div>
       </div>
-    </MainLayout>
-  )
+    );
+  }
+
+  // Success screen - prompt to verify email
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
+        {/* Success Icon */}
+        <div style={{
+          fontSize: "64px",
+          marginBottom: "20px"
+        }}>
+          📧
+        </div>
+
+        <h1 className="text-2xl font-bold mb-2">Account Created!</h1>
+        <p className="text-gray-600 mb-6">
+          We've sent a verification link to:
+        </p>
+
+        {/* Email Display */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+          <p className="font-mono text-blue-900">{registeredEmail}</p>
+        </div>
+
+        {/* Instructions */}
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 text-left">
+          <h3 className="font-semibold text-green-900 mb-3">Next Steps:</h3>
+          <ol className="list-decimal list-inside space-y-2 text-sm text-green-800">
+            <li>Check your email for the verification link</li>
+            <li>Click the link to verify your email address</li>
+            <li>Log in with your credentials</li>
+          </ol>
+        </div>
+
+        {/* Important Notes */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <p className="text-sm text-yellow-800">
+            <strong>⏰ Link expires in 24 hours</strong><br/>
+            <br/>
+            Don't see the email? Check your spam folder or{" "}
+            <Link href="/verify-email" className="text-blue-600 hover:underline font-medium">
+              request a new verification link
+            </Link>
+          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="space-y-3">
+          <button
+            onClick={() => router.push('/verify-email')}
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+          >
+            Resend Verification Link
+          </button>
+
+          <button
+            onClick={() => router.push('/login')}
+            className="w-full bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition font-medium"
+          >
+            Go to Login
+          </button>
+        </div>
+
+        {/* Support Link */}
+        <p className="text-xs text-gray-500 mt-6 pt-4 border-t border-gray-200">
+          Having issues?{" "}
+          <Link href="/contact" className="text-blue-600 hover:underline">
+            Contact support
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
 }
 
-export default RegisterPage

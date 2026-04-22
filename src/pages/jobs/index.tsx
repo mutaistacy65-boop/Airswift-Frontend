@@ -11,39 +11,61 @@ import { JOB_TYPES } from '@/utils/constants'
 
 const JobsPage: React.FC = () => {
   const router = useRouter()
-  const { isAuthenticated, isLoading: authLoading } = useAuth()
+  const { isLoading: authLoading, user, isAuthenticated } = useAuth()
   const [jobs, setJobs] = useState<Job[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [location, setLocation] = useState('')
   const [jobType, setJobType] = useState('')
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const { addNotification } = useNotification()
 
+  // Strong authentication guard - redirect immediately if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/login')
+      // Not authenticated, redirect to login
+      router.replace('/login')
       return
     }
-    if (!authLoading && isAuthenticated) {
+  }, [authLoading, isAuthenticated, router])
+
+  // Fetch jobs only when fully authenticated and loading is complete
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && user) {
       fetchJobs()
     }
-  }, [searchQuery, jobType, page, authLoading, isAuthenticated, router])
+  }, [searchQuery, location, jobType, page, authLoading, isAuthenticated, user])
 
   const fetchJobs = async () => {
     setLoading(true)
     try {
-      const filters: any = {}
-      if (jobType) filters.type = jobType
-      if (searchQuery) filters.search = searchQuery
-
-      const data = await jobService.getAllJobs(page, 10)
-      if (page === 1) {
-        setJobs(data.jobs || data)
-      } else {
-        setJobs(prev => [...prev, ...(data.jobs || data)])
+      const filters: any = {
+        type: jobType || undefined,
+        location: location || undefined,
+        page,
+        limit: 10,
       }
-      setHasMore(data.hasMore || false)
+
+      const data = await jobService.searchJobs(searchQuery, filters)
+      const jobs = Array.isArray(data)
+        ? data
+        : data?.jobs || []
+      const sortedJobs = [...jobs].sort((a: any, b: any) => {
+        if (typeof a === 'string' && typeof b === 'string') {
+          return a.localeCompare(b)
+        }
+        if (a?.title && b?.title) {
+          return a.title.localeCompare(b.title)
+        }
+        return 0
+      })
+      if (page === 1) {
+        setJobs(sortedJobs)
+      } else {
+        setJobs(prev => [...prev, ...sortedJobs])
+      }
+      setHasMore(data?.hasMore || false)
     } catch (error) {
       addNotification('Failed to load jobs', 'error')
     } finally {
@@ -52,21 +74,32 @@ const JobsPage: React.FC = () => {
   }
 
   return (
-    authLoading ? (
+    // Only render main content if authenticated and loading complete
+    authLoading || !isAuthenticated ? (
       <Loader />
     ) : (
-    <MainLayout>
-      <div>
-        <h1 className="text-3xl font-bold mb-8">Browse Jobs</h1>
+      <MainLayout>
+        <div>
+          <h1 className="text-4xl font-bold mb-2 text-gray-900">Browse Opportunities</h1>
+          <p className="text-gray-600 mb-8">Find your next career opportunity from our curated job listings</p>
 
         {/* Filters */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8 grid md:grid-cols-2 gap-4">
-          <Input
-            label="Search Jobs"
-            placeholder="Job title, company, location..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value)
+<div className="bg-white p-6 rounded-lg shadow-sm mb-8 grid lg:grid-cols-3 gap-4 border border-gray-100">
+            <Input
+              label="Search Jobs"
+              placeholder="Job title, company, location..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setPage(1)
+              }}
+            />
+            <Input
+              label="Location"
+              placeholder="Toronto, Nairobi, Remote..."
+              value={location}
+              onChange={(e) => {
+                setLocation(e.target.value)
               setPage(1)
             }}
           />

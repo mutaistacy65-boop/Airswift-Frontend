@@ -1,417 +1,797 @@
-import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
+
+import React, { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/router'
 import DashboardLayout from '@/layouts/DashboardLayout'
-import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useAuth } from '@/context/AuthContext'
+import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useNotification } from '@/context/NotificationContext'
 import Loader from '@/components/Loader'
 import Button from '@/components/Button'
 import Modal from '@/components/Modal'
-import Input from '@/components/Input'
-import Textarea from '@/components/Textarea'
-import { jobService, JobApplication } from '@/services/jobService'
-import { APPLICATION_STATUS } from '@/utils/constants'
+import ApplicationPipeline from '@/components/ApplicationPipeline'
+import { adminService } from '@/services/adminService'
+import { emailService } from '@/services/emailService'
+import { cvService, CVScore } from '@/services/cvService'
+import { useSocket } from '@/hooks/useSocket'
+import useApplicationPolling from '@/hooks/useApplicationPolling'
 import { formatDate } from '@/utils/helpers'
+import { Eye, Mail, Send, FileText, BarChart3, Trash2 } from 'lucide-react'
 
-const AdminApplicationsPage: React.FC = () => {
-  const { isAuthorized, isLoading } = useProtectedRoute('admin')
-  const { user } = useAuth()
+// Force server-side rendering for admin pages
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+interface Application {
+  _id: string
+  id?: string
+  fullName: string
+  email: string
+  phone?: string
+  jobId: { title: string; _id: string } | string
+  status:
+    | 'Submitted'
+    | 'Under Review'
+    | 'Shortlisted'
+    | 'Interview Scheduled'
+    | 'Hired'
+    | 'Rejected'
+    | 'rejected'
+    | 'pending'
+    | 'reviewed'
+    | 'shortlisted'
+    | 'accepted'
+    | 'interview-scheduled'
+  cv?: string
+  coverLetter?: string
+  qualifications?: string[]
+  experience?: string
+  cvScore?: number
+  aiScore?: number
+  notes?: string
+  interviewId?: string | null
+  jobTitle?: string
+  jobLocation?: string
+  applicantName?: string
+  applicantEmail?: string
+  applicantPhone?: string
+  documentsVerified?: boolean
+  documents?: {
+    passport?: string
+    nationalId?: string
+    certificates?: string[]
+    verified?: boolean
+  }
+  createdAt: string
+  updatedAt?: string
+}
+
+const AdminApplicationsPage = () => {
+  const router = useRouter()
+  const { user, isLoading: authLoading } = useAuth()
+  const { isAuthorized, isLoading: protectedLoading } = useProtectedRoute('admin')
   const { addNotification } = useNotification()
+  const { subscribe, isConnected } = useSocket()
 
-  const [applications, setApplications] = useState<JobApplication[]>([])
+  const [applications, setApplications] = useState<Application[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null)
-  const [showScheduleModal, setShowScheduleModal] = useState(false)
-  const [showStatusModal, setShowStatusModal] = useState(false)
-  const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [viewMode, setViewMode] = useState<'table' | 'pipeline'>('pipeline')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('all')
 
-  // Interview scheduling form
-  const [interviewDate, setInterviewDate] = useState('')
-  const [interviewTime, setInterviewTime] = useState('')
-  const [zoomLink, setZoomLink] = useState('')
-  const [interviewNotes, setInterviewNotes] = useState('')
-  const [scheduling, setScheduling] = useState(false)
+  const [showDetailModal, setShowDetailModal] = useState(false)
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [showScoreModal, setShowScoreModal] = useState(false)
+  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null)
+  const [updating, setUpdating] = useState(false)
 
-  // Status update form
-  const [newStatus, setNewStatus] = useState('')
-  const [statusNotes, setStatusNotes] = useState('')
-  const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [emailSubject, setEmailSubject] = useState('')
+  const [emailBody, setEmailBody] = useState('')
+  const [cvScore, setCvScore] = useState<CVScore | null>(null)
+  const audioRef = React.useRef<HTMLAudioElement>(null)
+
+  // Play notification sound
+  const playNotificationSound = () => {
+    try {
+      if (audioRef.current) {
+        audioRef.current.play().catch(() => {
+          console.log('Audio playback failed or blocked by browser')
+        })
+      }
+    } catch (error) {
+      console.error('Error playing notification sound:', error)
+    }
+  }
+
+  const sidebarItems = [
+    { label: '📊 Dashboard', href: '/admin/dashboard' },
+    { label: '👥 Users', href: '/admin/users' },
+    { label: ' Applications', href: '/admin/applications' },
+    { label: '📞 Interviews', href: '/admin/interviews' },
+    { label: '💰 Payments', href: '/admin/payments' },
+    { label: '📋 Audit Logs', href: '/admin/audit' },
+    { label: '🔍 Health', href: '/admin/health' },
+    { label: '⚙️ Settings', href: '/admin/settings' },
+  ]
 
   useEffect(() => {
-    if (isAuthorized) {
+    if (!authLoading && (!user || user.role.toLowerCase() !== 'admin')) {
+      router.push('/unauthorized')
+    }
+  }, [authLoading, user, router])
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
       fetchApplications()
     }
-  }, [isAuthorized])
+  }, [user])
+
+  // Subscribe to real-time updates
+  useEffect(() => {
+    const handleNewApplication = (data: any) => {
+      if (!data) return
+
+      const newApp: Application = {
+        _id: data._id || data.id,
+        id: data._id || data.id,
+        fullName: data.applicantName || data.fullName || 'Unknown',
+        email: data.applicantEmail || data.email || '',
+        phone: data.applicantPhone || data.phone,
+        jobId: data.jobId || { title: 'N/A' },
+        status: data.status || 'Submitted',
+        cv: data.documents?.cv,
+        coverLetter: data.coverLetter,
+        aiScore: data.aiScore,
+        notes: data.notes,
+        interviewId: data.interviewId,
+        jobTitle: data.jobTitle,
+        jobLocation: data.jobLocation,
+        applicantName: data.applicantName,
+        applicantEmail: data.applicantEmail,
+        applicantPhone: data.applicantPhone,
+        createdAt: data.createdAt || new Date().toISOString(),
+        updatedAt: data.updatedAt,
+        documents: data.documents,
+      }
+
+      setApplications(prev => [newApp, ...prev])
+      playNotificationSound()
+      addNotification(`🔥 New application from ${newApp.fullName}!`, 'success')
+
+      if (typeof window !== 'undefined' && document.hidden) {
+        alert(`📩 New application received from ${newApp.fullName}`)
+      }
+    }
+
+    const unsubscribeNewApp = subscribe('newApplication', handleNewApplication)
+    const unsubscribeNewAppSnake = subscribe('new_application', handleNewApplication)
+    const unsubscribeAppNew = subscribe('application:new', (data: any) => {
+      if (data && (data._id || data.id)) {
+        handleNewApplication(data)
+      } else {
+        fetchApplications()
+        playNotificationSound()
+        addNotification('🔥 New application received!', 'success')
+        if (typeof window !== 'undefined' && document.hidden) {
+          alert('📩 New application received!')
+        }
+      }
+    })
+
+    const unsubscribeStatus = subscribe('statusUpdate', (data: any) => {
+      setApplications(prev =>
+        prev.map(app =>
+          app._id === data.applicationId || app._id === data.id
+            ? { ...app, status: data.status as any }
+            : app
+        )
+      )
+      addNotification(`Application status updated to ${data.status}`, 'info')
+    })
+
+    const unsubscribeAppUpdated = subscribe('application_updated', (data: any) => {
+      if (data?.applicationId) {
+        setApplications(prev =>
+          prev.map(app =>
+            app._id === data.applicationId || app._id === data.id
+              ? { ...app, ...data.updates }
+              : app
+          )
+        )
+        addNotification('📝 Application updated', 'info')
+      }
+    })
+
+    const unsubscribeShortlisted = subscribe('user:shortlisted', (data: any) => {
+      addNotification('User shortlisted!', 'success')
+    })
+
+    return () => {
+      unsubscribeNewApp?.()
+      unsubscribeNewAppSnake?.()
+      unsubscribeStatus?.()
+      unsubscribeAppNew?.()
+      unsubscribeAppUpdated?.()
+      unsubscribeShortlisted?.()
+    }
+  }, [subscribe, addNotification])
 
   const fetchApplications = async () => {
     try {
-      // This would typically call an admin API to get all applications
-      // For now, we'll simulate with sample data
-      const sampleApplications: JobApplication[] = [
-        {
-          id: '1',
-          jobId: 'job-001',
-          userId: 'user-001',
-          resumeUrl: '/resumes/sample.pdf',
-          coverLetter: 'I am very interested in this position...',
-          appliedDate: '2026-04-01',
-          status: 'pending',
-          documents: {
-            passport: '/docs/passport.pdf',
-            nationalId: '/docs/id.pdf',
-            cv: '/docs/cv.pdf'
-          }
-        },
-        {
-          id: '2',
-          jobId: 'job-002',
-          userId: 'user-002',
-          resumeUrl: '/resumes/sample2.pdf',
-          coverLetter: 'I have extensive experience...',
-          appliedDate: '2026-03-28',
-          status: 'accepted',
-          documents: {
-            passport: '/docs/passport2.pdf',
-            nationalId: '/docs/id2.pdf',
-            cv: '/docs/cv2.pdf'
-          }
-        }
-      ]
-      setApplications(sampleApplications)
+      setLoading(true)
+      const data = await adminService.getAllApplications()
+      setApplications(Array.isArray(data) ? data : data.applications || [])
     } catch (error) {
+      console.error('Error fetching applications:', error)
       addNotification('Failed to load applications', 'error')
     } finally {
       setLoading(false)
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'reviewed': return 'bg-blue-100 text-blue-800'
-      case 'accepted': return 'bg-green-100 text-green-800'
-      case 'interview_scheduled': return 'bg-purple-100 text-purple-800'
-      case 'interview_completed': return 'bg-indigo-100 text-indigo-800'
-      case 'visa_payment_pending': return 'bg-orange-100 text-orange-800'
-      case 'visa_processing': return 'bg-teal-100 text-teal-800'
-      case 'visa_ready': return 'bg-emerald-100 text-emerald-800'
-      case 'rejected': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+  // ✅ Use polling as fallback when socket.io isn't available
+  // This ensures applications always appear even if socket events aren't emitted
+  useApplicationPolling(
+    useCallback(() => fetchApplications(), []),
+    5000, // Poll every 5 seconds
+    user?.role === 'admin' && !isConnected // Only poll if admin and socket not connected
+  )
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status?.toString().toLowerCase()) {
+      case 'submitted':
+      case 'pending':
+        return 'bg-gray-500'
+      case 'under review':
+      case 'reviewed':
+        return 'bg-yellow-500'
+      case 'shortlisted':
+      case 'accepted':
+        return 'bg-green-500'
+      case 'interview scheduled':
+      case 'interview-scheduled':
+        return 'bg-purple-500'
+      case 'rejected':
+      case 'rejected':
+        return 'bg-red-500'
+      default:
+        return 'bg-slate-500'
     }
   }
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending': return 'Under Review'
-      case 'reviewed': return 'Reviewed'
-      case 'accepted': return 'Accepted'
-      case 'interview_scheduled': return 'Interview Scheduled'
-      case 'interview_completed': return 'Interview Completed'
-      case 'visa_payment_pending': return 'Visa Payment Pending'
-      case 'visa_processing': return 'Visa Processing'
-      case 'visa_ready': return 'Visa Ready'
-      case 'rejected': return 'Rejected'
-      default: return status
+  const StatusBadge = ({ status }: { status: string }) => (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold text-white ${getStatusBadgeColor(status)}`}>
+      {status?.toString().replace(/-/g, ' ') || 'Unknown'}
+    </span>
+  )
+
+  const isDocsVerified = (app: Application) => {
+    return app.documentsVerified ?? app.documents?.verified ?? false
+  }
+
+  const verifyDocs = async (app: Application) => {
+    try {
+      setUpdating(true)
+      const updatedApp = await adminService.verifyApplicationDocs(app._id)
+      setApplications(prev => prev.map(item => item._id === app._id ? { ...item, ...updatedApp, documentsVerified: true } : item))
+      addNotification('Documents verified successfully', 'success')
+    } catch (error: any) {
+      console.error('Error verifying documents:', error)
+      addNotification(error?.message || 'Failed to verify documents', 'error')
+    } finally {
+      setUpdating(false)
     }
   }
 
-  const handleScheduleInterview = (application: JobApplication) => {
-    setSelectedApplication(application)
-    setInterviewDate('')
-    setInterviewTime('')
-    setZoomLink('')
-    setInterviewNotes('')
-    setShowScheduleModal(true)
+  const shortlistApplicant = async (app: Application) => {
+    try {
+      setUpdating(true)
+      const updatedApp = await adminService.shortlistApplication(app._id)
+      setApplications(prev => prev.map(item => item._id === app._id ? { ...item, ...updatedApp, status: 'Shortlisted' } : item))
+      addNotification('Applicant shortlisted successfully', 'success')
+    } catch (error: any) {
+      console.error('Error shortlisting applicant:', error)
+      addNotification(error?.message || 'Failed to shortlist applicant', 'error')
+    } finally {
+      setUpdating(false)
+    }
   }
 
-  const handleUpdateStatus = (application: JobApplication) => {
-    setSelectedApplication(application)
-    setNewStatus(application.status)
-    setStatusNotes('')
-    setShowStatusModal(true)
+  const handleStatusChange = (appId: string, newStatus: string) => {
+    setApplications(
+      applications.map(app => (app._id === appId ? { ...app, status: newStatus as any } : app))
+    )
   }
 
-  const submitInterviewSchedule = async () => {
-    if (!selectedApplication || !interviewDate || !interviewTime || !zoomLink) {
-      addNotification('Please fill in all required fields', 'error')
+  const handleSendEmail = async () => {
+    if (!selectedApplication || !emailSubject || !emailBody) {
+      addNotification('Please fill in all fields', 'error')
       return
     }
 
-    setScheduling(true)
     try {
-      // Here you would call an API to schedule the interview
-      const interviewDetails = {
-        scheduledDate: `${interviewDate} ${interviewTime}`,
-        zoomLink,
-        notes: interviewNotes
-      }
-
-      // Update the application status to interview_scheduled
-      await updateApplicationStatus(selectedApplication.id, 'interview_scheduled', `Interview scheduled for ${interviewDetails.scheduledDate}`)
-
-      addNotification('Interview scheduled successfully!', 'success')
-      setShowScheduleModal(false)
-      fetchApplications() // Refresh the list
-    } catch (error) {
-      addNotification('Failed to schedule interview', 'error')
+      setUpdating(true)
+      await emailService.sendEmail({
+        to: selectedApplication.email,
+        subject: emailSubject,
+        html: emailBody,
+      })
+      addNotification('Email sent successfully', 'success')
+      setShowEmailModal(false)
+      setEmailSubject('')
+      setEmailBody('')
+    } catch (error: any) {
+      addNotification(error?.message || 'Failed to send email', 'error')
     } finally {
-      setScheduling(false)
+      setUpdating(false)
     }
   }
 
-  const updateApplicationStatus = async (applicationId: string, status: string, notes: string) => {
-    // This would call an API to update the application status
-    console.log('Updating application', applicationId, 'to status', status, 'with notes', notes)
-  }
-
-  const submitStatusUpdate = async () => {
-    if (!selectedApplication || !newStatus) {
-      addNotification('Please select a status', 'error')
+  const handleAnalyzeCv = async () => {
+    if (!selectedApplication || !selectedApplication.cv) {
+      addNotification('CV not available', 'error')
       return
     }
 
-    setUpdatingStatus(true)
     try {
-      await updateApplicationStatus(selectedApplication.id, newStatus, statusNotes)
-      addNotification('Application status updated successfully!', 'success')
-      setShowStatusModal(false)
-      fetchApplications() // Refresh the list
-    } catch (error) {
-      addNotification('Failed to update status', 'error')
+      setUpdating(true)
+      const score = await cvService.analyzeCv(
+        selectedApplication.cv,
+        'Job Description',
+        ['Skill 1', 'Skill 2']
+      )
+      setCvScore(score)
+      setShowScoreModal(true)
+    } catch (error: any) {
+      addNotification(error?.message || 'Failed to analyze CV', 'error')
     } finally {
-      setUpdatingStatus(false)
+      setUpdating(false)
     }
   }
 
-  const filteredApplications = filterStatus === 'all'
-    ? applications
-    : applications.filter(app => app.status === filterStatus)
-
-  if (isLoading || loading) {
-    return <Loader fullScreen />
+  const openDetailModal = (app: Application) => {
+    setSelectedApplication(app)
+    setShowDetailModal(true)
   }
 
-  if (!isAuthorized) {
-    return null
+  const openEmailModal = (app: Application) => {
+    setSelectedApplication(app)
+    // Prepare email template based on status
+    if (app.status === 'shortlisted' || app.status === 'Shortlisted') {
+      setEmailSubject(`You've been shortlisted! - ${typeof app.jobId === 'object' ? app.jobId.title : app.jobId}`)
+      setEmailBody(`Hi ${app.fullName},\n\nGreat news! You have been shortlisted for the position. We will contact you soon with interview details.\n\nBest regards,\nThe Recruitment Team`)
+    } else {
+      setEmailSubject(`Update on your application`)
+      setEmailBody(`Hi ${app.fullName},\n\nThank you for your application. We appreciate your interest in joining our team.\n\nBest regards,\nThe Recruitment Team`)
+    }
+    setShowEmailModal(true)
   }
 
-  const sidebarItems = [
-    { label: 'Dashboard', href: '/admin/dashboard', icon: '📊' },
-    { label: 'Manage Jobs', href: '/admin/jobs', icon: '💼' },
-    { label: 'Applications', href: '/admin/applications', icon: '📋' },
-    { label: 'Users', href: '/admin/users', icon: '👥' },
-    { label: 'Audit Logs', href: '/admin/audit-logs', icon: '📋' },
-    { label: 'Interviews', href: '/admin/interviews', icon: '📞' },
-    { label: 'Settings', href: '/admin/settings', icon: '⚙️' },
-  ]
+  const filteredApplications = applications.filter(app => {
+    const matchesSearch =
+      app.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (typeof app.jobId === 'object'
+        ? app.jobId.title.toLowerCase().includes(searchTerm.toLowerCase())
+        : false)
+
+    const matchesStatus = filterStatus === 'all' || app.status === filterStatus
+
+    return matchesSearch && matchesStatus
+  })
+
+  if (authLoading || protectedLoading) return <Loader />
+  
+  if (!isAuthorized) return null
 
   return (
     <DashboardLayout sidebarItems={sidebarItems}>
-      {/* Schedule Interview Modal */}
-      <Modal
-        isOpen={showScheduleModal}
-        onClose={() => setShowScheduleModal(false)}
-        onConfirm={submitInterviewSchedule}
-        confirmText={scheduling ? 'Scheduling...' : 'Schedule Interview'}
-        title="Schedule Interview"
-      >
-        <div className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <Input
-              label="Interview Date"
-              type="date"
-              value={interviewDate}
-              onChange={(e) => setInterviewDate(e.target.value)}
-              required
-            />
-            <Input
-              label="Interview Time"
-              type="time"
-              value={interviewTime}
-              onChange={(e) => setInterviewTime(e.target.value)}
-              required
-            />
-          </div>
-          <Input
-            label="Zoom Meeting Link"
-            type="url"
-            value={zoomLink}
-            onChange={(e) => setZoomLink(e.target.value)}
-            placeholder="https://zoom.us/j/..."
-            required
-          />
-          <Textarea
-            label="Interview Notes (Optional)"
-            value={interviewNotes}
-            onChange={(e) => setInterviewNotes(e.target.value)}
-            rows={3}
-            placeholder="Any special instructions or notes for the candidate..."
-          />
-        </div>
-      </Modal>
-
-      {/* Update Status Modal */}
-      <Modal
-        isOpen={showStatusModal}
-        onClose={() => setShowStatusModal(false)}
-        onConfirm={submitStatusUpdate}
-        confirmText={updatingStatus ? 'Updating...' : 'Update Status'}
-        title="Update Application Status"
-      >
-        <div className="space-y-4">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">New Status</label>
-            <select
-              value={newStatus}
-              onChange={(e) => setNewStatus(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              required
-            >
-              {APPLICATION_STATUS.map(status => (
-                <option key={status} value={status}>
-                  {getStatusText(status)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <Textarea
-            label="Status Update Notes (Optional)"
-            value={statusNotes}
-            onChange={(e) => setStatusNotes(e.target.value)}
-            rows={3}
-            placeholder="Any notes about this status change..."
-          />
-        </div>
-      </Modal>
-
-      <div>
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Manage Applications</h1>
-          <div className="flex gap-4">
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg"
-            >
-              <option value="all">All Status</option>
-              {APPLICATION_STATUS.map(status => (
-                <option key={status} value={status}>
-                  {getStatusText(status)}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {filteredApplications.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
-            <div className="text-gray-400 text-6xl mb-4">📋</div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No Applications Found</h2>
-            <p className="text-gray-600">
-              {filterStatus === 'all' ? 'No applications have been submitted yet.' : `No applications with status "${getStatusText(filterStatus)}".`}
+            <h1 className="text-3xl font-bold text-gray-900">Applications & Applicants</h1>
+            <p className="text-gray-600 mt-1 flex items-center gap-2">
+              Review and manage job applications
+              {isConnected && <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Live Updates Active</span>}
             </p>
           </div>
-        ) : (
-          <div className="space-y-6">
-            {filteredApplications.map((application) => (
-              <div key={application.id} className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900">
-                      Application #{application.id.slice(-8)}
-                    </h3>
-                    <p className="text-gray-600">Job ID: {application.jobId} | Applied: {formatDate(application.appliedDate)}</p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(application.status)}`}>
-                    {getStatusText(application.status)}
-                  </span>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Applicant ID</p>
-                    <p className="font-medium">{application.userId}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Application Date</p>
-                    <p className="font-medium">{formatDate(application.appliedDate)}</p>
-                  </div>
-                </div>
-
-                {application.coverLetter && (
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600 mb-2">Cover Letter</p>
-                    <p className="text-gray-700 bg-gray-50 p-3 rounded text-sm">
-                      {application.coverLetter.length > 150
-                        ? `${application.coverLetter.slice(0, 150)}...`
-                        : application.coverLetter
-                      }
-                    </p>
-                  </div>
-                )}
-
-                {application.documents && (
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600 mb-2">Submitted Documents</p>
-                    <div className="flex gap-2 flex-wrap">
-                      {application.documents.passport && (
-                        <a href={application.documents.passport} target="_blank" rel="noopener noreferrer"
-                           className="bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm hover:bg-blue-200">
-                          Passport
-                        </a>
-                      )}
-                      {application.documents.nationalId && (
-                        <a href={application.documents.nationalId} target="_blank" rel="noopener noreferrer"
-                           className="bg-green-100 text-green-800 px-3 py-1 rounded text-sm hover:bg-green-200">
-                          National ID
-                        </a>
-                      )}
-                      {application.documents.cv && (
-                        <a href={application.documents.cv} target="_blank" rel="noopener noreferrer"
-                           className="bg-purple-100 text-purple-800 px-3 py-1 rounded text-sm hover:bg-purple-200">
-                          CV
-                        </a>
-                      )}
-                      {application.documents.certificates && application.documents.certificates.length > 0 && (
-                        <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded text-sm">
-                          {application.documents.certificates.length} Certificate(s)
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <div className="border-t pt-4 flex gap-3">
-                  <Button
-                    onClick={() => handleUpdateStatus(application)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Update Status
-                  </Button>
-
-                  {(application.status === 'accepted' || application.status === 'pending' || application.status === 'reviewed') && (
-                    <Button
-                      onClick={() => handleScheduleInterview(application)}
-                      className="bg-blue-600 hover:bg-blue-700"
-                      size="sm"
-                    >
-                      Schedule Interview
-                    </Button>
-                  )}
-
-                  {application.status === 'interview_scheduled' && application.interviewDetails?.zoomLink && (
-                    <a href={application.interviewDetails.zoomLink} target="_blank" rel="noopener noreferrer">
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                        Join Interview
-                      </Button>
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setViewMode(viewMode === 'table' ? 'pipeline' : 'table')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            >
+              {viewMode === 'pipeline' ? 'Table View' : 'Pipeline View'}
+            </button>
           </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="bg-white rounded-lg p-4 shadow-md">
+            <p className="text-sm text-gray-600">Total</p>
+            <p className="text-2xl font-bold text-gray-900">{applications.length}</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-md">
+            <p className="text-sm text-gray-600">Pending</p>
+            <p className="text-2xl font-bold text-yellow-600">
+              {applications.filter(a => a.status === 'pending' || a.status === 'Submitted').length}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-md">
+            <p className="text-sm text-gray-600">Shortlisted</p>
+            <p className="text-2xl font-bold text-green-600">
+              {applications.filter(a => a.status === 'shortlisted' || a.status === 'Shortlisted' || a.status === 'accepted').length}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-md">
+            <p className="text-sm text-gray-600">Interviews</p>
+            <p className="text-2xl font-bold text-purple-600">
+              {applications.filter(a => a.status === 'interview-scheduled' || a.status === 'Interview Scheduled').length}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-md">
+            <p className="text-sm text-gray-600">Rejected</p>
+            <p className="text-2xl font-bold text-red-600">
+              {applications.filter(a => a.status === 'rejected' || a.status === 'Rejected').length}
+            </p>
+          </div>
+        </div>
+
+        {/* Pipeline View */}
+        {viewMode === 'pipeline' ? (
+          <>
+            {loading ? (
+              <div className="text-center py-12">
+                <Loader />
+              </div>
+            ) : applications.length === 0 ? (
+              <div className="bg-white rounded-lg p-12 text-center shadow-md">
+                <FileText size={48} className="mx-auto mb-4 text-gray-400" />
+                <p className="text-gray-600">No applications yet</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg p-6 shadow-md">
+                <ApplicationPipeline
+                  applications={filteredApplications.length > 0 ? filteredApplications : applications}
+                  onStatusUpdate={handleStatusChange}
+                />
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Table View */}
+            <div className="flex gap-4 mb-6">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="Search by name, email, or job title..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <select
+                value={filterStatus}
+                onChange={e => setFilterStatus(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="reviewed">Reviewed</option>
+                <option value="shortlisted">Shortlisted</option>
+                <option value="interview-scheduled">Interview Scheduled</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+
+            {loading ? (
+              <div className="text-center py-12">
+                <Loader />
+              </div>
+            ) : filteredApplications.length === 0 ? (
+              <div className="bg-white rounded-lg p-12 text-center shadow-md">
+                <FileText size={48} className="mx-auto mb-4 text-gray-400" />
+                <p className="text-gray-600">No applications found</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-md overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Applicant</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Job</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Score</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Applied</th>
+                      <th className="px-6 py-3 text-center text-sm font-semibold text-gray-700">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {filteredApplications.map(app => (
+                      <tr key={app._id} className="hover:bg-gray-50 transition">
+                        <td className="px-6 py-4 text-sm">
+                          <p className="font-medium text-gray-900">{app.fullName}</p>
+                          <p className="text-xs text-gray-500">{app.email}</p>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {typeof app.jobId === 'object' ? app.jobId.title : app.jobId}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <StatusBadge status={app.status} />
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          {app.cvScore ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-12 h-6 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full transition-all ${
+                                    app.cvScore >= 80
+                                      ? 'bg-green-500'
+                                      : app.cvScore >= 60
+                                        ? 'bg-yellow-500'
+                                        : 'bg-red-500'
+                                  }`}
+                                  style={{ width: `${app.cvScore}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-xs font-medium">{app.cvScore}%</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-500">-</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{formatDate(app.createdAt)}</td>
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex flex-col items-center justify-center gap-2 sm:gap-1">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => verifyDocs(app)}
+                              disabled={isDocsVerified(app) || updating}
+                              className={`px-3 py-1 rounded text-white text-xs ${isDocsVerified(app) ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            >
+                              {isDocsVerified(app) ? 'Verified' : 'Verify Docs'}
+                            </button>
+                            <button
+                              onClick={() => shortlistApplicant(app)}
+                              disabled={!isDocsVerified(app) || updating}
+                              className={`px-3 py-1 rounded text-white text-xs ${!isDocsVerified(app) ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
+                            >
+                              Shortlist
+                            </button>
+                          </div>
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => openDetailModal(app)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                              title="View"
+                            >
+                              <Eye size={16} />
+                            </button>
+                            <button
+                              onClick={() => openEmailModal(app)}
+                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
+                              title="Email"
+                            >
+                              <Mail size={16} />
+                            </button>
+                            {app.cv && (
+                              <button
+                                onClick={() => {
+                                  setSelectedApplication(app)
+                                  handleAnalyzeCv()
+                                }}
+                                className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
+                                title="AI Score"
+                              >
+                                <BarChart3 size={16} />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                alert(`Manage user: ${app.fullName}\nEmail: ${app.email}\n\nRedirect to user management with this user's details.`)
+                              }}
+                              className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg"
+                              title="Manage applicant user"
+                            >
+                              👤
+                            </button>
+                          </div>
+                        </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
         )}
+
+        {/* Application Detail Modal */}
+        <Modal isOpen={showDetailModal} onClose={() => setShowDetailModal(false)}>
+          {selectedApplication && (
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-screen overflow-y-auto">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">{selectedApplication.fullName}</h2>
+                  <p className="text-gray-600 text-sm mt-1">
+                    Applied for: <strong>{typeof selectedApplication.jobId === 'object' ? selectedApplication.jobId.title : selectedApplication.jobId}</strong>
+                  </p>
+                </div>
+                <StatusBadge status={selectedApplication.status} />
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-2 text-sm">
+                <p><strong>Email:</strong> {selectedApplication.email}</p>
+                {selectedApplication.phone && <p><strong>Phone:</strong> {selectedApplication.phone}</p>}
+                <p><strong>Applied:</strong> {formatDate(selectedApplication.createdAt)}</p>
+              </div>
+
+              {selectedApplication.coverLetter && (
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-2">Cover Letter</h3>
+                  <p className="text-gray-700 text-sm bg-gray-50 p-3 rounded">{selectedApplication.coverLetter}</p>
+                </div>
+              )}
+
+              <div className="flex gap-2 mb-6">
+                <button
+                  onClick={() => openEmailModal(selectedApplication)}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 inline-flex items-center justify-center gap-2"
+                >
+                  <Mail size={16} />
+                  Send Email
+                </button>
+                {selectedApplication.cv && (
+                  <a
+                    href={selectedApplication.cv}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 inline-flex items-center justify-center gap-2"
+                  >
+                    <FileText size={16} />
+                    Download CV
+                  </a>
+                )}
+                <button
+                  onClick={() => {
+                    // Open user management for this applicant
+                    setSelectedApplication(selectedApplication)
+                    // TODO: Navigate to user management or show user edit modal
+                    alert(`Edit user: ${selectedApplication.fullName} (${selectedApplication.email})`)
+                  }}
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 inline-flex items-center justify-center gap-2"
+                  title="Edit applicant user profile"
+                >
+                  ✏️ Edit User
+                </button>
+              </div>
+
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              >
+                Close
+              </button>
+            </div>
+          )}
+        </Modal>
+
+        {/* Email Modal */}
+        <Modal isOpen={showEmailModal} onClose={() => setShowEmailModal(false)}>
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-screen overflow-y-auto">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Send Email to {selectedApplication?.fullName}</h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                <input
+                  type="text"
+                  value={emailSubject}
+                  onChange={e => setEmailSubject(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Email subject"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                <textarea
+                  value={emailBody}
+                  onChange={e => setEmailBody(e.target.value)}
+                  rows={8}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Email body"
+                />
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowEmailModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSendEmail}
+                  disabled={updating}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Send size={16} />
+                  {updating ? 'Sending...' : 'Send Email'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Modal>
+
+        {/* CV Score Modal */}
+        <Modal isOpen={showScoreModal} onClose={() => setShowScoreModal(false)}>
+          {cvScore && (
+            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">CV Analysis</h2>
+
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="text-5xl font-bold text-blue-600">{cvScore.overallScore}%</div>
+                  <p className="text-gray-600 text-sm mt-2">Overall Match</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-3 rounded">
+                    <p className="text-xs text-gray-600">Skills Match</p>
+                    <p className="text-lg font-bold text-gray-900">{cvScore.skillsMatch}%</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded">
+                    <p className="text-xs text-gray-600">Experience</p>
+                    <p className="text-lg font-bold text-gray-900">{cvScore.experienceScore}%</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded">
+                    <p className="text-xs text-gray-600">Keywords</p>
+                    <p className="text-lg font-bold text-gray-900">{cvScore.keywordsMatch}%</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded">
+                    <p className="text-xs text-gray-600">Education</p>
+                    <p className="text-lg font-bold text-gray-900">{cvScore.educationScore}%</p>
+                  </div>
+                </div>
+
+                {cvScore.strengths.length > 0 && (
+                  <div>
+                    <p className="font-semibold text-green-700 mb-2">Strengths:</p>
+                    <ul className="text-sm text-gray-700 space-y-1">
+                      {cvScore.strengths.map((str, idx) => <li key={idx}>• {str}</li>)}
+                    </ul>
+                  </div>
+                )}
+
+                {cvScore.weaknesses.length > 0 && (
+                  <div>
+                    <p className="font-semibold text-red-700 mb-2">Weaknesses:</p>
+                    <ul className="text-sm text-gray-700 space-y-1">
+                      {cvScore.weaknesses.map((weak, idx) => <li key={idx}>• {weak}</li>)}
+                    </ul>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => setShowScoreModal(false)}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+        </Modal>
+
+        {/* Audio notification element */}
+        <audio
+          ref={audioRef}
+          src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAAC aABCABAAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj=="
+          preload="auto"
+        />
       </div>
     </DashboardLayout>
   )

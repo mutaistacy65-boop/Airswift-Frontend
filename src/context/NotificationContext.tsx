@@ -8,12 +8,14 @@ interface Notification {
   message: string
   type: NotificationType
   duration?: number
+  timestamp?: Date
 }
 
 interface NotificationContextType {
   notifications: Notification[]
   addNotification: (message: string, type: NotificationType, duration?: number) => void
   removeNotification: (id: string) => void
+  clearNotifications: () => void
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
@@ -35,9 +37,17 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const removeNotification = useCallback((id: string) => {
     setNotifications(prev => prev.filter(notification => notification.id !== id))
   }, [])
+const clearNotifications = useCallback(() => {
+    setNotifications([])
+  }, [])
 
   return (
-    <NotificationContext.Provider value={{ notifications, addNotification, removeNotification }}>
+    <NotificationContext.Provider value={{
+      notifications,
+      addNotification,
+      removeNotification,
+      clearNotifications
+    }}>
       {children}
       {notifications.length > 0 && (
         <div className="fixed bottom-4 right-4 z-50 space-y-2">

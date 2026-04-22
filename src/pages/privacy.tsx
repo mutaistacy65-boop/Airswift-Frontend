@@ -1,217 +1,169 @@
 import React from 'react'
-import MainLayout from '@/layouts/MainLayout'
+import { motion } from 'framer-motion'
+import { Lock, Eye, Database, ShieldCheck } from 'lucide-react'
 
 const PrivacyPolicy: React.FC = () => {
   return (
-    <MainLayout>
-      <div className="space-y-16">
+    <div className="min-h-screen bg-white text-gray-900">
+      <div className="max-w-4xl mx-auto px-6 py-16">
         {/* Hero Section */}
-        <div className="bg-gradient-to-r from-primary to-secondary text-white py-20 px-6 rounded-lg text-center">
-          <h1 className="text-5xl font-bold mb-4">Privacy Policy</h1>
-          <p className="text-xl max-w-2xl mx-auto">
-            How we collect, use, and protect your personal information
-          </p>
-        </div>
-
-        <div className="max-w-4xl mx-auto space-y-8">
-          {/* Last Updated */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <p className="text-sm text-blue-800">
-              <strong>Last Updated:</strong> April 1, 2026
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-16"
+        >
+          <div className="bg-primary/10 rounded-2xl p-8 border border-primary/20">
+            <Lock className="mx-auto mb-4 text-primary" size={48} />
+            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Privacy Policy
+            </h1>
+            <p className="text-gray-600">
+              Your privacy and data security are our top priorities at Talex
             </p>
           </div>
+        </motion.div>
 
-          {/* Introduction */}
-          <section className="space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">1. Introduction</h2>
-            <p className="text-gray-700 leading-relaxed">
-              At Airswift ("we," "us," or "our"), we are committed to protecting your privacy and personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website, mobile application, and services (collectively, the "Service").
-            </p>
-            <p className="text-gray-700 leading-relaxed">
-              By using our Service, you agree to the collection and use of information in accordance with this Privacy Policy. If you do not agree with our policies and practices, please do not use our Service.
-            </p>
-          </section>
-
-          {/* Information We Collect */}
-          <section className="space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">2. Information We Collect</h2>
-
-            <h3 className="text-xl font-semibold text-gray-800">2.1 Personal Information</h3>
-            <p className="text-gray-700 leading-relaxed">
-              We may collect personal information that you provide directly to us, such as:
-            </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
-              <li>Name, email address, phone number</li>
-              <li>Professional information (resume, work experience, education)</li>
-              <li>Account credentials (username, password)</li>
-              <li>Payment information (processed securely by third-party providers)</li>
-              <li>Communications you send to us</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold text-gray-800">2.2 Usage Information</h3>
-            <p className="text-gray-700 leading-relaxed">
-              We automatically collect certain information about your use of our Service:
-            </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
-              <li>IP address and location information</li>
-              <li>Browser type and version</li>
-              <li>Device information</li>
-              <li>Pages visited and time spent on our Service</li>
-              <li>Referral sources</li>
-              <li>Search queries and job preferences</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold text-gray-800">2.3 Cookies and Tracking Technologies</h3>
-            <p className="text-gray-700 leading-relaxed">
-              We use cookies, web beacons, and similar technologies to enhance your experience, analyze usage patterns, and provide personalized content. You can control cookie settings through your browser preferences.
-            </p>
-          </section>
-
-          {/* How We Use Your Information */}
-          <section className="space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">3. How We Use Your Information</h2>
-            <p className="text-gray-700 leading-relaxed">
-              We use the information we collect for various purposes, including:
-            </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
-              <li>Providing and maintaining our Service</li>
-              <li>Processing job applications and connecting you with employers</li>
-              <li>Creating and managing your account</li>
-              <li>Communicating with you about our services</li>
-              <li>Personalizing your experience and providing relevant job recommendations</li>
-              <li>Analyzing usage patterns to improve our Service</li>
-              <li>Ensuring security and preventing fraud</li>
-              <li>Complying with legal obligations</li>
-            </ul>
-          </section>
-
-          {/* Information Sharing */}
-          <section className="space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">4. Information Sharing and Disclosure</h2>
-            <p className="text-gray-700 leading-relaxed">
-              We do not sell, trade, or rent your personal information to third parties. We may share your information in the following circumstances:
-            </p>
-
-            <h3 className="text-xl font-semibold text-gray-800">4.1 With Employers</h3>
-            <p className="text-gray-700 leading-relaxed">
-              When you apply for jobs through our platform, we share your application materials (resume, cover letter, etc.) with the relevant employers. We only share information necessary for the job application process.
-            </p>
-
-            <h3 className="text-xl font-semibold text-gray-800">4.2 Service Providers</h3>
-            <p className="text-gray-700 leading-relaxed">
-              We may share information with trusted third-party service providers who assist us in operating our Service, such as payment processors, email service providers, and analytics companies. These providers are contractually obligated to protect your information.
-            </p>
-
-            <h3 className="text-xl font-semibold text-gray-800">4.3 Legal Requirements</h3>
-            <p className="text-gray-700 leading-relaxed">
-              We may disclose your information if required by law, court order, or government request, or if we believe such disclosure is necessary to protect our rights, safety, or the rights and safety of others.
-            </p>
-
-            <h3 className="text-xl font-semibold text-gray-800">4.4 Business Transfers</h3>
-            <p className="text-gray-700 leading-relaxed">
-              In the event of a merger, acquisition, or sale of assets, your information may be transferred to the new entity. We will notify you before your information is transferred and becomes subject to a different privacy policy.
-            </p>
-          </section>
-
-          {/* Data Security */}
-          <section className="space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">5. Data Security</h2>
-            <p className="text-gray-700 leading-relaxed">
-              We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. These measures include:
-            </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
-              <li>Encryption of data in transit and at rest</li>
-              <li>Regular security audits and updates</li>
-              <li>Access controls and authentication procedures</li>
-              <li>Secure data centers and infrastructure</li>
-            </ul>
-            <p className="text-gray-700 leading-relaxed">
-              However, no method of transmission over the internet or electronic storage is 100% secure. While we strive to protect your information, we cannot guarantee absolute security.
-            </p>
-          </section>
-
-          {/* Data Retention */}
-          <section className="space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">6. Data Retention</h2>
-            <p className="text-gray-700 leading-relaxed">
-              We retain your personal information for as long as necessary to provide our services, comply with legal obligations, resolve disputes, and enforce our agreements. Specific retention periods vary depending on the type of information and the purpose for which it was collected.
-            </p>
-            <p className="text-gray-700 leading-relaxed">
-              You may request deletion of your account and personal information at any time. However, some information may be retained for legal compliance or legitimate business purposes.
-            </p>
-          </section>
-
-          {/* Your Rights */}
-          <section className="space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">7. Your Rights</h2>
-            <p className="text-gray-700 leading-relaxed">
-              Depending on your location, you may have certain rights regarding your personal information:
-            </p>
-            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
-              <li><strong>Access:</strong> Request a copy of the personal information we hold about you</li>
-              <li><strong>Correction:</strong> Request correction of inaccurate or incomplete information</li>
-              <li><strong>Deletion:</strong> Request deletion of your personal information (subject to legal limitations)</li>
-              <li><strong>Portability:</strong> Request transfer of your data to another service</li>
-              <li><strong>Opt-out:</strong> Opt out of marketing communications or certain data processing</li>
-            </ul>
-            <p className="text-gray-700 leading-relaxed">
-              To exercise these rights, please contact us using the information provided below.
-            </p>
-          </section>
-
-          {/* Children's Privacy */}
-          <section className="space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">8. Children's Privacy</h2>
-            <p className="text-gray-700 leading-relaxed">
-              Our Service is not intended for children under 16 years of age. We do not knowingly collect personal information from children under 16. If we become aware that we have collected personal information from a child under 16, we will take steps to delete such information.
-            </p>
-          </section>
-
-          {/* International Data Transfers */}
-          <section className="space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">9. International Data Transfers</h2>
-            <p className="text-gray-700 leading-relaxed">
-              Your information may be transferred to and processed in countries other than your own. We ensure that such transfers comply with applicable data protection laws and implement appropriate safeguards.
-            </p>
-          </section>
-
-          {/* Third-Party Links */}
-          <section className="space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">10. Third-Party Links and Services</h2>
-            <p className="text-gray-700 leading-relaxed">
-              Our Service may contain links to third-party websites or services. We are not responsible for the privacy practices or content of these third parties. We encourage you to review the privacy policies of any third-party services you use.
-            </p>
-          </section>
-
-          {/* Changes to Privacy Policy */}
-          <section className="space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">11. Changes to This Privacy Policy</h2>
-            <p className="text-gray-700 leading-relaxed">
-              We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date. We may also send you an email notification.
-            </p>
-            <p className="text-gray-700 leading-relaxed">
-              Your continued use of our Service after any changes constitutes your acceptance of the updated Privacy Policy.
-            </p>
-          </section>
-
-          {/* Contact Information */}
-          <section className="space-y-4">
-            <h2 className="text-3xl font-bold text-gray-900">12. Contact Us</h2>
-            <p className="text-gray-700 leading-relaxed">
-              If you have any questions about this Privacy Policy or our data practices, please contact us:
-            </p>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-gray-700"><strong>Email:</strong> privacy@airswift.com</p>
-              <p className="text-gray-700"><strong>Phone:</strong> +1-800-AIRSWIFT</p>
-              <p className="text-gray-700"><strong>Address:</strong> 1500 King Street West, Toronto, ON M5H 1A1, Canada</p>
+        {/* Data Protection */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-12"
+        >
+          <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+            <h2 className="text-2xl font-bold mb-6 text-primary flex items-center gap-3">
+              <ShieldCheck className="text-primary" size={28} />
+              Data Protection Measures
+            </h2>
+            <div className="space-y-4 text-gray-700">
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                <p>All user data is encrypted using industry-standard protocols</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                <p>Personal information is stored securely and never shared</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                <p>Regular security audits ensure platform integrity</p>
+              </div>
             </div>
-            <p className="text-gray-700 leading-relaxed">
-              For privacy-related concerns, you may also contact our Data Protection Officer at dpo@airswift.com.
+          </div>
+        </motion.section>
+
+        {/* Information Collection */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-12"
+        >
+          <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+            <h2 className="text-2xl font-bold mb-6 text-primary flex items-center gap-3">
+              <Database className="text-secondary" size={28} />
+              Information We Collect
+            </h2>
+            <div className="space-y-4 text-gray-700">
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0"></div>
+                <p>Email address for account verification and communication.</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0"></div>
+                <p>Phone number for OTP verification only.</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0"></div>
+                <p>Usage analytics to improve platform performance.</p>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* Security Features */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mb-12"
+        >
+          <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+            <h2 className="text-2xl font-bold mb-6 text-primary flex items-center gap-3">
+              <Eye className="text-secondary" size={28} />
+              Security Features
+            </h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4">
+                <h3 className="font-semibold text-secondary mb-2">OTP Verification</h3>
+                <p className="text-gray-600 text-sm">Secure one-time password authentication.</p>
+              </div>
+              <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4">
+                <h3 className="font-semibold text-secondary mb-2">Session Management</h3>
+                <p className="text-gray-600 text-sm">Automatic session timeout for security.</p>
+              </div>
+              <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4">
+                <h3 className="font-semibold text-secondary mb-2">Data Encryption</h3>
+                <p className="text-gray-600 text-sm">End-to-end encryption for all data.</p>
+              </div>
+              <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4">
+                <h3 className="font-semibold text-secondary mb-2">Access Monitoring</h3>
+                <p className="text-gray-600 text-sm">Continuous monitoring of account activity.</p>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* Usage Policies */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mb-12"
+        >
+          <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+            <h2 className="text-2xl font-bold mb-6 text-primary flex items-center gap-3">
+              <Lock className="text-accent" size={28} />
+              Usage Policies
+            </h2>
+            <div className="space-y-4 text-gray-700">
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                <p>Data is used solely for platform functionality and security.</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                <p>No data is sold or shared with third parties.</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                <p>Users can request data deletion at any time.</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                <p>Compliance with international data protection standards.</p>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* Commitment */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="text-center"
+        >
+          <div className="bg-primary/10 border border-primary/20 rounded-2xl p-6">
+            <ShieldCheck className="mx-auto mb-4 text-primary" size={48} />
+            <h3 className="text-xl font-semibold mb-2 text-primary">Our Commitment</h3>
+            <p className="text-gray-700">
+              Talex is committed to maintaining the highest standards of data privacy and security. Your trust is our foundation.
             </p>
-          </section>
-        </div>
+          </div>
+        </motion.div>
       </div>
-    </MainLayout>
+    </div>
   )
 }
 

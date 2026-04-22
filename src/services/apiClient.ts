@@ -1,42 +1,17 @@
-import axios, { AxiosInstance, AxiosError, AxiosResponse } from 'axios'
-import Cookies from 'js-cookie'
-import { useRouter } from 'next/router'
+/**
+ * ✅ CENTRALIZED API CLIENT (RE-EXPORT)
+ * 
+ * This file re-exports the main API client from @/lib/api
+ * All imports from '@/services/apiClient' will automatically use the centralized client.
+ * 
+ * Usage:
+ *   import API from '@/services/apiClient'  // Still works! (redirected)
+ *   API.post('/auth/login', { email, password })
+ *   API.get('/users/profile')
+ */
 
-const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL
+import API from '@/lib/api'
 
-const apiClient: AxiosInstance = axios.create({
-  baseURL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
+export const API_URL = API.defaults.baseURL
 
-// Request interceptor to add token to headers
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = Cookies.get('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
-  }
-)
-
-// Response interceptor to handle 401 errors
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      Cookies.remove('token')
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login'
-      }
-    }
-    return Promise.reject(error)
-  }
-)
-
-export default apiClient
+export default API

@@ -1,276 +1,495 @@
-import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
-import DashboardLayout from '@/layouts/DashboardLayout'
-import { useProtectedRoute } from '@/hooks/useProtectedRoute'
-import { useAuth } from '@/context/AuthContext'
-import { useNotification } from '@/context/NotificationContext'
+import React, { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import DashboardLayout from '@/layouts/DashboardLayout';
+import { useAuth } from '@/context/AuthContext';
+import { useProtectedRoute } from '@/hooks/useProtectedRoute';
+import { useSocket } from '@/hooks/useSocket';
+import MetricCard from '@/components/MetricCard';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, FunnelChart, Funnel, LabelList } from "recharts";
+import { TrendingUp, Users, Briefcase, Calendar, AlertTriangle, CheckCircle, Clock, DollarSign, Mail, Bell, Settings, Download, FileText, User } from 'lucide-react';
+import API from '@/services/apiClient'
+import { adminService } from '@/services/adminService'
+import AdminPayments from '@/components/AdminPayments'
+import { AdminLogs } from '@/components/AdminLogs'
 import Loader from '@/components/Loader'
-import Button from '@/components/Button'
-import { jobCategoryService } from '@/services/jobCategoryService'
-import { JobCategoryStats, InterviewPipelineItem } from '@/types/jobCategories'
 
-const AdminDashboard: React.FC = () => {
-  const { isAuthorized, isLoading } = useProtectedRoute('admin')
-  const { user } = useAuth()
-  const { addNotification } = useNotification()
+const AdminRealtimeMap = dynamic(() => import('@/components/AdminRealtimeMap'), {
+  ssr: false,
+})
 
-  const [stats, setStats] = useState({
-    totalJobs: 0,
-    totalApplications: 0,
-    pendingApplications: 0,
-    acceptedApplications: 0,
-    interviewScheduled: 0,
-    interviewCompleted: 0,
-    visaProcessing: 0,
-    visaReady: 0,
-    totalRevenue: 0
-  })
-  const [categoryStats, setCategoryStats] = useState<JobCategoryStats[]>([])
-  const [interviewPipeline, setInterviewPipeline] = useState<InterviewPipelineItem[]>([])
-  const [loading, setLoading] = useState(true)
+export default function AdminDashboard() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter()
+  const { subscribe } = useSocket()
+
+  console.log("USER:", user);
+  console.log("ROLE:", user?.role);
+  console.log("LOADING:", isLoading);
 
   useEffect(() => {
-    if (isAuthorized) {
+    if (isLoading) return; // ⛔ wait until auth is ready
+
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    const userRole = user?.role?.toLowerCase() || "user";
+    console.log("🔐 Admin Dashboard Guard - User Role:", userRole);
+    
+    if (userRole !== "admin") {
+      console.log("❌ Access denied - not an admin. Redirecting to unauthorized");
+      router.push("/unauthorized");
+      return;
+    }
+    
+    console.log("✅ Admin access granted");
+  }, [user, isLoading, router]);
+  
+  const [summary, setSummary] = useState<any>(null)
+  const [trends, setTrends] = useState<any[]>([])
+  const [funnel, setFunnel] = useState<any[]>([])
+  const [activities, setActivities] = useState<any[]>([])
+  const [alerts, setAlerts] = useState<any[]>([])
+  const [health, setHealth] = useState<any>(null)
+  const [adminActions, setAdminActions] = useState<any[]>([])
+  const [emailLogs, setEmailLogs] = useState<any[]>([])
+  const [adminActionsLoading, setAdminActionsLoading] = useState(true)
+  const [emailLogsLoading, setEmailLogsLoading] = useState(true)
+  const [trendRange, setTrendRange] = useState('7d')
+  const [statsLoading, setStatsLoading] = useState(true)
+
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      const response = await API.get('/admin/dashboard')
+      const data = response.data || {}
+      
+      // Parse the single response containing all dashboard data
+      setSummary(data.summary || {})
+      setFunnel(data.funnel || [])
+      setActivities(data.activities || [])
+      setHealth(data.health || {})
+      setTrends(data.trends || [])
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error)
+      // Set safe defaults to prevent crashes
+      setSummary({})
+      setFunnel([])
+      setActivities([])
+      setHealth(null)
+      setTrends([])
+    } finally {
+      setStatsLoading(false)
+    }
+  }, [])
+
+  const fetchTrends = async (range: string) => {
+    // Trends are now fetched as part of the main dashboard data
+    // This function is kept for backward compatibility but does nothing
+    console.log('Trends are now part of dashboard data, range:', range)
+  }
+
+  const fetchAdminActions = useCallback(async () => {
+    try {
+      setAdminActionsLoading(true)
+      const response = await adminService.getAuditLogs({ page: 1, limit: 6 })
+      setAdminActions(response.logs || response || [])
+    } catch (error) {
+      console.error('Error fetching admin actions:', error)
+      setAdminActions([])
+    } finally {
+      setAdminActionsLoading(false)
+    }
+  }, [])
+
+  const fetchEmailLogs = useCallback(async () => {
+    try {
+      setEmailLogsLoading(true)
+      const response = await adminService.getEmailLogs({ page: 1, limit: 6 })
+      setEmailLogs(response.logs || response || [])
+    } catch (error) {
+      console.error('Error fetching email logs:', error)
+      setEmailLogs([])
+    } finally {
+      setEmailLogsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isLoading) {
       fetchDashboardData()
     }
-  }, [isAuthorized])
+  }, [isLoading, fetchDashboardData])
 
-  const fetchDashboardData = async () => {
-    try {
-      // Fetch category statistics
-      const catStats = await jobCategoryService.getCategoryStats()
-      setCategoryStats(catStats)
-
-      // Fetch interview pipeline
-      const pipeline = await jobCategoryService.getInterviewPipeline()
-      setInterviewPipeline(pipeline)
-
-      // Calculate overall stats
-      const totalJobs = catStats.reduce((sum, cat) => sum + cat.totalJobs, 0)
-      const totalApplications = catStats.reduce((sum, cat) => sum + cat.totalApplications, 0)
-      const pendingApplications = catStats.reduce((sum, cat) => sum + cat.pendingApplications, 0)
-      const acceptedApplications = catStats.reduce((sum, cat) => sum + cat.acceptedApplications, 0)
-      const interviewScheduled = catStats.reduce((sum, cat) => sum + cat.interviewScheduled, 0)
-      const interviewCompleted = catStats.reduce((sum, cat) => sum + cat.interviewCompleted, 0)
-      const visaProcessing = catStats.reduce((sum, cat) => sum + cat.visaProcessing, 0)
-      const visaReady = catStats.reduce((sum, cat) => sum + cat.visaReady, 0)
-
-      // Calculate revenue (interview fees + visa fees)
-      const interviewRevenue = (interviewScheduled + interviewCompleted) * 3 // 3 KSH per interview
-      const visaRevenue = (visaProcessing + visaReady) * 30000 // 30,000 KSH per visa
-      const totalRevenue = interviewRevenue + visaRevenue
-
-      setStats({
-        totalJobs,
-        totalApplications,
-        pendingApplications,
-        acceptedApplications,
-        interviewScheduled,
-        interviewCompleted,
-        visaProcessing,
-        visaReady,
-        totalRevenue
-      })
-    } catch (error) {
-      addNotification('Failed to load dashboard data', 'error')
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    if (!isLoading) {
+      fetchAdminActions()
+      fetchEmailLogs()
     }
-  }
+  }, [isLoading, fetchAdminActions, fetchEmailLogs])
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800'
-      case 'medium': return 'bg-yellow-100 text-yellow-800'
-      case 'low': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
+  useEffect(() => {
+    const unsubscribeUserUpdated = subscribe('user:updated', () => {
+      fetchDashboardData()
+      fetchAdminActions()
+      fetchEmailLogs()
+    })
+
+    const unsubscribeNewApp = subscribe('application:new', () => {
+      fetchDashboardData()
+      fetchAdminActions()
+      fetchEmailLogs()
+    })
+
+    const unsubscribeShortlisted = subscribe('user:shortlisted', () => {
+      fetchDashboardData()
+      fetchAdminActions()
+      fetchEmailLogs()
+    })
+
+    return () => {
+      unsubscribeUserUpdated?.()
+      unsubscribeNewApp?.()
+      unsubscribeShortlisted?.()
     }
-  }
+  }, [subscribe, fetchDashboardData, fetchAdminActions, fetchEmailLogs])
 
-  const getStageColor = (stage: string) => {
-    switch (stage) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'reviewed': return 'bg-blue-100 text-blue-800'
-      case 'accepted': return 'bg-green-100 text-green-800'
-      case 'interview_scheduled': return 'bg-purple-100 text-purple-800'
-      case 'interview_completed': return 'bg-indigo-100 text-indigo-800'
-      case 'visa_payment_pending': return 'bg-orange-100 text-orange-800'
-      case 'visa_processing': return 'bg-teal-100 text-teal-800'
-      case 'visa_ready': return 'bg-emerald-100 text-emerald-800'
-      case 'rejected': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  if (isLoading || loading) {
-    return <Loader fullScreen />
-  }
-
-  if (!isAuthorized) {
-    return null
+  // Protect route
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-gray-600">Verifying admin access...</p>
+        </div>
+      </div>
+    )
   }
 
   const sidebarItems = [
-    { label: 'Dashboard', href: '/admin/dashboard', icon: '📊' },
-    { label: 'Manage Jobs', href: '/admin/jobs', icon: '💼' },
-    { label: 'Categories', href: '/admin/categories', icon: '🏷️' },
-    { label: 'Applications', href: '/admin/applications', icon: '📋' },
-    { label: 'Interviews', href: '/admin/interviews', icon: '📞' },
-    { label: 'Email Templates', href: '/admin/email-templates', icon: '📧' },
-    { label: 'Settings', href: '/admin/settings', icon: '⚙️' },
+    { label: '📊 Dashboard', href: '/admin/dashboard' },
+    { label: '👥 Users', href: '/admin/users' },
+    { label: ' Applications', href: '/admin/applications' },
+    { label: '📞 Interviews', href: '/admin/interviews' },
+    { label: '💰 Payments', href: '/admin/payments' },
+    { label: '📋 Audit Logs', href: '/admin/audit' },
+    { label: '🔍 Health', href: '/admin/health' },
+    { label: '⚙️ Settings', href: '/admin/settings' },
   ]
 
-  // Sort categories alphabetically for A-Z display
-  const sortedCategories = [...categoryStats].sort((a, b) => a.categoryName.localeCompare(b.categoryName))
+  const safeTrends = Array.isArray(trends) ? trends : []
+  const safeFunnel = Array.isArray(funnel) ? funnel : []
+  const safeActivities = Array.isArray(activities) ? activities : []
+  const safeAlerts = Array.isArray(alerts) ? alerts : []
+  const safeHealth = typeof health === 'object' && health !== null ? health : {}
 
   return (
     <DashboardLayout sidebarItems={sidebarItems}>
-      <div>
-        <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+      <div className="space-y-8">
+        {/* Alerts Section */}
+        {safeAlerts.length > 0 && (
+          <div className="mb-8">
+            <div className="bg-white rounded-lg shadow-sm border p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle className="w-5 h-5 text-orange-500" />
+                <h3 className="font-semibold text-gray-900">System Alerts</h3>
+              </div>
+              <div className="space-y-2">
+                {safeAlerts.map(alert => (
+                  <div key={alert.id} className={`p-3 rounded-lg text-sm ${
+                    alert.type === 'warning' ? 'bg-yellow-50 text-yellow-800 border border-yellow-200' :
+                    alert.type === 'error' ? 'bg-red-50 text-red-800 border border-red-200' :
+                    alert.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' :
+                    'bg-blue-50 text-blue-800 border border-blue-200'
+                  }`}>
+                    {alert.message}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
-        {/* Key Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <p className="text-gray-600 mb-2">Total Jobs</p>
-            <p className="text-4xl font-bold text-primary">{stats.totalJobs}</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <p className="text-gray-600 mb-2">Total Applications</p>
-            <p className="text-4xl font-bold text-secondary">{stats.totalApplications}</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <p className="text-gray-600 mb-2">Pending Review</p>
-            <p className="text-4xl font-bold text-yellow-600">{stats.pendingApplications}</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <p className="text-gray-600 mb-2">Interviews</p>
-            <p className="text-4xl font-bold text-purple-600">{stats.interviewScheduled + stats.interviewCompleted}</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <p className="text-gray-600 mb-2">Visas Ready</p>
-            <p className="text-4xl font-bold text-green-600">{stats.visaReady}</p>
-          </div>
+        {/* Enhanced Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <MetricCard
+            title="Total Applications"
+            value={statsLoading ? '...' : summary?.totalApplications || 0}
+            icon={<FileText className="w-6 h-6" />}
+            trend={{ value: summary?.growth?.applications || 0, isPositive: (summary?.growth?.applications || 0) >= 0 }}
+          />
+
+          <MetricCard
+            title="Active Jobs"
+            value={statsLoading ? '...' : summary?.activeJobs || 0}
+            icon={<Briefcase className="w-6 h-6" />}
+            trend={{ value: summary?.growth?.jobs || 0, isPositive: (summary?.growth?.jobs || 0) >= 0 }}
+          />
+
+          <MetricCard
+            title="Conversion Rate"
+            value={statsLoading ? '...' : `${summary?.conversionRate || 0}%`}
+            icon={<TrendingUp className="w-6 h-6" />}
+            trend={{ value: summary?.growth?.conversion || 0, isPositive: (summary?.growth?.conversion || 0) >= 0 }}
+          />
+
+          <MetricCard
+            title="Avg. Time to Hire"
+            value={statsLoading ? '...' : `${summary?.avgTimeToHire || 0} days`}
+            icon={<Clock className="w-6 h-6" />}
+            trend={{ value: summary?.growth?.timeToHire || 0, isPositive: (summary?.growth?.timeToHire || 0) >= 0 }}
+          />
         </div>
 
-        {/* Revenue */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-xl font-semibold mb-4">Revenue Overview</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div>
-              <p className="text-gray-600 mb-2">Interview Fees (3 KSH each)</p>
-              <p className="text-3xl font-bold text-blue-600">
-                KES {(stats.interviewScheduled + stats.interviewCompleted) * 3}
-              </p>
-              <p className="text-sm text-gray-500">{stats.interviewScheduled + stats.interviewCompleted} interviews</p>
-            </div>
-            <div>
-              <p className="text-gray-600 mb-2">Visa Fees (30,000 KSH each)</p>
-              <p className="text-3xl font-bold text-green-600">
-                KES {(stats.visaProcessing + stats.visaReady) * 30000}
-              </p>
-              <p className="text-sm text-gray-500">{stats.visaProcessing + stats.visaReady} visas</p>
-            </div>
-            <div>
-              <p className="text-gray-600 mb-2">Total Revenue</p>
-              <p className="text-4xl font-bold text-primary">
-                KES {stats.totalRevenue.toLocaleString()}
-              </p>
-              <p className="text-sm text-gray-500">All time</p>
-            </div>
-          </div>
+        {/* Admin Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <MetricCard
+            title="Total Users"
+            value={statsLoading ? '...' : summary?.totalUsers || 0}
+            icon={<Users className="w-6 h-6" />}
+            trend={{ value: summary?.growth?.totalUsers || 0, isPositive: (summary?.growth?.totalUsers || 0) >= 0 }}
+          />
+          <MetricCard
+            title="Active Users"
+            value={statsLoading ? '...' : summary?.activeUsers || 0}
+            icon={<CheckCircle className="w-6 h-6" />}
+            trend={{ value: summary?.growth?.activeUsers || 0, isPositive: (summary?.growth?.activeUsers || 0) >= 0 }}
+          />
+          <MetricCard
+            title="Banned Users"
+            value={statsLoading ? '...' : summary?.bannedUsers || 0}
+            icon={<AlertTriangle className="w-6 h-6" />}
+            trend={{ value: summary?.growth?.bannedUsers || 0, isPositive: (summary?.growth?.bannedUsers || 0) <= 0 }}
+          />
+          <MetricCard
+            title="Emails Sent Today"
+            value={statsLoading ? '...' : summary?.emailsSentToday || 0}
+            icon={<Mail className="w-6 h-6" />}
+            trend={{ value: summary?.growth?.emailsSentToday || 0, isPositive: (summary?.growth?.emailsSentToday || 0) >= 0 }}
+          />
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* A-Z Role Counts */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">A-Z Job Categories</h2>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {sortedCategories.map((category) => (
-                <div key={category.categoryId} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                  <div>
-                    <span className="font-medium text-gray-900">{category.categoryName}</span>
-                    <span className="text-gray-500 text-sm ml-2">
-                      ({category.totalJobs} jobs, {category.totalApplications} applications)
-                    </span>
-                  </div>
-                  <div className="flex gap-4 text-sm">
-                    <span className="text-blue-600">📋 {category.pendingApplications}</span>
-                    <span className="text-green-600">✅ {category.acceptedApplications}</span>
-                    <span className="text-purple-600">📞 {category.interviewScheduled}</span>
-                    <span className="text-indigo-600">🎓 {category.interviewCompleted}</span>
-                    <span className="text-emerald-600">🛂 {category.visaReady}</span>
-                  </div>
+        {/* Payments Section */}
+        <div className="mb-8">
+          <AdminPayments />
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Application Trends */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Application Trends</h3>
+              <select
+                value={trendRange}
+                onChange={(e) => setTrendRange(e.target.value)}
+                className="text-sm border rounded-lg px-3 py-1"
+              >
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+              </select>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={safeTrends}>
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="applications" stroke="#3b82f6" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Conversion Funnel */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Conversion Funnel</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <FunnelChart>
+                <Tooltip />
+                <Funnel
+                  dataKey="count"
+                  data={safeFunnel}
+                  isAnimationActive
+                >
+                  <LabelList position="center" fill="#fff" stroke="none" />
+                </Funnel>
+              </FunnelChart>
+            </ResponsiveContainer>
+            <div className="mt-4 space-y-2">
+              {safeFunnel.map((stage: any, index: number) => (
+                <div key={index} className="flex justify-between text-sm">
+                  <span>{stage.stage}</span>
+                  <span className="font-medium">{stage.count}</span>
                 </div>
               ))}
             </div>
           </div>
+        </div>
 
-          {/* Interview Pipeline */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Interview Pipeline</h2>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {interviewPipeline.slice(0, 10).map((item) => (
-                <div key={item.applicantId} className="p-3 border border-gray-200 rounded">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <p className="font-medium text-gray-900">{item.applicantName}</p>
-                      <p className="text-sm text-gray-600">{item.jobTitle} • {item.categoryName}</p>
+        {/* Real-Time Location Map */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Real-Time User Locations</h3>
+              <p className="text-sm text-gray-500">Live user tracking and admin alerts from the socket feed.</p>
+            </div>
+          </div>
+          <AdminRealtimeMap />
+        </div>
+
+        {/* Recent Admin Activity + Email Logs */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <div className="xl:col-span-2 space-y-8">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Recent Admin Actions</h3>
+                  <p className="text-sm text-gray-500">Latest admin audit events from the system.</p>
+                </div>
+                <button
+                  onClick={fetchAdminActions}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Refresh
+                </button>
+              </div>
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {adminActionsLoading ? (
+                  <p className="text-gray-500 text-center py-6">Loading admin actions...</p>
+                ) : adminActions.length > 0 ? (
+                  adminActions.map((log: any) => (
+                    <div key={log._id || log.id} className="rounded-lg border border-gray-200 p-4 hover:bg-gray-50 transition">
+                      <div className="flex items-center justify-between gap-4 text-sm text-gray-600">
+                        <span>{log.user?.name || log.user?.email || 'System'}</span>
+                        <span>{new Date(log.created_at || log.timestamp).toLocaleString()}</span>
+                      </div>
+                      <div className="mt-2 text-sm text-gray-900">
+                        <p className="font-medium">{log.action || log.event || 'ACTION'}</p>
+                        <p className="text-gray-600">Target: {log.details?.targetUser || log.resource || log.resource_id || 'Unknown'}</p>
+                      </div>
                     </div>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(item.priority)}`}>
-                      {item.priority}
-                    </span>
-                  </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-6">No recent admin actions available.</p>
+                )}
+              </div>
+            </div>
 
-                  <div className="flex justify-between items-center">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${getStageColor(item.currentStage)}`}>
-                      {item.currentStage.replace(/_/g, ' ')}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      {item.daysInStage} days • {item.nextAction || 'Waiting'}
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Email Logs</h3>
+                  <p className="text-sm text-gray-500">Recent email delivery status from the admin system.</p>
+                </div>
+                <button
+                  onClick={fetchEmailLogs}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Refresh
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-gray-700">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3">Recipient</th>
+                      <th className="px-4 py-3">Subject</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Type</th>
+                      <th className="px-4 py-3">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {emailLogsLoading ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-gray-500">Loading email logs...</td>
+                      </tr>
+                    ) : emailLogs.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-gray-500">No email logs found.</td>
+                      </tr>
+                    ) : (
+                      emailLogs.map((log: any) => (
+                        <tr key={log._id || log.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="px-4 py-3">{log.recipientEmail || log.email || 'Unknown'}</td>
+                          <td className="px-4 py-3">{log.subject || '—'}</td>
+                          <td className="px-4 py-3">{(log.status || 'sent').toUpperCase()}</td>
+                          <td className="px-4 py-3">{log.templateId || log.type || 'Custom'}</td>
+                          <td className="px-4 py-3">{new Date(log.sentAt || log.created_at || Date.now()).toLocaleDateString()}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">System Health</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Server</span>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${
+                      safeHealth?.server?.status === 'online' ? 'bg-green-500' :
+                      safeHealth?.server?.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
+                    }`}></div>
+                    <span className={`text-sm capitalize ${
+                      safeHealth?.server?.status === 'online' ? 'text-green-600' :
+                      safeHealth?.server?.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'
+                    }`}>
+                      {safeHealth?.server?.status || 'unknown'}
                     </span>
                   </div>
                 </div>
-              ))}
-
-              {interviewPipeline.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <div className="text-4xl mb-2">📋</div>
-                  <p>No applicants in interview pipeline</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Database</span>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${
+                      safeHealth?.database?.status === 'online' ? 'bg-green-500' :
+                      safeHealth?.database?.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
+                    }`}></div>
+                    <span className={`text-sm capitalize ${
+                      safeHealth?.database?.status === 'online' ? 'text-green-600' :
+                      safeHealth?.database?.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'
+                    }`}>
+                      {safeHealth?.database?.status || 'unknown'}
+                    </span>
+                  </div>
                 </div>
-              )}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Email Service</span>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${
+                      safeHealth?.emailService?.status === 'online' ? 'bg-green-500' :
+                      safeHealth?.emailService?.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'
+                    }`}></div>
+                    <span className={`text-sm capitalize ${
+                      safeHealth?.emailService?.status === 'online' ? 'text-green-600' :
+                      safeHealth?.emailService?.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'
+                    }`}>
+                      {safeHealth?.emailService?.status || 'unknown'}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link href="/admin/jobs">
-              <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                Manage Jobs
-              </Button>
-            </Link>
-            <Link href="/admin/applications">
-              <Button className="w-full bg-green-600 hover:bg-green-700">
-                Review Applications
-              </Button>
-            </Link>
-            <Link href="/admin/interviews">
-              <Button className="w-full bg-purple-600 hover:bg-purple-700">
-                Schedule Interviews
-              </Button>
-            </Link>
-            <Link href="/admin/categories">
-              <Button className="w-full bg-orange-600 hover:bg-orange-700">
-                Manage Categories
-              </Button>
-            </Link>
+        {/* Recent Audit Logs */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Audit Logs</h3>
+            <span className="text-sm text-gray-500">Latest system activity</span>
           </div>
+          <AdminLogs limit={5} compact />
         </div>
       </div>
     </DashboardLayout>
-  )
+  );
 }
 
-export default AdminDashboard
+

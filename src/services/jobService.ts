@@ -1,4 +1,4 @@
-import apiClient from './apiClient'
+import API from './apiClient'
 
 export interface Job {
   id: string
@@ -17,10 +17,27 @@ export interface JobApplication {
   id: string
   jobId: string
   userId: string
-  resumeUrl: string
-  coverLetter: string
-  appliedDate: string
-  status: 'pending' | 'reviewed' | 'accepted' | 'interview_scheduled' | 'interview_completed' | 'visa_payment_pending' | 'visa_processing' | 'visa_ready' | 'rejected'
+  resumeUrl?: string
+  coverLetter?: string
+  appliedDate?: string
+  createdAt?: string
+  updatedAt?: string
+  status:
+    | 'Submitted'
+    | 'Under Review'
+    | 'Shortlisted'
+    | 'Interview Scheduled'
+    | 'Hired'
+    | 'Rejected'
+    | 'rejected'
+    | 'pending'
+    | 'reviewed'
+    | 'accepted'
+    | 'interview_scheduled'
+    | 'interview_completed'
+    | 'visa_payment_pending'
+    | 'visa_processing'
+    | 'visa_ready'
   documents?: {
     passport?: string
     nationalId?: string
@@ -32,57 +49,77 @@ export interface JobApplication {
     scheduledDate?: string
     notes?: string
   }
+  aiScore?: number
+  resumeSnapshot?: string
+  interviewId?: string | null
+  notes?: string
+  applicantName?: string
+  applicantEmail?: string
+  applicantPhone?: string
+  jobTitle?: string
+  jobLocation?: string
 }
 
 export const jobService = {
   getAllJobs: async (page = 1, limit = 10) => {
-    const response = await apiClient.get('/jobs', { params: { page, limit } })
+    const response = await API.get('/jobs', { params: { page, limit } })
     return response.data
   },
 
   getJobById: async (id: string) => {
-    const response = await apiClient.get(`/jobs/${id}`)
+    const response = await API.get(`/jobs/${id}`)
     return response.data
   },
 
-  searchJobs: async (query: string, filters?: any) => {
-    const response = await apiClient.get('/jobs/search', { params: { q: query, ...filters } })
+  searchJobs: async (keyword: string, filters?: any) => {
+    const response = await API.get('/jobs/search', { params: { keyword, ...filters } })
     return response.data
   },
 
-  applyForJob: async (jobId: string, cv: File, coverLetter?: string, additionalData?: FormData) => {
+  applyForJob: async (jobId: string, cv: File, phone: string, passport: File, nationalId: File, additionalData?: FormData) => {
     const formData = new FormData()
-    formData.append('job_id', jobId)
+    formData.append('jobId', jobId)
+    formData.append('phone', phone)
     formData.append('cv', cv)
-    if (coverLetter) formData.append('cover_letter', coverLetter)
+    formData.append('passport', passport)
+    formData.append('nationalId', nationalId)
 
-    // Add additional documents if provided
     if (additionalData) {
       for (const [key, value] of additionalData.entries()) {
-        if (key !== 'job_id' && key !== 'cv' && key !== 'cover_letter') {
+        if (!['jobId', 'phone', 'cv', 'passport', 'nationalId'].includes(key)) {
           formData.append(key, value as File)
         }
       }
     }
 
-    const response = await apiClient.post('/applications/apply', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    // ✅ Authorization header is set automatically by API interceptor
+    const response = await API.post('/applications/apply', formData)
     return response.data
   },
 
-  getMyApplications: async () => {
-    const response = await apiClient.get('/applications/my')
+  getMyApplications: async (userId?: string) => {
+    const params = userId ? { userId } : undefined
+    const response = await API.get('/applications/my', { params })
     return response.data
   },
 
   getApplicationById: async (id: string) => {
-    const response = await apiClient.get(`/applications/${id}`)
+    const response = await API.get(`/applications/${id}`)
     return response.data
   },
 
   cancelApplication: async (id: string) => {
-    const response = await apiClient.delete(`/applications/${id}`)
+    const response = await API.delete(`/applications/${id}`)
+    return response.data
+  },
+
+  getJobs: async () => {
+    const response = await API.get('/jobs')
+    return response.data
+  },
+
+  getJobAnalytics: async () => {
+    const response = await API.get('/jobs/dashboard/categories')
     return response.data
   },
 }

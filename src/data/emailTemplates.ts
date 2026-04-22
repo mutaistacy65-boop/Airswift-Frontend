@@ -19,8 +19,8 @@ We will review your application and get back to you within 3-5 business days. If
 
 Best regards,
 The {{companyName}} Recruitment Team
-Email: recruitment@airswift.com
-Phone: +1-800-AIRSWIFT`,
+Email: recruitment@talex.com
+Phone: +1-800-TALEX`,
     stage: 'application_submitted',
     isActive: true,
     variables: ['applicantName', 'jobTitle', 'companyName', 'certificates']
@@ -67,8 +67,8 @@ If you need to reschedule or have any questions, please contact us immediately.
 
 Best regards,
 The {{companyName}} Recruitment Team
-Email: recruitment@airswift.com
-Phone: +1-800-AIRSWIFT`,
+Email: recruitment@talex.com
+Phone: +1-800-TALEX`,
     stage: 'interview_scheduled',
     isActive: true,
     variables: ['applicantName', 'jobTitle', 'companyName', 'interviewDate', 'zoomLink', 'interviewNotes']
@@ -125,8 +125,8 @@ If you have any questions about the payment process, please contact our support 
 
 Best regards,
 The {{companyName}} Visa Processing Team
-Email: visa@airswift.com
-Phone: +1-800-AIRSWIFT`,
+Email: visa@talex.com
+Phone: +1-800-TALEX`,
     stage: 'visa_payment_required',
     isActive: true,
     variables: ['applicantName', 'jobTitle', 'companyName', 'applicationId']
@@ -153,8 +153,8 @@ If you have any questions, please contact our visa processing team.
 
 Best regards,
 The {{companyName}} Visa Processing Team
-Email: visa@airswift.com
-Phone: +1-800-AIRSWIFT
+Email: visa@talex.com
+Phone: +1-800-TALEX
 Tracking: {{trackingNumber}}`,
     stage: 'visa_processing_started',
     isActive: true,
@@ -189,8 +189,8 @@ Welcome to the {{companyName}} team!
 
 Best regards,
 The {{companyName}} Visa Processing Team
-Email: visa@airswift.com
-Phone: +1-800-AIRSWIFT`,
+Email: visa@talex.com
+Phone: +1-800-TALEX`,
     stage: 'visa_ready',
     isActive: true,
     variables: ['applicantName', 'jobTitle', 'companyName', 'visaNumber', 'issueDate', 'expiryDate', 'workPermitExpiry', 'embassyLocation']
@@ -211,10 +211,81 @@ Thank you again for your interest in {{companyName}}. We wish you the best in yo
 
 Best regards,
 The {{companyName}} Recruitment Team
-Email: recruitment@airswift.com
-Phone: +1-800-AIRSWIFT`,
+Email: recruitment@talex.com
+Phone: +1-800-TALEX`,
     stage: 'application_rejected',
     isActive: true,
     variables: ['applicantName', 'jobTitle', 'companyName']
+  },
+  {
+    id: 'user_suspended',
+    name: 'Account Suspended',
+    subject: 'Your account has been temporarily suspended',
+    body: `Dear {{userName}},
+
+We regret to inform you that your account has been temporarily suspended.
+
+Suspension details:
+- Reason: Account suspension
+- Suspended until: {{suspendedUntil}}
+
+While your account is suspended, you will not be able to access the platform. If you believe this is an error or have questions, please contact our support team.
+
+Best regards,
+The TALEX Support Team
+Email: support@talex.com`,
+    stage: 'user_suspended',
+    isActive: true,
+    variables: ['userName', 'suspendedUntil']
+  },
+  {
+    id: 'user_banned',
+    name: 'Account Banned',
+    subject: 'Your account has been permanently banned',
+    body: `Dear {{userName}},
+
+We regret to inform you that your account has been permanently banned.
+
+This means that your account can no longer access the platform.
+
+If you believe this action was taken in error, please contact our support team for assistance.
+
+Best regards,
+The TALEX Support Team
+Email: support@talex.com`,
+    stage: 'user_banned',
+    isActive: true,
+    variables: ['userName']
+  },
+  {
+    id: 'password_reset',
+    name: 'Password Reset',
+    subject: 'Reset Your Talex Password',
+    body: `Dear {{userName}},
+
+We received a request to reset your password for your Talex account.
+
+If you made this request, click the link below to reset your password:
+
+{{resetLink}}
+
+This link will expire in 24 hours for security reasons.
+
+If you didn't request a password reset, please ignore this email. Your password will remain unchanged.
+
+For security reasons, please don't share this email or the reset link with anyone.
+
+If you have any questions or need assistance, please contact our support team.
+
+Best regards,
+The Talex Support Team
+Email: support@talex.com
+Phone: +1-800-TALEX
+
+---
+This is an automated message. Please do not reply to this email.`,
+    stage: 'password_reset',
+    isActive: true,
+    variables: ['userName', 'resetLink']
   }
 ]

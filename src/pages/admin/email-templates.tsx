@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react'
 import DashboardLayout from '@/layouts/DashboardLayout'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
@@ -44,7 +45,7 @@ const AdminEmailTemplatesPage: React.FC = () => {
     try {
       // For now, use default templates since we don't have a backend
       // In production, this would fetch from the API
-      setTemplates(DEFAULT_EMAIL_TEMPLATES)
+      setTemplates(DEFAULT_EMAIL_TEMPLATES.filter(template => template.stage !== 'password_reset'))
     } catch (error) {
       addNotification('Failed to load email templates', 'error')
     } finally {
@@ -57,7 +58,7 @@ const AdminEmailTemplatesPage: React.FC = () => {
       name: template.name,
       subject: template.subject,
       body: template.body,
-      stage: template.stage,
+      stage: template.stage as ApplicationStage, // Safe cast since password_reset templates are filtered out
       isActive: template.isActive
     })
     setSelectedTemplate(template)
@@ -107,7 +108,7 @@ const AdminEmailTemplatesPage: React.FC = () => {
       const sampleVariables = {
         applicantName: 'John Doe',
         jobTitle: 'Software Developer',
-        companyName: 'Airswift',
+        companyName: 'Talex',
         interviewDate: 'April 15, 2026 at 2:00 PM',
         zoomLink: 'https://zoom.us/j/123456789',
         interviewNotes: 'Please bring your ID and resume',
@@ -160,13 +161,14 @@ const AdminEmailTemplatesPage: React.FC = () => {
   }
 
   const sidebarItems = [
-    { label: 'Dashboard', href: '/admin/dashboard', icon: '📊' },
-    { label: 'Manage Jobs', href: '/admin/jobs', icon: '💼' },
-    { label: 'Categories', href: '/admin/categories', icon: '🏷️' },
-    { label: 'Applications', href: '/admin/applications', icon: '📋' },
-    { label: 'Interviews', href: '/admin/interviews', icon: '📞' },
-    { label: 'Email Templates', href: '/admin/email-templates', icon: '📧' },
-    { label: 'Settings', href: '/admin/settings', icon: '⚙️' },
+    { label: '📊 Dashboard', href: '/admin/dashboard' },
+    { label: '👥 Users', href: '/admin/users' },
+    { label: ' Applications', href: '/admin/applications' },
+    { label: '📞 Interviews', href: '/admin/interviews' },
+    { label: '💰 Payments', href: '/admin/payments' },
+    { label: '📋 Audit Logs', href: '/admin/audit' },
+    { label: '🔍 Health', href: '/admin/health' },
+    { label: '⚙️ Settings', href: '/admin/settings' },
   ]
 
   return (
@@ -296,8 +298,8 @@ const AdminEmailTemplatesPage: React.FC = () => {
                   <p className="text-gray-600 text-sm">Subject: {template.subject}</p>
                 </div>
                 <div className="flex gap-2">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStageColor(template.stage)}`}>
-                    {getStageLabel(template.stage)}
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStageColor(template.stage as ApplicationStage)}`}>
+                    {getStageLabel(template.stage as ApplicationStage)}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${template.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                     {template.isActive ? 'Active' : 'Inactive'}
