@@ -9,30 +9,6 @@ const baseURL = normalizedBaseUrl.endsWith('/api')
   ? normalizedBaseUrl
   : `${normalizedBaseUrl}/api`
 
-// For auth endpoints, use local API routes instead of external backend
-const getApiUrl = (url: string) => {
-  const isAuthEndpoint = url.includes('/auth/login') ||
-                        url.includes('/auth/register') ||
-                        url.includes('/auth/google') ||
-                        url.includes('/auth/forgot-password') ||
-                        url.includes('/auth/reset-password') ||
-                        url.includes('/auth/verify') ||
-                        url.includes('/auth/verify-email') ||
-                        url.includes('/auth/resend-otp') ||
-                        url.includes('/auth/send-registration-otp') ||
-                        url.includes('/auth/verify-registration-otp') ||
-                        url.includes('/auth/verify-otp') ||
-                        url.includes('/auth/me') ||
-                        url.includes('/auth/refresh')
-
-  if (isAuthEndpoint) {
-    // Use local Next.js API routes for auth
-    return ''
-  }
-
-  return baseURL
-}
-
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL,
@@ -40,6 +16,7 @@ const api = axios.create({
 })
 
 console.log('📡 API baseURL set to:', baseURL)
+
 
 // ✅ REQUEST INTERCEPTOR: Add Authorization header with Bearer token
 api.interceptors.request.use((config) => {
@@ -55,11 +32,13 @@ api.interceptors.request.use((config) => {
   console.log('   Method:', config.method?.toUpperCase())
   console.log('   Token in localStorage:', token ? '✓ EXISTS' : '✗ MISSING')
 
-  // Set the correct base URL for this request
-  const apiUrl = getApiUrl(url)
-  if (apiUrl !== baseURL) {
-    config.baseURL = apiUrl
-    console.log('   🔄 Using local API routes for auth endpoint')
+  // Route auth endpoints to local Next.js API routes
+  const isAuthEndpoint = url.includes('/auth/')
+  if (isAuthEndpoint) {
+    // Local API routes: /api/auth/... instead of backend URL
+    config.baseURL = '' // Use current domain
+    config.url = `/api${url}` // Prepend /api to the URL
+    console.log('   🔄 Using local API routes for auth endpoint:', config.url)
   }
 
   if (!isAuthRequest && token) {
