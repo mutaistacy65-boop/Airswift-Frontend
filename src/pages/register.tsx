@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import Button from "../components/Button";
 import API from "@/services/apiClient";
 import { clearAuth } from '@/lib/auth';
-import { validateEmailForAuth } from '@/utils/roleUtils';
+import { validateGmailEmail, getGmailHint } from '@/utils/gmailValidation';
 
 export default function Register() {
   const router = useRouter();
@@ -32,10 +32,10 @@ export default function Register() {
       return;
     }
 
-    // Email validation
-    const emailValidation = validateEmailForAuth(formData.email);
-    if (!emailValidation.isValid) {
-      setError(emailValidation.error);
+    // Email validation - enforce Gmail only
+    const emailValidation = validateGmailEmail(formData.email);
+    if (!emailValidation.valid) {
+      setError(emailValidation.message);
       setLoading(false);
       return;
     }
@@ -132,18 +132,18 @@ export default function Register() {
 
             {/* Email Address */}
             <div>
-              <label className="text-sm font-medium text-gray-700">Email Address</label>
+              <label className="text-sm font-medium text-gray-700">Gmail Address</label>
               <input
                 type="email"
                 className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="you@example.com"
+                placeholder="yourname@gmail.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value.toLowerCase() })}
                 disabled={loading}
                 required
               />
               <p className="text-xs text-gray-500 mt-1">
-                ℹ️ We'll send you a verification link to this email
+                📧 {getGmailHint()}
               </p>
             </div>
 
