@@ -31,15 +31,7 @@ api.interceptors.request.use((config) => {
   console.log('   URL:', url)
   console.log('   Method:', config.method?.toUpperCase())
   console.log('   Token in localStorage:', token ? '✓ EXISTS' : '✗ MISSING')
-
-  // Route auth endpoints to local Next.js API routes
-  const isAuthEndpoint = url.includes('/auth/')
-  if (isAuthEndpoint) {
-    // Local API routes: /api/auth/... instead of backend URL
-    config.baseURL = '' // Use current domain
-    config.url = `/api${url}` // Prepend /api to the URL
-    console.log('   🔄 Using local API routes for auth endpoint:', config.url)
-  }
+  console.log('   Base URL:', config.baseURL)
 
   if (!isAuthRequest && token) {
     config.headers.Authorization = `Bearer ${token}`
