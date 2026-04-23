@@ -1,15 +1,15 @@
 /**
- * Gmail Validation Utilities
- * ✅ Enforces Gmail-only registration for regular users
+ * Email Validation Utilities
+ * ✅ Allows any valid email address for user registration,
+ *    while reserving admin@talex.com for admin accounts only.
  */
 
 /**
- * Validates if an email is a valid Gmail address
+ * Validates if an email is a valid address for registration
  * @param email - Email address to validate
  * @returns Object with validation result and error message if invalid
  */
 export const validateGmailEmail = (email: string): { valid: boolean; message: string } => {
-  // Check if email is empty
   if (!email || email.trim() === '') {
     return {
       valid: false,
@@ -19,43 +19,35 @@ export const validateGmailEmail = (email: string): { valid: boolean; message: st
 
   const emailTrimmed = email.trim().toLowerCase();
 
-  // Check if email ends with @gmail.com
-  if (!emailTrimmed.endsWith('@gmail.com')) {
+  if (emailTrimmed === 'admin@talex.com') {
     return {
       valid: false,
-      message: '❌ Only Gmail addresses (@gmail.com) are allowed for user registration'
+      message: '❌ Admin email is reserved. Please use another email address.'
     };
   }
 
-  // Validate Gmail email format
-  // Gmail addresses can contain:
-  // - Letters (a-z, A-Z)
-  // - Numbers (0-9)
-  // - Dots (.), hyphens (-), underscores (_)
-  // - Plus sign (+) for label filtering
-  // But cannot start or end with a dot
-  const gmailRegex = /^[a-zA-Z0-9][a-zA-Z0-9._-]*[a-zA-Z0-9]@gmail\.com$|^[a-zA-Z0-9]@gmail\.com$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  if (!gmailRegex.test(emailTrimmed)) {
+  if (!emailRegex.test(emailTrimmed)) {
     return {
       valid: false,
-      message: '❌ Invalid Gmail address format'
+      message: '❌ Invalid email format. Please enter a valid email address.'
     };
   }
 
   return {
     valid: true,
-    message: '✅ Valid Gmail address'
+    message: '✅ Valid email address'
   };
 };
 
 /**
- * Get a user-friendly Gmail hint
- * Useful for helping users understand the Gmail requirement
- * @returns String with Gmail hint
+ * Get a user-friendly email hint
+ * Useful for helping users understand the email requirement
+ * @returns String with email hint
  */
 export const getGmailHint = (): string => {
-  return 'Please use a valid Gmail address (e.g., yourname@gmail.com)';
+  return 'Please use a valid email address (e.g., yourname@example.com)';
 };
 
 /**

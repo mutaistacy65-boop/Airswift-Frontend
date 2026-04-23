@@ -132,11 +132,11 @@ export default function Register() {
 
             {/* Email Address */}
             <div>
-              <label className="text-sm font-medium text-gray-700">Gmail Address</label>
+              <label className="text-sm font-medium text-gray-700">Email Address</label>
               <input
                 type="email"
                 className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="yourname@gmail.com"
+                placeholder="yourname@example.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value.toLowerCase() })}
                 disabled={loading}
