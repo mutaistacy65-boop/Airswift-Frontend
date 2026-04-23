@@ -9,6 +9,30 @@ const baseURL = normalizedBaseUrl.endsWith('/api')
   ? normalizedBaseUrl
   : `${normalizedBaseUrl}/api`
 
+// For auth endpoints, use local API routes instead of external backend
+const getApiUrl = (url: string) => {
+  const isAuthEndpoint = url.includes('/auth/login') ||
+                        url.includes('/auth/register') ||
+                        url.includes('/auth/google') ||
+                        url.includes('/auth/forgot-password') ||
+                        url.includes('/auth/reset-password') ||
+                        url.includes('/auth/verify') ||
+                        url.includes('/auth/verify-email') ||
+                        url.includes('/auth/resend-otp') ||
+                        url.includes('/auth/send-registration-otp') ||
+                        url.includes('/auth/verify-registration-otp') ||
+                        url.includes('/auth/verify-otp') ||
+                        url.includes('/auth/me') ||
+                        url.includes('/auth/refresh')
+
+  if (isAuthEndpoint) {
+    // Use local Next.js API routes for auth
+    return ''
+  }
+
+  return baseURL
+}
+
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL,
@@ -30,6 +54,13 @@ api.interceptors.request.use((config) => {
   console.log('   URL:', url)
   console.log('   Method:', config.method?.toUpperCase())
   console.log('   Token in localStorage:', token ? '✓ EXISTS' : '✗ MISSING')
+
+  // Set the correct base URL for this request
+  const apiUrl = getApiUrl(url)
+  if (apiUrl !== baseURL) {
+    config.baseURL = apiUrl
+    console.log('   🔄 Using local API routes for auth endpoint')
+  }
 
   if (!isAuthRequest && token) {
     config.headers.Authorization = `Bearer ${token}`
