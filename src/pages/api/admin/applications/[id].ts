@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { requireAdmin } from '@/lib/adminMiddleware'
 import mongoose from 'mongoose'
 import { connectDB } from '@/lib/mongodb'
-import { sendEmail } from '@/utils/sendEmail'
+import { sendEmail } from '@/lib/emailService'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'PUT') {
