@@ -119,9 +119,9 @@ const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({ children }) =
                 aria-label="Notifications"
               >
                 <span className="text-xl">🔔</span>
-                {unreadCount > 0 && (
+                {notificationCount > 0 && (
                   <span className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                    {unreadCount}
+                    {notificationCount}
                   </span>
                 )}
               </Link>
