@@ -139,7 +139,6 @@ const AdminCategoriesPage: React.FC = () => {
     { label: '📞 Interviews', href: '/admin/interviews' },
     { label: '💰 Payments', href: '/admin/payments' },
     { label: '📋 Audit Logs', href: '/admin/audit' },
-    { label: '🔍 Health', href: '/admin/health' },
     { label: '⚙️ Settings', href: '/admin/settings' },
   ]
 

@@ -100,7 +100,6 @@ export default function AdminEmailLogsPage() {
     { label: '💰 Payments', href: '/admin/payments' },
     { label: '📋 Audit Logs', href: '/admin/audit' },
     { label: '✉️ Email Logs', href: '/admin/email-logs' },
-    { label: '🔍 Health', href: '/admin/health' },
     { label: '⚙️ Settings', href: '/admin/settings' },
   ]
 

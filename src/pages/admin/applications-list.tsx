@@ -85,7 +85,6 @@ export default function AdminApplicationsPage() {
       { label: '📞 Interviews', href: '/admin/interviews' },
       { label: '💰 Payments', href: '/admin/payments' },
       { label: '📋 Audit Logs', href: '/admin/audit' },
-      { label: '🔍 Health', href: '/admin/health' },
       { label: '⚙️ Settings', href: '/admin/settings' },
     ]
     
@@ -115,7 +114,6 @@ export default function AdminApplicationsPage() {
       { label: '📞 Interviews', href: '/admin/interviews' },
       { label: '💰 Payments', href: '/admin/payments' },
       { label: '📋 Audit Logs', href: '/admin/audit' },
-      { label: '🔍 Health', href: '/admin/health' },
       { label: '⚙️ Settings', href: '/admin/settings' },
     ]
     
@@ -135,7 +133,6 @@ export default function AdminApplicationsPage() {
     { label: '📞 Interviews', href: '/admin/interviews' },
     { label: '💰 Payments', href: '/admin/payments' },
     { label: '📋 Audit Logs', href: '/admin/audit' },
-    { label: '🔍 Health', href: '/admin/health' },
     { label: '⚙️ Settings', href: '/admin/settings' },
   ]
 
