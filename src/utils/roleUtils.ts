@@ -41,24 +41,9 @@ export const validateEmailForAuth = (email: string): { isValid: boolean; error?:
 
   const emailLower = email.toLowerCase().trim()
 
-  if (!emailLower.includes('@')) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(emailLower)) {
     return { isValid: false, error: 'Please enter a valid email address' }
-  }
-
-  // Allow admin email
-  if (emailLower === 'admin@talex.com') {
-    return { isValid: true }
-  }
-
-  // Check for valid domains
-  if (!emailLower.endsWith('@email.com') &&
-      !emailLower.endsWith('.com') &&
-      !emailLower.endsWith('.org') &&
-      !emailLower.endsWith('.net')) {
-    return {
-      isValid: false,
-      error: 'Please use an email address ending with @email.com or other common domains (.com, .org, .net)'
-    }
   }
 
   return { isValid: true }
@@ -83,14 +68,10 @@ export const isValidUserEmail = (email: string): boolean => {
 
   const emailLower = email.toLowerCase().trim()
 
-  // Admin email is also valid
   if (isAdminEmail(emailLower)) return true
 
-  // Check for valid domains
-  return emailLower.endsWith('@email.com') ||
-         emailLower.endsWith('.com') ||
-         emailLower.endsWith('.org') ||
-         emailLower.endsWith('.net')
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(emailLower)
 }
 
 export const getPostLoginPath = (role?: string, hasSubmittedApplication?: boolean) => {

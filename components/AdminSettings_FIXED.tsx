@@ -23,7 +23,7 @@ interface Setting {
 
 interface SettingInput {
   key: string
-  value: string | number | boolean
+  value: string
   description: string
   category: string
   isPublic: boolean
@@ -293,7 +293,7 @@ const AdminSettings = () => {
                     <td className="px-6 py-4">
                       <input
                         type="text"
-                        value={setting.value}
+                        value={String(setting.value)}
                         onChange={(e) => {
                           const updatedSettings = settings.map(s =>
                             s._id === setting._id ? { ...s, value: e.target.value } : s

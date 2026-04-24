@@ -163,6 +163,13 @@ const AdminApplicationsPage = () => {
 
     const unsubscribeNewApp = subscribe('newApplication', handleNewApplication)
     const unsubscribeNewAppSnake = subscribe('new_application', handleNewApplication)
+    const unsubscribeNewAppSubmitted = subscribe('newApplicationSubmitted', (data: any) => {
+      if (data?.application) {
+        handleNewApplication(data.application)
+      } else {
+        handleNewApplication(data)
+      }
+    })
     const unsubscribeAppNew = subscribe('application:new', (data: any) => {
       if (data && (data._id || data.id)) {
         handleNewApplication(data)
@@ -207,6 +214,7 @@ const AdminApplicationsPage = () => {
     return () => {
       unsubscribeNewApp?.()
       unsubscribeNewAppSnake?.()
+      unsubscribeNewAppSubmitted?.()
       unsubscribeStatus?.()
       unsubscribeAppNew?.()
       unsubscribeAppUpdated?.()

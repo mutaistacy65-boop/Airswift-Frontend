@@ -123,7 +123,7 @@ export default function VerifyOTP() {
       }
       
       await api.post(endpoint, { email });
-      setMessage("📩 OTP resent successfully!");
+      setMessage("� Verification link resent successfully! Check your email.");
       setCooldown(60);
 
       cooldownRef.current = setInterval(() => {

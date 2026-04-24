@@ -17,6 +17,7 @@ const api = axios.create({
 
 console.log('📡 API baseURL set to:', baseURL)
 
+
 // ✅ REQUEST INTERCEPTOR: Add Authorization header with Bearer token
 api.interceptors.request.use((config) => {
   const url = config.url || ''
@@ -30,6 +31,7 @@ api.interceptors.request.use((config) => {
   console.log('   URL:', url)
   console.log('   Method:', config.method?.toUpperCase())
   console.log('   Token in localStorage:', token ? '✓ EXISTS' : '✗ MISSING')
+  console.log('   Base URL:', config.baseURL)
 
   if (!isAuthRequest && token) {
     config.headers.Authorization = `Bearer ${token}`

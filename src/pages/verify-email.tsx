@@ -6,17 +6,18 @@ import API from '@/services/apiClient'
 
 export default function VerifyEmailPage() {
   const router = useRouter()
-  const { token } = router.query
+  const { token, email: queryEmail } = router.query
   const [verificationStatus, setVerificationStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
   const [email, setEmail] = useState('')
   const [isResending, setIsResending] = useState(false)
   const [resendMessage, setResendMessage] = useState('')
   const [showResendForm, setShowResendForm] = useState(false)
+  const isVerificationMessage = !token && queryEmail && typeof queryEmail === 'string'
 
   useEffect(() => {
     if (!token) {
-      setShowResendForm(true)
+      setShowResendForm(!queryEmail)
       return
     }
 
@@ -41,7 +42,13 @@ export default function VerifyEmailPage() {
     }
 
     verifyEmail()
-  }, [token, router])
+  }, [token, queryEmail, router])
+
+  useEffect(() => {
+    if (queryEmail && typeof queryEmail === 'string') {
+      setEmail(queryEmail)
+    }
+  }, [queryEmail])
 
   const handleResendEmail = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -121,6 +128,58 @@ export default function VerifyEmailPage() {
                 }
               `}</style>
               <p style={{ color: '#666', fontSize: '16px' }}>Verifying your email...</p>
+            </div>
+          )}
+
+          {/* Activation Email Sent / Resend Prompt */}
+          {isVerificationMessage && !showResendForm && (
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{ fontSize: '48px', color: '#16a34a', marginBottom: '12px' }}>✓</div>
+              <h1 style={{ fontSize: '32px', margin: '0 0 8px', color: '#16a34a' }}>Check Your Email</h1>
+              <p style={{ margin: '0 0 16px', color: '#475569', fontSize: '16px' }}>
+                Check your email for activation instructions.
+              </p>
+              <p style={{ margin: '0 0 18px', color: '#64748b', fontSize: '14px', lineHeight: '1.75' }}>
+                The email may take a few minutes to arrive. Don't forget to check your spam folder.
+              </p>
+
+              <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '18px', margin: '0 auto 24px', maxWidth: '420px' }}>
+                <p style={{ margin: 0, color: '#1d4ed8', fontSize: '14px', lineHeight: '1.7' }}>
+                  <strong>Tip:</strong> Activation links expire after 24 hours. Make sure to use it promptly.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowResendForm(true)}
+                style={{
+                  width: '100%',
+                  padding: '14px 18px',
+                  background: '#2563eb',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '999px',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  marginBottom: '12px'
+                }}
+              >
+                Send Another Email
+              </button>
+
+              <button
+                onClick={() => router.push('/login')}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#2563eb',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  textDecoration: 'underline'
+                }}
+              >
+                Back to login
+              </button>
             </div>
           )}
 
