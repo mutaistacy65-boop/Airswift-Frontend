@@ -11,6 +11,7 @@ export default function Register() {
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +55,8 @@ export default function Register() {
       // Handle the response
       if (result.data.code === 'REGISTRATION_SUCCESS' || result.data.code === 'VERIFICATION_EMAIL_RESENT') {
         // Redirect to the verification page with the user's email after registration
-        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+        setRedirecting(true);
+        await router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
         return;
       } else {
         // Unexpected response
@@ -77,6 +79,18 @@ export default function Register() {
       setLoading(false);
     }
   };
+
+  if (redirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+        <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
+          <div className="text-4xl mb-4">✅</div>
+          <h1 className="text-2xl font-bold mb-2">Redirecting...</h1>
+          <p className="text-gray-600">Taking you to the email verification page.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
