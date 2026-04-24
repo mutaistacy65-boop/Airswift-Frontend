@@ -10,6 +10,7 @@ const AdminUsersPage: React.FC = () => {
     { label: 'Dashboard', href: '/admin/dashboard', icon: '📊' },
     { label: 'Applications', href: '/admin/applications', icon: '📋' },
     { label: 'Users', href: '/admin/users', icon: '👥' },
+    { label: 'Audit', href: '/admin/audit', icon: '📋' },
     { label: 'Interviews', href: '/admin/interviews', icon: '📞' },
     { label: 'Settings', href: '/admin/settings', icon: '⚙️' },
   ]
