@@ -135,16 +135,16 @@ export default function VerifyEmailPage() {
           {isVerificationMessage && !showResendForm && (
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
               <div style={{ fontSize: '48px', color: '#16a34a', marginBottom: '12px' }}>✓</div>
-              <h1 style={{ fontSize: '28px', margin: '0 0 8px', color: '#15803d' }}>Check Your Email</h1>
+              <h1 style={{ fontSize: '32px', margin: '0 0 8px', color: '#16a34a' }}>Check Your Email</h1>
               <p style={{ margin: '0 0 16px', color: '#475569', fontSize: '16px' }}>
                 Check your email for activation instructions.
               </p>
-              <p style={{ margin: '0 0 18px', color: '#64748b', fontSize: '14px', lineHeight: '1.6' }}>
+              <p style={{ margin: '0 0 18px', color: '#64748b', fontSize: '14px', lineHeight: '1.75' }}>
                 The email may take a few minutes to arrive. Don't forget to check your spam folder.
               </p>
 
-              <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '16px', margin: '0 auto 24px', maxWidth: '420px' }}>
-                <p style={{ margin: 0, color: '#1d4ed8', fontSize: '14px' }}>
+              <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '18px', margin: '0 auto 24px', maxWidth: '420px' }}>
+                <p style={{ margin: 0, color: '#1d4ed8', fontSize: '14px', lineHeight: '1.7' }}>
                   <strong>Tip:</strong> Activation links expire after 24 hours. Make sure to use it promptly.
                 </p>
               </div>
@@ -153,7 +153,7 @@ export default function VerifyEmailPage() {
                 onClick={() => setShowResendForm(true)}
                 style={{
                   width: '100%',
-                  padding: '12px 18px',
+                  padding: '14px 18px',
                   background: '#2563eb',
                   color: 'white',
                   border: 'none',

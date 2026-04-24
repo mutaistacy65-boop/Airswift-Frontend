@@ -53,10 +53,14 @@ export default function Register() {
       console.log("Registration response:", result.data);
 
       // Handle the response
-      if (result.data.code === 'REGISTRATION_SUCCESS' || result.data.code === 'VERIFICATION_EMAIL_RESENT') {
+      if (
+        result.data.code === 'REGISTRATION_SUCCESS' ||
+        result.data.code === 'VERIFICATION_EMAIL_SENT' ||
+        result.data.code === 'VERIFICATION_EMAIL_RESENT'
+      ) {
         // Redirect to the verification page with the user's email after registration
         setRedirecting(true);
-        await router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+        await router.replace(`/verify-email?email=${encodeURIComponent(formData.email)}`);
         return;
       } else {
         // Unexpected response
