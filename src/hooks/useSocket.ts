@@ -9,6 +9,7 @@ export type SocketEventType =
   | 'applicationStatusChanged'
   | 'applicationUpdated'
   | 'newApplication'
+  | 'newApplicationSubmitted'
   | 'new_application'
   | 'new_interview'
   | 'payment_success'
