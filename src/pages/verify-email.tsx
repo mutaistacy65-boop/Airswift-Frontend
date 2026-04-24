@@ -6,7 +6,7 @@ import API from '@/services/apiClient'
 
 export default function VerifyEmailPage() {
   const router = useRouter()
-  const { token } = router.query
+  const { token, email: queryEmail } = router.query
   const [verificationStatus, setVerificationStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
   const [email, setEmail] = useState('')
@@ -42,6 +42,12 @@ export default function VerifyEmailPage() {
 
     verifyEmail()
   }, [token, router])
+
+  useEffect(() => {
+    if (queryEmail && typeof queryEmail === 'string') {
+      setEmail(queryEmail)
+    }
+  }, [queryEmail])
 
   const handleResendEmail = async (e: React.FormEvent) => {
     e.preventDefault()

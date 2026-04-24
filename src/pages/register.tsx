@@ -217,12 +217,12 @@ export default function Register() {
           fontSize: "64px",
           marginBottom: "20px"
         }}>
-          📧
+          ✓
         </div>
 
-        <h1 className="text-2xl font-bold mb-2">Account Created!</h1>
-        <p className="text-gray-600 mb-6">
-          We've sent a verification link to:
+        <h1 className="text-3xl font-bold text-green-700 mb-3">Check Your Email</h1>
+        <p className="text-gray-600 mb-4">
+          An activation link has been sent to your email address.
         </p>
 
         {/* Email Display */}
@@ -230,48 +230,35 @@ export default function Register() {
           <p className="font-mono text-blue-900">{registeredEmail}</p>
         </div>
 
-        {/* Instructions */}
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 text-left">
-          <h3 className="font-semibold text-green-900 mb-3">Next Steps:</h3>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-green-800">
-            <li>Check your email for the verification link</li>
-            <li>Click the link to verify your email address</li>
-            <li>Log in with your credentials</li>
-          </ol>
-        </div>
+        <p className="text-gray-600 mb-3">
+          The email may take a few minutes to arrive. Don't forget to check your spam folder.
+        </p>
 
-        {/* Important Notes */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-          <p className="text-sm text-yellow-800">
-            <strong>⏰ Link expires in 24 hours</strong><br/>
-            <br/>
-            Don't see the email? Check your spam folder or{" "}
-            <Link href="/verify-email" className="text-blue-600 hover:underline font-medium">
-              request a new verification link
-            </Link>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
+          <p className="text-sm text-blue-800">
+            <strong>Tip:</strong> Activation links expire after 24 hours. Make sure to use it promptly.
           </p>
         </div>
 
         {/* Action Buttons */}
         <div className="space-y-3">
           <button
-            onClick={() => router.push('/verify-email')}
+            onClick={() => router.push(`/verify-email?email=${encodeURIComponent(registeredEmail)}`)}
             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium"
           >
-            Resend Verification Link
+            Send Another Email
           </button>
 
           <button
             onClick={() => router.push('/login')}
             className="w-full bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition font-medium"
           >
-            Go to Login
+            Back to Login
           </button>
         </div>
 
-        {/* Support Link */}
         <p className="text-xs text-gray-500 mt-6 pt-4 border-t border-gray-200">
-          Having issues?{" "}
+          Having issues?{' '}
           <Link href="/contact" className="text-blue-600 hover:underline">
             Contact support
           </Link>
