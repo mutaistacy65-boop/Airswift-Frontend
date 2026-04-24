@@ -43,13 +43,22 @@ function AuditLogs() {
         params.search = searchTerm;
       }
 
-      // Try the primary audit endpoint
+      // Try multiple endpoints in order of priority
+      const endpoints = ['/admin/audit', '/admin/audit-logs', '/audit-logs', '/auditLogs'];
       let response;
-      try {
-        response = await apiClient.get('/admin/audit', { params });
-      } catch (err) {
-        console.warn('⚠️ /admin/audit failed, trying /auditLogs...');
-        response = await apiClient.get('/auditLogs', { params });
+      
+      for (const endpoint of endpoints) {
+        try {
+          response = await apiClient.get(endpoint, { params });
+          console.log(`✅ Successfully fetched from ${endpoint}`);
+          break;
+        } catch (err) {
+          console.warn(`⚠️ ${endpoint} failed (${err.response?.status}), trying next endpoint...`);
+        }
+      }
+
+      if (!response) {
+        throw new Error('Unable to fetch audit logs from any configured endpoint');
       }
 
       console.log('✅ Audit logs fetched:', response.data);
