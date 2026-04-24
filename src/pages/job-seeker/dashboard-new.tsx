@@ -239,7 +239,7 @@ export default function UserDashboard() {
               </a>
               <a
                 href="/job-seeker/applications"
-                className="block p-3 bg-green-100 hover:bg-green-200 text-green-800 rounded-lg transition duration-200 font-medium"
+                className="block p-3 bg-green/10 hover:bg-green/20 text-green rounded-lg transition duration-200 font-medium"
               >
                 📂 View Applications
               </a>
@@ -280,5 +280,4 @@ export default function UserDashboard() {
       </div>
     </UserDashboardLayout>
   )
-}
 }
