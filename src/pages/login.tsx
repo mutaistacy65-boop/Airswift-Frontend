@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { clearAuth } from "@/lib/auth";
 import { validateEmailForAuth } from "@/utils/roleUtils";
@@ -224,9 +225,9 @@ export default function LoginPage() {
               Remember me
             </label>
 
-            <a href="/forgot-password" className="text-blue-600 hover:underline">
+            <Link href="/forgot-password" className="text-blue-600 hover:underline">
               Forgot password?
-            </a>
+            </Link>
           </div>
 
           {/* Login Button */}
@@ -262,9 +263,9 @@ export default function LoginPage() {
 
         <p className="text-center text-sm mt-6">
           Don’t have an account?{" "}
-          <a href="/register" className="text-blue-600 hover:underline">
+          <Link href="/register" className="text-blue-600 hover:underline">
             Create one
-          </a>
+          </Link>
         </p>
 
       </div>

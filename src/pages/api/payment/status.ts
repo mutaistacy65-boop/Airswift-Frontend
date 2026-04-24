@@ -1,5 +1,6 @@
 // @ts-nocheck
 import type { NextApiRequest, NextApiResponse } from 'next'
+import mongoose from 'mongoose'
 import { connectDB } from '@/lib/mongodb'
 import { verifyToken } from '@/lib/authController'
 
@@ -16,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     await connectDB()
-    const db = require('mongoose').connection.db
+    const db = mongoose.connection.db
 
     const payment = await db.collection('payments').findOne({
       user_id: user.userId,

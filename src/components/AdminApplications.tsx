@@ -144,7 +144,7 @@ function AdminApplications() {
   };
 
   const filterApplications = () => {
-    let filtered = applications.filter((app) => {
+    const filtered = applications.filter((app) => {
       const matchesSearch = !searchTerm ||
         app.userId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         app.userId?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
