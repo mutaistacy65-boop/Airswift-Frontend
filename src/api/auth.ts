@@ -100,9 +100,9 @@ export const loginUser = async (formData: LoginFormData) => {
     if (!data.user?.isVerified) {
       // Return special response for unverified accounts
       return {
-        redirect: '/verify-otp',
+        redirect: '/verify-email',
         email: data.user.email,
-        message: 'Account not verified. OTP sent to your email.',
+        message: 'Account not verified. Activation link sent to your email. Check your inbox and click the link to verify.',
         user: data.user
       };
     }

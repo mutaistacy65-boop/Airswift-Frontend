@@ -166,7 +166,7 @@ export const authLogin = async (req: NextApiRequest, res: NextApiResponse) => {
       }
 
       return res.status(403).json({ 
-        message: "Your account has not been verified yet. Check your email for the verification link.",
+        message: "Your account has not been verified yet. We've sent an activation link to your email. Click the link to verify your account.",
         code: 'ACCOUNT_NOT_VERIFIED',
         email: email,
         redirect: '/verify-email',
