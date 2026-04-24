@@ -11,8 +11,6 @@ export default function Register() {
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [registrationStatus, setRegistrationStatus] = useState<'form' | 'success'>('form');
-  const [registeredEmail, setRegisteredEmail] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,16 +52,10 @@ export default function Register() {
       console.log("Registration response:", result.data);
 
       // Handle the response
-      if (result.data.code === 'REGISTRATION_SUCCESS') {
-        // New user created - show verification email screen
-        setRegisteredEmail(formData.email);
-        setRegistrationStatus('success');
-        setFormData({ name: "", email: "", password: "" });
-      } else if (result.data.code === 'VERIFICATION_EMAIL_RESENT') {
-        // Unverified user tried to register again - show verification email screen
-        setRegisteredEmail(formData.email);
-        setRegistrationStatus('success');
-        setFormData({ name: "", email: "", password: "" });
+      if (result.data.code === 'REGISTRATION_SUCCESS' || result.data.code === 'VERIFICATION_EMAIL_RESENT') {
+        // Redirect to the verification page with the user's email after registration
+        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+        return;
       } else {
         // Unexpected response
         setError(result.data.message || "Registration failed");
@@ -86,9 +78,7 @@ export default function Register() {
     }
   };
 
-  // Registration form view
-  if (registrationStatus === 'form') {
-    return (
+  return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
         <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
           {/* Header */}
@@ -206,65 +196,5 @@ export default function Register() {
         </div>
       </div>
     );
-  }
-
-  // Success screen - prompt to verify email
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
-        {/* Success Icon */}
-        <div style={{
-          fontSize: "64px",
-          marginBottom: "20px"
-        }}>
-          ✓
-        </div>
-
-        <h1 className="text-3xl font-bold text-green-700 mb-3">Check Your Email</h1>
-        <p className="text-gray-600 mb-4">
-          An activation link has been sent to your email address.
-        </p>
-
-        {/* Email Display */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
-          <p className="font-mono text-blue-900">{registeredEmail}</p>
-        </div>
-
-        <p className="text-gray-600 mb-3">
-          The email may take a few minutes to arrive. Don't forget to check your spam folder.
-        </p>
-
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
-          <p className="text-sm text-blue-800">
-            <strong>Tip:</strong> Activation links expire after 24 hours. Make sure to use it promptly.
-          </p>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          <button
-            onClick={() => router.push(`/verify-email?email=${encodeURIComponent(registeredEmail)}`)}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium"
-          >
-            Send Another Email
-          </button>
-
-          <button
-            onClick={() => router.push('/login')}
-            className="w-full bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition font-medium"
-          >
-            Back to Login
-          </button>
-        </div>
-
-        <p className="text-xs text-gray-500 mt-6 pt-4 border-t border-gray-200">
-          Having issues?{' '}
-          <Link href="/contact" className="text-blue-600 hover:underline">
-            Contact support
-          </Link>
-        </p>
-      </div>
-    </div>
-  );
 }
 
