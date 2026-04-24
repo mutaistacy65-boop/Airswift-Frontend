@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import DashboardLayout from '@/layouts/DashboardLayout'
+import UserLayout from '@/layouts/UserLayout'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
 import Loader from '@/components/Loader'
 import Button from '@/components/Button'
 import VoiceInterview from '@/components/VoiceInterview'
-import { jobService, JobApplication } from '@/services/jobService'
+import API from '@/services/apiClient'
 import { interviewService } from '@/services/interviewService'
 import { formatDate } from '@/utils/helpers'
 
@@ -15,10 +15,10 @@ const InterviewsPage: React.FC = () => {
   const { user } = useAuth()
   const { addNotification } = useNotification()
 
-  const [applications, setApplications] = useState<JobApplication[]>([])
+  const [applications, setApplications] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [voiceInterviewOpen, setVoiceInterviewOpen] = useState(false)
-  const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null)
+  const [selectedApplication, setSelectedApplication] = useState<any>(null)
 
   useEffect(() => {
     if (isAuthorized) {
@@ -28,12 +28,8 @@ const InterviewsPage: React.FC = () => {
 
   const fetchApplications = async () => {
     try {
-      const data = await jobService.getMyApplications()
-      // Filter applications that have interviews scheduled or completed
-      const interviewApplications = data.filter(app =>
-        ['interview_scheduled', 'interview_completed', 'accepted'].includes(app.status)
-      )
-      setApplications(interviewApplications)
+      const response = await API.get('/interviews/my')
+      setApplications(response.data.interviews)
     } catch (error) {
       addNotification('Failed to load interviews', 'error')
     } finally {
@@ -60,7 +56,7 @@ const InterviewsPage: React.FC = () => {
     }
   }
 
-  const handleStartVoiceInterview = (application: JobApplication) => {
+  const handleStartVoiceInterview = (application: any) => {
     setSelectedApplication(application)
     setVoiceInterviewOpen(true)
   }
@@ -101,7 +97,7 @@ const InterviewsPage: React.FC = () => {
   const pendingInterviews = applications.filter(app => app.status === 'accepted')
 
   return (
-    <DashboardLayout sidebarItems={sidebarItems}>
+    <UserLayout sidebarItems={sidebarItems}>
       <div>
         <h1 className="text-3xl font-bold mb-8">My Interviews</h1>
 
@@ -267,7 +263,7 @@ const InterviewsPage: React.FC = () => {
           onComplete={handleVoiceInterviewComplete}
         />
       )}
-    </DashboardLayout>
+    </UserLayout>
   )
 }
 

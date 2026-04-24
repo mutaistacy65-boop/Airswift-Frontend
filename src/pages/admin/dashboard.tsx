@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import DashboardLayout from '@/layouts/DashboardLayout'
+import UserLayout from '@/layouts/UserLayout'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import API from '@/lib/api'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, BarChart, Bar } from 'recharts'
@@ -107,7 +107,7 @@ const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <DashboardLayout sidebarItems={sidebarItems}>
+    <UserLayout sidebarItems={sidebarItems}>
       <div className="space-y-6 pb-8">
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -245,7 +245,7 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </UserLayout>
   )
 }
 

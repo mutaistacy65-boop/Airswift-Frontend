@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react'
 import API from '@/services/apiClient'
-import DashboardLayout from '@/layouts/DashboardLayout'
+import UserLayout from '@/layouts/UserLayout'
 import { useAuth } from '@/context/AuthContext'
 
 // Force server-side rendering for admin pages
@@ -135,26 +135,26 @@ export default function EmailTemplatesPage() {
 
   if (user?.role !== 'admin') {
     return (
-      <DashboardLayout>
+      <UserLayout>
         <div className="bg-red-100 border border-red-400 rounded p-4">
           <p className="text-red-700">Only admins can manage email templates.</p>
         </div>
-      </DashboardLayout>
+      </UserLayout>
     )
   }
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <UserLayout>
         <div className="flex justify-center items-center h-screen">
           <div className="text-xl text-gray-600">Loading...</div>
         </div>
-      </DashboardLayout>
+      </UserLayout>
     )
   }
 
   return (
-    <DashboardLayout>
+    <UserLayout>
       <div>
         <div className="mb-8 flex justify-between items-center">
           <div>
@@ -299,6 +299,6 @@ export default function EmailTemplatesPage() {
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </UserLayout>
   )
 }

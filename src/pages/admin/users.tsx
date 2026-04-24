@@ -1,5 +1,5 @@
 import React from 'react'
-import DashboardLayout from '@/layouts/DashboardLayout'
+import UserLayout from '@/layouts/UserLayout'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import AdminUsers from '@/components/AdminUsers'
 
@@ -24,9 +24,9 @@ const AdminUsersPage: React.FC = () => {
   }
 
   return (
-    <DashboardLayout sidebarItems={sidebarItems}>
+    <UserLayout sidebarItems={sidebarItems}>
       <AdminUsers />
-    </DashboardLayout>
+    </UserLayout>
   )
 }
 

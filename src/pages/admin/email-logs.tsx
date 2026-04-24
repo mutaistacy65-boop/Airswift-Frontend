@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import DashboardLayout from '@/layouts/DashboardLayout'
+import UserLayout from '@/layouts/UserLayout'
 import { useAuth } from '@/context/AuthContext'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useNotification } from '@/context/NotificationContext'
@@ -106,7 +106,7 @@ export default function AdminEmailLogsPage() {
   const totalPages = Math.ceil(totalLogs / pageSize)
 
   return (
-    <DashboardLayout sidebarItems={sidebarItems}>
+    <UserLayout sidebarItems={sidebarItems}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -199,6 +199,6 @@ export default function AdminEmailLogsPage() {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </UserLayout>
   )
 }

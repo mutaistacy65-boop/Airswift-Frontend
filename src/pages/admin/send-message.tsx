@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import API from '@/services/apiClient'
 import { useRouter } from 'next/router'
-import DashboardLayout from '@/layouts/DashboardLayout'
+import UserLayout from '@/layouts/UserLayout'
 import { useAuth } from '@/context/AuthContext'
 import { useSocket } from '@/hooks/useSocket'
 import { useNotification } from '@/context/NotificationContext'
@@ -448,19 +448,19 @@ export default function SendMessagePage() {
 
   if (user?.role !== 'admin') {
     return (
-      <DashboardLayout>
+      <UserLayout>
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Access Denied</h1>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
           <p className="text-red-700 font-medium">Only admins can send interview messages.</p>
         </div>
-      </DashboardLayout>
+      </UserLayout>
     )
   }
 
   return (
-    <DashboardLayout sidebarItems={sidebarItems}>
+    <UserLayout sidebarItems={sidebarItems}>
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '20px' }}>
         {/* Header */}
         <div style={{
@@ -1482,7 +1482,7 @@ export default function SendMessagePage() {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </UserLayout>
   )
 }
 

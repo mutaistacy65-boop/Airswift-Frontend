@@ -1,6 +1,6 @@
 import React from 'react'
 import Head from 'next/head'
-import Navbar from '@/components/Navbar'
+import UserTopBar from '@/components/UserTopBar'
 import Footer from '@/components/Footer'
 
 interface MainLayoutProps {
@@ -14,7 +14,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <div className="flex flex-col min-h-screen page-watermark">
-        <Navbar />
+        <UserTopBar />
         <main className="flex-1 max-w-7xl mx-auto px-4 py-8">
           {children}
         </main>

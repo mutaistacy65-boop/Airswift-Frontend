@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react'
-import DashboardLayout from '@/layouts/DashboardLayout'
+import UserLayout from '@/layouts/UserLayout'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
@@ -302,7 +302,7 @@ const AdminInterviewsPage: React.FC = () => {
   ]
 
   return (
-    <DashboardLayout sidebarItems={sidebarItems}>
+    <UserLayout sidebarItems={sidebarItems}>
       <div>
         <h1 className="text-3xl font-bold mb-8">Interview Management</h1>
 
@@ -818,7 +818,7 @@ const AdminInterviewsPage: React.FC = () => {
           </div>
         </Modal>
       )}
-    </DashboardLayout>
+    </UserLayout>
   )
 }
 

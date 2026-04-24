@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import DashboardLayout from '@/layouts/DashboardLayout'
+import UserLayout from '@/layouts/UserLayout'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
@@ -166,7 +166,7 @@ const RescheduleInterviewPage: React.FC = () => {
 
   if (!interview) {
     return (
-      <DashboardLayout sidebarItems={[]}>
+      <UserLayout sidebarItems={[]}>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Interview Not Found</h1>
@@ -179,7 +179,7 @@ const RescheduleInterviewPage: React.FC = () => {
             </Button>
           </div>
         </div>
-      </DashboardLayout>
+      </UserLayout>
     )
   }
 
@@ -191,7 +191,7 @@ const RescheduleInterviewPage: React.FC = () => {
   ]
 
   return (
-    <DashboardLayout sidebarItems={sidebarItems}>
+    <UserLayout sidebarItems={sidebarItems}>
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">Reschedule Interview</h1>
 
@@ -347,7 +347,7 @@ const RescheduleInterviewPage: React.FC = () => {
           </div>
         </Modal>
       )}
-    </DashboardLayout>
+    </UserLayout>
   )
 }
 

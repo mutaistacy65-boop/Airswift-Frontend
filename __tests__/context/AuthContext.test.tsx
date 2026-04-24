@@ -1,6 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useAuth } from '@/context/AuthContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { NotificationProvider } from '@/context/NotificationContext';
 
 // Mock next/router
 const mockPush = jest.fn();
@@ -25,7 +26,11 @@ describe('AuthContext Integration Tests', () => {
   });
 
   test('initial state has no user and is loading', async () => {
-    const wrapper = ({ children }: any) => <AuthProvider>{children}</AuthProvider>;
+    const wrapper = ({ children }: any) => (
+      <NotificationProvider>
+        <AuthProvider>{children}</AuthProvider>
+      </NotificationProvider>
+    );
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     // Wait for the provider to mount
@@ -42,7 +47,11 @@ describe('AuthContext Integration Tests', () => {
   });
 
   test('login sets user data', async () => {
-    const wrapper = ({ children }: any) => <AuthProvider>{children}</AuthProvider>;
+    const wrapper = ({ children }: any) => (
+      <NotificationProvider>
+        <AuthProvider>{children}</AuthProvider>
+      </NotificationProvider>
+    );
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     // Wait for the provider to mount

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import DashboardLayout from '@/layouts/DashboardLayout';
+import UserLayout from '@/layouts/UserLayout';
 import { useAuth } from '@/context/AuthContext';
 
 export default function ApplicationSubmissionTester() {
@@ -250,7 +250,7 @@ export default function ApplicationSubmissionTester() {
   if (!user) return null;
 
   return (
-    <DashboardLayout>
+    <UserLayout>
       <div style={{
         maxWidth: '900px',
         margin: '0 auto',
@@ -799,6 +799,6 @@ export default function ApplicationSubmissionTester() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </UserLayout>
   );
 }

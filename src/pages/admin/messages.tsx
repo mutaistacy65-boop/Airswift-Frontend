@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import DashboardLayout from '@/layouts/DashboardLayout'
+import UserLayout from '@/layouts/UserLayout'
 import { useAuth } from '@/context/AuthContext'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useNotification } from '@/context/NotificationContext'
@@ -152,7 +152,7 @@ const AdminMessagesPage = () => {
   if (!isAuthorized) return null
 
   return (
-    <DashboardLayout sidebarItems={sidebarItems}>
+    <UserLayout sidebarItems={sidebarItems}>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -384,7 +384,7 @@ const AdminMessagesPage = () => {
           </div>
         </Modal>
       </div>
-    </DashboardLayout>
+    </UserLayout>
   )
 }
 

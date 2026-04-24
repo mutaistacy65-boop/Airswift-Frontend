@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react'
-import DashboardLayout from '@/layouts/DashboardLayout'
+import UserLayout from '@/layouts/UserLayout'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
@@ -172,7 +172,7 @@ const AdminEmailTemplatesPage: React.FC = () => {
   ]
 
   return (
-    <DashboardLayout sidebarItems={sidebarItems}>
+    <UserLayout sidebarItems={sidebarItems}>
       {/* Edit Template Modal */}
       <Modal
         isOpen={showEditModal}
@@ -341,7 +341,7 @@ const AdminEmailTemplatesPage: React.FC = () => {
           ))}
         </div>
       </div>
-    </DashboardLayout>
+    </UserLayout>
   )
 }
 

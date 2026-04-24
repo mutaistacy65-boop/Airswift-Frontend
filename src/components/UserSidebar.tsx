@@ -1,19 +1,15 @@
-import React, { useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
-import { useAuth } from '@/context/AuthContext'
-import Navbar from '@/components/Navbar'
 
-interface DashboardLayoutProps {
-  children: React.ReactNode
-  sidebarItems?: { label: string; href: string; icon?: string }[]
+interface UserSidebarProps {
+  sidebarItems: { label: string; href: string; icon?: string }[]
+  sidebarOpen: boolean
+  setSidebarOpen: (open: boolean) => void
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, sidebarItems }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { user } = useAuth()
-
+const UserSidebar: React.FC<UserSidebarProps> = ({ sidebarItems, sidebarOpen, setSidebarOpen }) => {
   return (
-    <div className="flex h-screen bg-gray-50 page-watermark overflow-hidden">
+    <>
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white transform transition-transform duration-300 overflow-y-auto md:relative md:translate-x-0 ${
@@ -54,18 +50,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, sidebarItem
           aria-hidden="true"
         />
       )}
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden md:pl-64">
-        <Navbar />
-        <main className="flex-1 overflow-y-auto">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {children}
-          </div>
-        </main>
-      </div>
-    </div>
+    </>
   )
 }
 
-export default DashboardLayout
+export default UserSidebar

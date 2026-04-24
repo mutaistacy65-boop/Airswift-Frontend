@@ -3,7 +3,7 @@
 
 import React from 'react'
 import { useAuth } from '@/context/AuthContext'
-import DashboardLayout from '@/layouts/DashboardLayout'
+import UserLayout from '@/layouts/UserLayout'
 import { AdminLogs } from '@/components/AdminLogs'
 import { useRouter } from 'next/router'
 
@@ -23,7 +23,7 @@ export default function AdminLogsExamplePage() {
   }
 
   return (
-    <DashboardLayout>
+    <UserLayout>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -120,6 +120,6 @@ export default function AdminLogsExamplePage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </UserLayout>
   )
 }

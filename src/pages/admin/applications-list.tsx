@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import API from '@/services/apiClient'
 import Link from 'next/link'
-import DashboardLayout from '@/layouts/DashboardLayout'
+import UserLayout from '@/layouts/UserLayout'
 import { useAuth } from '@/context/AuthContext'
 
 interface Application {
@@ -89,11 +89,11 @@ export default function AdminApplicationsPage() {
     ]
     
     return (
-      <DashboardLayout sidebarItems={sidebarItems}>
+      <UserLayout sidebarItems={sidebarItems}>
         <div className="bg-red-100 border border-red-400 rounded p-4">
           <p className="text-red-700">Only admins can view applications.</p>
         </div>
-      </DashboardLayout>
+      </UserLayout>
     )
   }
 
@@ -118,11 +118,11 @@ export default function AdminApplicationsPage() {
     ]
     
     return (
-      <DashboardLayout sidebarItems={sidebarItems}>
+      <UserLayout sidebarItems={sidebarItems}>
         <div className="flex justify-center items-center h-screen">
           <div className="text-xl text-gray-600">Loading...</div>
         </div>
-      </DashboardLayout>
+      </UserLayout>
     )
   }
 
@@ -137,7 +137,7 @@ export default function AdminApplicationsPage() {
   ]
 
   return (
-    <DashboardLayout sidebarItems={sidebarItems}>
+    <UserLayout sidebarItems={sidebarItems}>
       <div>
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Applications Management</h1>
@@ -248,6 +248,6 @@ export default function AdminApplicationsPage() {
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </UserLayout>
   )
 }

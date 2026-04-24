@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react'
-import DashboardLayout from '@/layouts/DashboardLayout'
+import UserLayout from '@/layouts/UserLayout'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
@@ -146,7 +146,7 @@ const AdminCategoriesPage: React.FC = () => {
   const inactiveCategories = categories.filter(cat => !cat.isActive)
 
   return (
-    <DashboardLayout sidebarItems={sidebarItems}>
+    <UserLayout sidebarItems={sidebarItems}>
       {/* Create/Edit Category Modal */}
       <Modal
         isOpen={showCreateModal || showEditModal}
@@ -308,7 +308,7 @@ const AdminCategoriesPage: React.FC = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </UserLayout>
   )
 }
 
