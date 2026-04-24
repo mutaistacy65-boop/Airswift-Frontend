@@ -109,7 +109,10 @@ export default function SendMessagePage() {
     { label: '📞 Interviews', href: '/admin/interviews' },
     { label: '💰 Payments', href: '/admin/payments' },
     { label: '📋 Audit Logs', href: '/admin/audit' },
+    { label: '⚙️ Settings', href: '/admin/settings' },
+  ]
 
+  useEffect(() => {
     loadMessageLogs()
   }, [user])
 
