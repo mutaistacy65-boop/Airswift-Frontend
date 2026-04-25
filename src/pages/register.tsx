@@ -390,12 +390,6 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <div className="info-box">
-            <p>
-              <strong>⚠️ Gmail Required:</strong> Regular user accounts must use a Gmail address for registration.
-            </p>
-          </div>
-
           <div className="login-link">
             <p>
               Already have an account?{' '}
