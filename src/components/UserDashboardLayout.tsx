@@ -1,8 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useAuth } from '@/context/AuthContext'
 import { useNotification } from '@/context/NotificationContext'
+import { Menu, X, Bell, User, LogOut } from 'lucide-react'
+import API from '@/services/apiClient'
 
 interface UserDashboardLayoutProps {
   children: React.ReactNode
@@ -11,11 +13,30 @@ interface UserDashboardLayoutProps {
 const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { user, logout } = useAuth()
+  const { addNotification } = useNotification()
   const router = useRouter()
-  const [notificationCount, setNotificationCount] = useState(0)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  // Fetch unread notifications count
+  useEffect(() => {
+    if (!user) return
+
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await API.get('/notifications')
+        const notifications = response.data || []
+        const unread = notifications.filter((n: any) => !n.read).length
+        setUnreadCount(unread)
+      } catch (error) {
+        console.error('Error fetching notifications:', error)
+      }
+    }
+
+    fetchUnreadCount()
+  }, [user])
 
   const menuItems = [
-    { label: '🏠 Dashboard', href: '/job-seeker/dashboard', icon: '📊' },
+    { label: '🏠 Dashboard', href: '/job-seeker/dashboard', icon: '🏠' },
     { label: '📝 Apply', href: '/apply', icon: '📝' },
     { label: '📂 Applications', href: '/job-seeker/applications', icon: '📂' },
     { label: '📅 Interviews', href: '/job-seeker/interviews', icon: '📅' },
@@ -25,129 +46,133 @@ const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({ children }) =
 
   const isActive = (href: string) => router.pathname === href
 
+  const handleLogout = () => {
+    logout()
+    router.push('/login')
+  }
+
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-gray-50">
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white transform transition-transform duration-300 overflow-y-auto md:relative md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Logo/Brand */}
-        <div className="p-4 bg-gradient-to-r from-primary to-secondary flex items-center justify-between">
-          <h1 className="text-2xl font-bold uppercase tracking-wider">TALEX</h1>
+        {/* Logo */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <Link href="/job-seeker/dashboard" className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">A</span>
+            </div>
+            <span className="text-xl font-bold text-gray-900">Airswift</span>
+          </Link>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="md:hidden p-2 hover:bg-black/20 rounded transition"
-            aria-label="Close sidebar"
+            className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            ✕
+            <X size={20} />
           </button>
         </div>
 
         {/* User Info */}
-        <div className="border-b border-gray-700 p-4">
-          <p className="text-sm text-gray-400">Welcome,</p>
-          <p className="font-semibold text-white truncate">{user?.name || 'User'}</p>
-          <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <User size={20} className="text-blue-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {user?.name || 'User'}
+              </p>
+              <p className="text-xs text-gray-500 truncate">
+                {user?.email}
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Navigation Menu */}
-        <nav className="mt-8 space-y-2 px-2">
+        {/* Navigation */}
+        <nav className="flex-1 px-4 py-4 space-y-1">
           {menuItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center px-4 py-3 rounded-lg transition duration-200 ${
+              className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                 isActive(item.href)
-                  ? 'bg-primary text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
+                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
               }`}
               onClick={() => setSidebarOpen(false)}
             >
               <span className="mr-3">{item.icon}</span>
-              <span>{item.label}</span>
+              {item.label}
             </Link>
           ))}
         </nav>
 
-        {/* Logout Button */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700 bg-gray-900">
+        {/* Logout */}
+        <div className="p-4 border-t border-gray-200">
           <button
-            onClick={() => {
-              logout()
-              setSidebarOpen(false)
-            }}
-            className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
+            onClick={handleLogout}
+            className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-colors"
           >
-            🚪 Logout
+            <LogOut size={18} className="mr-3" />
+            Logout
           </button>
         </div>
       </aside>
 
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Main Content */}
+      {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
-        <header className="bg-white border-b border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
+        {/* Top bar */}
+        <header className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 md:px-6">
+          <div className="flex items-center justify-between">
             <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded transition"
-              aria-label="Toggle sidebar"
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              ☰
+              <Menu size={20} />
             </button>
 
-            <Link href="/" className="flex-1 ml-4 md:ml-0">
-              <h1 className="text-xl font-bold text-gray-900">TALEX</h1>
-            </Link>
-
-            <div className="flex items-center space-x-4">
-              {/* Notifications Bell */}
+            <div className="flex items-center space-x-4 ml-auto">
+              {/* Notifications */}
               <Link
                 href="/job-seeker/notifications"
-                className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
-                aria-label="Notifications"
+                className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <span className="text-xl">🔔</span>
-                {notificationCount > 0 && (
-                  <span className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                    {notificationCount}
+                <Bell size={20} className="text-gray-600" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </Link>
 
-              {/* Profile Dropdown */}
+              {/* User menu */}
               <div className="flex items-center space-x-2">
-                <div className="hidden sm:block">
-                  <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                  <p className="text-xs text-gray-600">{user?.role || 'User'}</p>
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <User size={16} className="text-blue-600" />
                 </div>
-                <Link
-                  href="/job-seeker/settings"
-                  className="inline-block p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
-                >
-                  👤
-                </Link>
+                <span className="hidden md:block text-sm font-medium text-gray-700">
+                  {user?.name || 'User'}
+                </span>
               </div>
             </div>
           </div>
         </header>
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {children}
-          </div>
+        {/* Page content */}
+        <main className="flex-1 overflow-auto">
+          {children}
         </main>
       </div>
     </div>
