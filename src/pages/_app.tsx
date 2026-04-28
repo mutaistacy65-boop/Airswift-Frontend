@@ -14,6 +14,8 @@ import '@/styles/globals.css'
 // @ts-ignore
 import '@/styles/AdminUsers.css'
 // @ts-ignore
+import '@/styles/AdminComponents.css'
+// @ts-ignore
 import '@/styles/SystemHealth.css'
 
 /**

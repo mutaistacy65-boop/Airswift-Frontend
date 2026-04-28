@@ -116,11 +116,7 @@ export default function UserDashboard() {
 
       } catch (error) {
         console.error('Error loading dashboard data:', error)
-        addNotification({
-          type: 'error',
-          title: 'Error',
-          message: 'Failed to load dashboard data'
-        })
+        addNotification('Failed to load dashboard data', 'error')
       } finally {
         setDashboardLoading(false)
       }
