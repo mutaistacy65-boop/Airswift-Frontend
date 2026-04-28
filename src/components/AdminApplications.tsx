@@ -3,6 +3,7 @@ import { adminService } from '../services/adminService';
 import apiClient from '../services/apiClient';
 import { getSocket } from '../socket';
 import EditModal from './EditModal';
+// CSS is imported globally in _app.tsx
 
 function AdminApplications() {
   const [applications, setApplications] = useState([]);
