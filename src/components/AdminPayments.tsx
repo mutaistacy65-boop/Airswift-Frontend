@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { adminService } from '@/services/adminService'
 import API from '@/services/apiClient'
 
 export default function AdminPayments() {
@@ -12,10 +13,10 @@ export default function AdminPayments() {
 
   const fetchPayments = async () => {
     try {
-      const res = await API.get('/admin/payments', {
-        params: { status: statusFilter || undefined },
+      const res = await adminService.getPayments({
+        status: statusFilter || undefined,
       })
-      setPayments(res.data.payments || [])
+      setPayments(res.payments || res.data || [])
     } catch (err) {
       console.error(err)
       setPayments([])

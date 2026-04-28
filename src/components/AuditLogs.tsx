@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import apiClient from '../services/apiClient';
+import { adminService } from '../services/adminService';
 
 function AuditLogs() {
   const [logs, setLogs] = useState([]);
@@ -43,55 +43,32 @@ function AuditLogs() {
         params.search = searchTerm;
       }
 
-      // Try multiple endpoints in order of priority
-      const endpoints = ['/admin/audit', '/admin/audit-logs', '/audit-logs', '/auditLogs'];
-      let response;
-      
-      for (const endpoint of endpoints) {
-        try {
-          response = await apiClient.get(endpoint, { params });
-          console.log(`✅ Successfully fetched from ${endpoint}`);
-          break;
-        } catch (err) {
-          console.warn(`⚠️ ${endpoint} failed (${err.response?.status}), trying next endpoint...`);
-        }
-      }
+      const response = await adminService.getAuditLogs(params);
+      console.log('✅ Audit logs response:', response);
 
-      if (!response) {
-        throw new Error('Unable to fetch audit logs from any configured endpoint');
-      }
-
-      console.log('✅ Audit logs fetched:', response.data);
-
-      const data = response.data;
-      
       // Handle different response formats
       let logsData = [];
-      let pagination = { total: 0, pages: 1 };
+      let total = 0;
 
-      if (data.data) {
-        logsData = Array.isArray(data.data) ? data.data : [];
-        pagination = data.pagination || { total: logsData.length, pages: 1 };
-      } else if (Array.isArray(data)) {
-        logsData = data;
-        pagination = { total: data.length, pages: 1 };
-      } else if (data.logs) {
-        logsData = data.logs;
-        pagination = data.pagination || { total: data.logs.length, pages: 1 };
+      if (response && response.data) {
+        logsData = response.data;
+        total = response.pagination?.total || logsData.length;
+      } else if (response && response.logs) {
+        logsData = response.logs;
+        total = response.total || logsData.length;
+      } else if (Array.isArray(response)) {
+        logsData = response;
+        total = response.length;
       }
 
       setLogs(logsData);
-      setTotalLogs(pagination.total);
+      setTotalLogs(total);
+      console.log('✅ Audit logs loaded:', logsData.length, 'of', total);
     } catch (err) {
       console.error('❌ Error fetching audit logs:', err);
-      const errorMessage = err.response?.data?.message || err.message || 'Unable to load audit logs. Please try again.';
-      setError(errorMessage);
-
-      if (err.response?.status === 401) {
-        setError('Unauthorized - Please login again');
-      } else if (err.response?.status === 403) {
-        setError('Forbidden - You do not have permission to view audit logs');
-      }
+      setError(err.message || 'Failed to fetch audit logs');
+      setLogs([]);
+      setTotalLogs(0);
     } finally {
       setLoading(false);
     }

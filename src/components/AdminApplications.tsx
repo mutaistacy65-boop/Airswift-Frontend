@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { adminService } from '../services/adminService';
 import apiClient from '../services/apiClient';
 import { getSocket } from '../socket';
 import EditModal from './EditModal';
@@ -86,58 +87,27 @@ function AdminApplications() {
     try {
       setLoading(true);
       setError(null);
-      console.log('📥 Fetching all applications from admin endpoint...');
+      console.log('📥 Fetching all applications from admin service...');
 
-      let response;
+      const response = await adminService.getAllApplications();
+      console.log('✅ Response from admin service:', response);
+
+      // Handle different response formats
       let applications = [];
-
-      // Try primary admin endpoint (permission-based)
-      try {
-        console.log('🔄 Trying /applications/admin endpoint...');
-        response = await apiClient.get('/applications/admin');
-        console.log('✅ Response from /applications/admin:', response.data);
-
-        // Handle different response formats from this endpoint
-        if (response.data && response.data.data) {
-          applications = response.data.data;
-        } else if (Array.isArray(response.data)) {
-          applications = response.data;
-        } else if (response.data && response.data.applications) {
-          applications = response.data.applications;
-        }
-      } catch (err1) {
-        console.warn('⚠️ /applications/admin failed, trying /applications/mongo/admin...');
-
-        try {
-          // Fallback to MongoDB endpoint (role-based)
-          response = await apiClient.get('/applications/mongo/admin');
-          console.log('✅ Response from /applications/mongo/admin:', response.data);
-
-          if (Array.isArray(response.data)) {
-            applications = response.data;
-          } else if (response.data && response.data.data) {
-            applications = response.data.data;
-          } else if (response.data && response.data.applications) {
-            applications = response.data.applications;
-          }
-        } catch (err2) {
-          console.error('❌ Both endpoints failed');
-          throw err1; // Throw the first error
-        }
+      if (response && response.data) {
+        applications = response.data;
+      } else if (Array.isArray(response)) {
+        applications = response;
+      } else if (response && response.applications) {
+        applications = response.applications;
       }
 
-      console.log('✅ Applications fetched:', applications);
-      setApplications(Array.isArray(applications) ? applications : []);
+      console.log('✅ Applications loaded:', applications.length);
+      setApplications(applications);
     } catch (err) {
       console.error('❌ Error fetching applications:', err);
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch applications';
-      setError(errorMessage);
-
-      if (err.response?.status === 401) {
-        setError('Unauthorized - Please login again');
-      } else if (err.response?.status === 403) {
-        setError('Forbidden - You do not have permission to view applications');
-      }
+      setError(err.message || 'Failed to fetch applications');
+      setApplications([]);
     } finally {
       setLoading(false);
     }

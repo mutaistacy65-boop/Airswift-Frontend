@@ -180,12 +180,17 @@ export const adminService = {
 
   // Settings Management
   getSettings: async () => {
-    const response = await API.get('/settings')
+    const response = await API.get('/admin/settings')
     return response.data
   },
 
   updateSettings: async (settings: any) => {
-    const response = await API.put('/settings', settings)
+    const response = await API.put('/admin/settings', settings)
+    return response.data
+  },
+
+  getSettingsHistory: async () => {
+    const response = await API.get('/admin/settings/history')
     return response.data
   },
 
@@ -197,6 +202,11 @@ export const adminService = {
 
   getUser: async (id: string) => {
     const response = await API.get(`/admin/users/${id}`)
+    return response.data
+  },
+
+  createUser: async (userData: any) => {
+    const response = await API.post('/admin/users', userData)
     return response.data
   },
 
@@ -239,7 +249,7 @@ export const adminService = {
 
   // Payment Management
   getPayments: async (params?: any) => {
-    const response = await API.get('/payment', { params })
+    const response = await API.get('/admin/payments', { params })
     return response.data
   },
 
@@ -256,12 +266,17 @@ export const adminService = {
 
   // Audit & Reports
   getAuditLogs: async (params?: any) => {
+    const response = await API.get('/admin/audit', { params })
+    return response.data
+  },
+
+  getAuditLogsAlias: async (params?: any) => {
     const response = await API.get('/admin/audit-logs', { params })
     return response.data
   },
 
   getEmailLogs: async (params?: any) => {
-    const response = await API.get('/email', { params })
+    const response = await API.get('/admin/email-logs', { params })
     return response.data
   },
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import api from '@/lib/api'; // Your axios instance
+import { adminService } from '@/services/adminService';
+import api from '@/services/apiClient';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -17,8 +18,8 @@ const AdminSettings = () => {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/settings/category/${selectedCategory}`);
-      setSettings(response.data);
+      const response = await adminService.getSettings();
+      setSettings(response.data || []);
     } catch (err) {
       setError('Failed to load settings');
       console.error(err);
@@ -29,7 +30,7 @@ const AdminSettings = () => {
 
   const updateSetting = async (key, value) => {
     try {
-      await api.put(`/settings/${key}`, { value });
+      await adminService.updateSettings({ [key]: value });
       fetchSettings();
     } catch (err) {
       console.error('Failed to update setting:', err);
@@ -39,7 +40,7 @@ const AdminSettings = () => {
 
   const createSetting = async () => {
     try {
-      await api.post('/settings', newSetting);
+      await adminService.updateSettings(newSetting);
       setNewSetting({ key: '', value: '', description: '', category: selectedCategory, isPublic: false });
       fetchSettings();
     } catch (err) {

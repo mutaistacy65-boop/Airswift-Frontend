@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import api from '@/lib/api';
+import { adminService } from '@/services/adminService';
 
 interface User {
   _id: string;
@@ -97,18 +97,18 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ title = 'Admin Users' }) => {
       setActionLoading(true);
       setActionError(null);
 
-      const response = await api.put(`/admin/users/${selectedUser._id || selectedUser.id}`, editFormData);
-      
+      const response = await adminService.updateUser(selectedUser._id || selectedUser.id!, editFormData);
+
       // Update the users list with the updated user
-      setUsers(prev => prev.map(u => 
-        (u._id === selectedUser._id || u.id === selectedUser.id) 
+      setUsers(prev => prev.map(u =>
+        (u._id === selectedUser._id || u.id === selectedUser.id)
           ? { ...u, ...editFormData }
           : u
       ));
 
       setSuccessMessage('✅ User updated successfully!');
       console.log('✅ User persisted to database:', response);
-      
+
       setTimeout(() => {
         setSuccessMessage(null);
         closeEditModal();
@@ -131,16 +131,16 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ title = 'Admin Users' }) => {
       setActionLoading(true);
       setActionError(null);
 
-      const response = await api.delete(`/admin/users/${selectedUser._id || selectedUser.id}`);
+      const response = await adminService.deleteUser(selectedUser._id || selectedUser.id!);
 
       // Remove the deleted user from the list
-      setUsers(prev => prev.filter(u => 
+      setUsers(prev => prev.filter(u =>
         (u._id !== selectedUser._id && u.id !== selectedUser.id)
       ));
 
       setSuccessMessage('✅ User deleted successfully!');
       console.log('✅ User deleted from database:', response);
-      
+
       setTimeout(() => {
         setSuccessMessage(null);
         closeDeleteModal();
@@ -160,18 +160,18 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ title = 'Admin Users' }) => {
     try {
       setLoading(true);
       setError(null);
-      console.log('📥 Fetching users from /api/admin/users');
-      
-      const response = await api.get('/admin/users');
-      
+      console.log('📥 Fetching users from admin service');
+
+      const response = await adminService.getUsers();
+
       // Handle response structure: { users: [...] }
-      const usersData = response.data.users || response.data;
+      const usersData = response.users || response.data || response;
       console.log('✅ Users fetched successfully:', usersData.length, 'users');
-      
+
       setUsers(Array.isArray(usersData) ? usersData : []);
     } catch (err: any) {
       console.error('❌ Error fetching users:', err);
-      
+
       // Provide user-friendly error messages
       if (err.response?.status === 401) {
         setError('Unauthorized. Please log in again.');
@@ -182,7 +182,7 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ title = 'Admin Users' }) => {
       } else {
         setError(err.response?.data?.message || err.message || 'Failed to fetch users');
       }
-      
+
       setUsers([]);
     } finally {
       setLoading(false);
